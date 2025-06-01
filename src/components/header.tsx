@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Edit3 } from 'lucide-react'; // Added Edit3 for Notes
+import { Sparkles, Menu, Edit3, MessageSquareQuestion } from 'lucide-react'; // Added MessageSquareQuestion for Grammar Helper
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -12,7 +12,8 @@ import { useState } from 'react';
 const navLinks = [
   { href: '/', label: 'Generate Questions' },
   { href: '/saved', label: 'Saved Questions' },
-  { href: '/notes', label: 'Notes' }, // Added Notes link
+  { href: '/notes', label: 'Notes' },
+  { href: '/grammar', label: 'Grammar Helper' }, // Added Grammar Helper link
 ];
 
 export function Header() {
@@ -68,7 +69,7 @@ export function Header() {
                       "text-lg font-medium transition-colors hover:text-primary",
                       pathname === link.href ? "text-primary" : "text-foreground/80"
                     )}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
                   >
                     {link.label}
                   </Link>

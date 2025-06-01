@@ -49,3 +49,12 @@ export interface Note {
   createdAt: number;
   updatedAt: number;
 }
+
+// Types for Grammar Helper
+export interface AnswerGrammarQuestionInput {
+  userQuestion: string;
+}
+
+export interface AnswerGrammarQuestionOutput {
+  aiAnswer: string;
+}
