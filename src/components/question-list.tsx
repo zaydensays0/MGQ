@@ -1,16 +1,17 @@
+
 'use client';
 
 import { QuestionCard } from './question-card';
-import type { QuestionContext } from '@/types';
+import type { QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import { Button } from '@/components/ui/button';
 import { SaveAll } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
 
 interface QuestionListProps {
-  questions: string[];
+  questions: GeneratedQuestionAnswerPair[];
   questionContext: QuestionContext;
-  onRegenerateQuestion: (originalQuestion: string, context: QuestionContext) => Promise<string | null>;
+  onRegenerateQuestion: (originalQuestion: string, context: QuestionContext) => Promise<{ question: string; answer: string } | null>;
 }
 
 export function QuestionList({ questions, questionContext, onRegenerateQuestion }: QuestionListProps) {
@@ -18,14 +19,14 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
   const { toast } = useToast();
 
   if (!questions || questions.length === 0) {
-    return null; // Or a message indicating no questions
+    return null;
   }
 
   const handleSaveAll = () => {
     addMultipleQuestions(questions, questionContext);
     toast({
       title: "All Questions Saved",
-      description: `${questions.length} questions from this set have been added to your collection.`,
+      description: `${questions.length} question-answer pairs from this set have been added to your collection.`,
     });
   };
 
@@ -41,10 +42,11 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
         )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {questions.map((qText, index) => (
+        {questions.map((qaPair, index) => (
           <QuestionCard
-            key={`${questionContext.subject}-${questionContext.chapter}-${index}`}
-            questionText={qText}
+            key={`${questionContext.subject}-${questionContext.chapter}-${qaPair.question}-${index}`} // Ensure key is unique
+            questionText={qaPair.question}
+            answerText={qaPair.answer}
             questionContext={questionContext}
             onRegenerate={(originalQuestion) => onRegenerateQuestion(originalQuestion, questionContext)}
           />

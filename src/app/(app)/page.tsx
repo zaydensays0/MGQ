@@ -5,15 +5,15 @@ import { useState } from 'react';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { QuestionList } from '@/components/question-list';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
-import { regenerateQuestion, type RegenerateQuestionInput } from '@/ai/flows/regenerate-question';
+import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
 import { useToast } from '@/hooks/use-toast';
-import type { QuestionContext } from '@/types';
+import type { QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Sparkles, Loader2 } from "lucide-react";
+import { Terminal, Sparkles } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ExamPrepPage() {
-  const [generatedQuestions, setGeneratedQuestions] = useState<string[]>([]);
+  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestionAnswerPair[]>([]);
   const [currentContext, setCurrentContext] = useState<QuestionContext | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export default function ExamPrepPage() {
         } else {
            toast({
             title: "Questions Generated!",
-            description: `${result.questions.length} questions are ready.`,
+            description: `${result.questions.length} question-answer pairs are ready.`,
           });
         }
       } else {
@@ -72,22 +72,26 @@ export default function ExamPrepPage() {
     }
   };
 
-  const handleRegenerateQuestion = async (originalQuestion: string, context: QuestionContext): Promise<string | null> => {
+  const handleRegenerateQuestion = async (originalQuestionText: string, context: QuestionContext): Promise<{ question: string; answer: string } | null> => {
     const input: RegenerateQuestionInput = {
       gradeLevel: context.gradeLevel as '9' | '10' | '11' | '12', 
       subject: context.subject,
       chapter: context.chapter,
       questionType: context.questionType as any, 
-      originalQuestion: originalQuestion,
+      originalQuestion: originalQuestionText,
     };
 
     try {
-      const result = await regenerateQuestion(input);
-      if (result && result.regeneratedQuestion) {
+      const result: RegenerateQuestionOutput = await regenerateQuestion(input);
+      if (result && result.regeneratedQuestion && result.regeneratedAnswer) {
         setGeneratedQuestions(prevQuestions => 
-          prevQuestions.map(q => q === originalQuestion ? result.regeneratedQuestion : q)
+          prevQuestions.map(qaPair => 
+            qaPair.question === originalQuestionText 
+              ? { question: result.regeneratedQuestion, answer: result.regeneratedAnswer }
+              : qaPair
+          )
         );
-        return result.regeneratedQuestion;
+        return { question: result.regeneratedQuestion, answer: result.regeneratedAnswer };
       }
       return null;
     } catch (err) {
@@ -119,9 +123,14 @@ export default function ExamPrepPage() {
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-5/6" />
-      <div className="flex justify-end space-x-2 pt-2">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-8 w-20" />
+      <Skeleton className="h-4 w-full mt-2" /> {/* Placeholder for answer area */}
+      <Skeleton className="h-4 w-3/4" />
+      <div className="flex justify-between items-center pt-2">
+        <Skeleton className="h-8 w-28" /> {/* Show Answer button placeholder */}
+        <div className="flex space-x-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-20" />
+        </div>
       </div>
     </div>
   );

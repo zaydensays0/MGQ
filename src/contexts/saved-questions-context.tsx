@@ -1,13 +1,14 @@
+
 'use client';
 
-import type { SavedQuestion, QuestionContext, GeneratedQuestionItem } from '@/types';
+import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 
 interface SavedQuestionsContextType {
   savedQuestions: SavedQuestion[];
   addQuestion: (questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => void;
-  addMultipleQuestions: (questionsTexts: string[], context: QuestionContext) => void;
+  addMultipleQuestions: (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => void;
   removeQuestion: (id: string) => void;
   isSaved: (questionText: string, context: QuestionContext) => boolean;
   getQuestionsBySubjectAndChapter: (subject: string, chapter: string) => SavedQuestion[];
@@ -47,18 +48,24 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
   }, [savedQuestions, isInitialized]);
 
   const addQuestion = useCallback((questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => {
-    const newQuestion: SavedQuestion = {
+    // Ensure 'answer' field exists, even if empty, to match SavedQuestion type
+    const completeQuestionData = {
+      answer: '', // Default if not provided, though typically it should be
       ...questionData,
+    };
+    const newQuestion: SavedQuestion = {
+      ...completeQuestionData,
       id: uuidv4(),
       timestamp: Date.now(),
     };
     setSavedQuestions((prevQuestions) => [...prevQuestions, newQuestion]);
   }, []);
 
-  const addMultipleQuestions = useCallback((questionsTexts: string[], context: QuestionContext) => {
-    const newQuestions: SavedQuestion[] = questionsTexts.map(text => ({
+  const addMultipleQuestions = useCallback((questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
+    const newQuestions: SavedQuestion[] = questions.map(qaPair => ({
       id: uuidv4(),
-      text,
+      text: qaPair.question,
+      answer: qaPair.answer,
       ...context,
       timestamp: Date.now(),
     }));

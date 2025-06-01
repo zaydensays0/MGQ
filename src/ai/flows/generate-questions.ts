@@ -2,15 +2,16 @@
 // src/ai/flows/generate-questions.ts
 'use server';
 /**
- * @fileOverview A question generator AI agent that generates questions from a given syllabus.
+ * @fileOverview A question generator AI agent that generates questions and their answers from a given syllabus.
  *
- * - generateQuestions - A function that handles the question generation process.
+ * - generateQuestions - A function that handles the question and answer generation process.
  * - GenerateQuestionsInput - The input type for the generateQuestions function.
  * - GenerateQuestionsOutput - The return type for the generateQuestions function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { GeneratedQuestionAnswerPair } from '@/types';
 
 const GenerateQuestionsInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level of the syllabus.'),
@@ -21,8 +22,13 @@ const GenerateQuestionsInputSchema = z.object({
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
+const QuestionAnswerPairSchema = z.object({
+  question: z.string().describe('The generated question.'),
+  answer: z.string().describe('The answer to the generated question.'),
+});
+
 const GenerateQuestionsOutputSchema = z.object({
-  questions: z.array(z.string()).describe('An array of generated questions.'),
+  questions: z.array(QuestionAnswerPairSchema).describe('An array of generated question-answer pairs.'),
 });
 export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
 
@@ -34,18 +40,19 @@ const prompt = ai.definePrompt({
   name: 'generateQuestionsPrompt',
   input: {schema: GenerateQuestionsInputSchema},
   output: {schema: GenerateQuestionsOutputSchema},
-  prompt: `You are a helpful AI that generates questions for students based on their syllabus.
+  prompt: `You are a helpful AI that generates questions and their corresponding answers for students based on their syllabus.
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
-  Return the questions as a JSON array of strings.
+  For each question, provide a concise and accurate answer.
+  Return the questions and answers as a JSON array of objects, where each object has a "question" field and an "answer" field.
   Make sure the questions are relevant to the chapter and suitable for the specified grade level.
   If you cannot generate the exact number of questions requested, generate as many as you can up to that number.
   Example:
   {
     "questions": [
-      "Question 1",
-      "Question 2",
-      "Question 3"
+      { "question": "Question 1 text?", "answer": "Answer 1 text." },
+      { "question": "Question 2 text?", "answer": "Answer 2 text." },
+      { "question": "Question 3 text?", "answer": "Answer 3 text." }
     ]
   }
   `,
