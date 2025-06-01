@@ -1,3 +1,4 @@
+
 // src/ai/flows/generate-questions.ts
 'use server';
 /**
@@ -16,6 +17,7 @@ const GenerateQuestionsInputSchema = z.object({
   subject: z.string().describe('The subject of the syllabus.'),
   chapter: z.string().describe('The chapter of the syllabus.'),
   questionType: z.string().describe('The type of questions to generate (e.g., MCQ, short answer, long answer).'),
+  numberOfQuestions: z.number().int().positive().describe('The number of questions to generate.'),
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
@@ -34,9 +36,10 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateQuestionsOutputSchema},
   prompt: `You are a helpful AI that generates questions for students based on their syllabus.
 
-  Generate questions of type {{questionType}} for grade {{gradeLevel}}, subject {{subject}}, chapter {{chapter}}.
+  Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
   Return the questions as a JSON array of strings.
   Make sure the questions are relevant to the chapter and suitable for the specified grade level.
+  If you cannot generate the exact number of questions requested, generate as many as you can up to that number.
   Example:
   {
     "questions": [

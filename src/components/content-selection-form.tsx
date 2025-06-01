@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FormEvent } from 'react';
@@ -27,6 +28,7 @@ export interface FormValues {
   subject: string;
   chapter: string;
   questionType: string;
+  numberOfQuestions: string; // Added numberOfQuestions
 }
 
 export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectionFormProps) {
@@ -34,15 +36,19 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
   const [subject, setSubject] = useState<string>('');
   const [chapter, setChapter] = useState<string>('');
   const [questionType, setQuestionType] = useState<string>('');
+  const [numberOfQuestions, setNumberOfQuestions] = useState<string>('5'); // Added state for numberOfQuestions, default to 5
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!gradeLevel || !subject || !chapter || !questionType) {
-      // Basic validation, can be enhanced with react-hook-form
+    if (!gradeLevel || !subject || !chapter || !questionType || !numberOfQuestions) {
       alert('Please fill all fields');
       return;
     }
-    onSubmit({ gradeLevel, subject, chapter, questionType });
+    if (parseInt(numberOfQuestions, 10) <= 0) {
+      alert('Number of questions must be greater than 0.');
+      return;
+    }
+    onSubmit({ gradeLevel, subject, chapter, questionType, numberOfQuestions });
   };
 
   const selectedSubjectDetails = SUBJECTS.find(s => s.value === subject);
@@ -55,7 +61,7 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
           Create Your Questions
         </CardTitle>
         <CardDescription>
-          Select your class, subject, chapter, and desired question type.
+          Select your class, subject, chapter, desired question type, and number of questions.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,6 +132,20 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="numberOfQuestions">Number of Questions</Label>
+            <Input
+              id="numberOfQuestions"
+              type="number"
+              value={numberOfQuestions}
+              onChange={(e) => setNumberOfQuestions(e.target.value)}
+              placeholder="e.g., 5"
+              min="1"
+              required
+              className="text-base"
+            />
           </div>
 
           <Button type="submit" className="w-full text-base py-3" disabled={isGenerating}>

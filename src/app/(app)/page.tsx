@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -22,13 +23,21 @@ export default function ExamPrepPage() {
     setIsGenerating(true);
     setError(null);
     setGeneratedQuestions([]); // Clear previous questions
-    setCurrentContext(data);
+    
+    const contextData: QuestionContext = {
+      gradeLevel: data.gradeLevel,
+      subject: data.subject,
+      chapter: data.chapter,
+      questionType: data.questionType,
+    };
+    setCurrentContext(contextData);
 
     const input: GenerateQuestionsInput = {
       gradeLevel: parseInt(data.gradeLevel, 10),
       subject: data.subject,
       chapter: data.chapter,
       questionType: data.questionType,
+      numberOfQuestions: parseInt(data.numberOfQuestions, 10),
     };
 
     try {
@@ -65,17 +74,16 @@ export default function ExamPrepPage() {
 
   const handleRegenerateQuestion = async (originalQuestion: string, context: QuestionContext): Promise<string | null> => {
     const input: RegenerateQuestionInput = {
-      gradeLevel: context.gradeLevel as '9' | '10' | '11' | '12', // Assuming context.gradeLevel is one of these
+      gradeLevel: context.gradeLevel as '9' | '10' | '11' | '12', 
       subject: context.subject,
       chapter: context.chapter,
-      questionType: context.questionType as any, // The flow expects specific enum, this might need mapping
+      questionType: context.questionType as any, 
       originalQuestion: originalQuestion,
     };
 
     try {
       const result = await regenerateQuestion(input);
       if (result && result.regeneratedQuestion) {
-        // Update the specific question in the list
         setGeneratedQuestions(prevQuestions => 
           prevQuestions.map(q => q === originalQuestion ? result.regeneratedQuestion : q)
         );
