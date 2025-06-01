@@ -32,12 +32,11 @@
   }
 
   .dark {
-    /* Keeping dark mode defaults, can be customized later if needed */
-    --background: 222 47% 11%;
+    --background: 0 0% 0%; /* AMOLED Black */
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
+    --card: 222 47% 11%; /* Keeping original card color for now */
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 222 47% 11%; /* Keeping original popover color */
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
