@@ -2,10 +2,10 @@
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SavedQuestion } from '@/types';
+import type { SavedQuestion, FollowUpExchange } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState } from 'react';
@@ -15,28 +15,57 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
 
   return (
     <Card className="bg-background shadow-sm">
-      <CardContent className="p-4">
+      <CardContent className="p-4 pb-0"> {/* Adjust padding */}
         <p className="text-sm text-muted-foreground mb-1">
           Type: {question.questionType.replace(/_/g, ' ')}
         </p>
         <p className="text-foreground leading-relaxed mb-2">{question.text}</p>
-        {showAnswer && (
-          <div className="mt-2 p-3 bg-secondary/30 rounded-md border border-input">
-            <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
-            <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
-          </div>
-        )}
       </CardContent>
-      <CardFooter className="p-3 flex justify-between items-center bg-muted/30 rounded-b-md">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowAnswer(!showAnswer)}
-          aria-label={showAnswer ? "Hide answer" : "Show answer"}
-        >
-          {showAnswer ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-          {showAnswer ? 'Hide Answer' : 'Show Answer'}
-        </Button>
+
+      <Accordion type="single" collapsible className="w-full">
+        {/* Answer Accordion Item */}
+        <AccordionItem value="answer" className="border-none">
+          <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0">
+            <div className="flex items-center">
+              {showAnswer ? <EyeOff className="mr-2 h-4 w-4 text-primary" /> : <Eye className="mr-2 h-4 w-4 text-primary" />}
+              {showAnswer ? 'Hide Answer' : 'Show Answer'}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-4 pt-2">
+            <div className="p-3 bg-secondary/50 rounded-md border border-input">
+              <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
+              <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Follow-up History Accordion Item */}
+        {question.followUps && question.followUps.length > 0 && (
+          <AccordionItem value="follow-ups" className="border-t">
+            <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none">
+              <div className="flex items-center">
+                <MessageSquare className="mr-2 h-4 w-4 text-primary" />
+                View Follow-up History ({question.followUps.length})
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="p-4 pt-2 space-y-3">
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {question.followUps.map((exchange, index) => (
+                  <div key={index} className="text-sm">
+                    <p className="font-semibold text-primary">You:</p>
+                    <p className="mb-1 pl-2 whitespace-pre-wrap">{exchange.userQuery}</p>
+                    <p className="font-semibold text-accent">MGQs Bot:</p>
+                    <p className="pl-2 whitespace-pre-wrap">{exchange.aiResponse}</p>
+                    {index < (question.followUps?.length ?? 0) - 1 && <hr className="my-2"/>}
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
+
+      <CardFooter className="p-3 flex justify-end items-center bg-muted/50 rounded-b-md border-t">
         <Button
           variant="ghost"
           size="sm"
@@ -56,7 +85,10 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
 export function SavedQuestionsList() {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
 
-  if (savedQuestions.length === 0) {
+  // Sort questions by timestamp descending (newest first)
+  const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
+
+  if (sortedSavedQuestions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center">
         <NotebookText className="w-24 h-24 text-muted-foreground mb-6" />
@@ -72,7 +104,7 @@ export function SavedQuestionsList() {
   }
 
   // Group questions by subject, then by chapter
-  const groupedQuestions = savedQuestions.reduce((acc, q) => {
+  const groupedQuestions = sortedSavedQuestions.reduce((acc, q) => {
     const subjectKey = `${q.subject} (Class ${q.gradeLevel})`;
     if (!acc[subjectKey]) {
       acc[subjectKey] = {};
@@ -92,16 +124,15 @@ export function SavedQuestionsList() {
             <CardTitle className="text-xl font-headline capitalize">{subjectKey}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Accordion type="multiple" className="w-full">
+            <Accordion type="multiple" className="w-full space-y-1">
               {Object.entries(chapters).map(([chapter, questionsInChapter]) => (
-                <AccordionItem value={`${subjectKey}-${chapter}`} key={`${subjectKey}-${chapter}`}>
-                  <AccordionTrigger className="text-lg hover:no-underline">
+                <AccordionItem value={`${subjectKey}-${chapter}`} key={`${subjectKey}-${chapter}`} className="border rounded-md overflow-hidden">
+                  <AccordionTrigger className="text-lg hover:no-underline px-4 py-3 bg-background hover:bg-muted/50">
                     Chapter: {chapter} ({questionsInChapter.length} questions)
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 space-y-4">
+                  <AccordionContent className="pt-2 space-y-4 p-4 bg-muted/20">
                     {questionsInChapter
-                      .sort((a,b) => b.timestamp - a.timestamp)
-                      .map((q) => (
+                      .map((q) => ( // No need to sort again if already sorted
                         <SavedQuestionItem key={q.id} question={q} onRemove={removeQuestion} />
                     ))}
                   </AccordionContent>

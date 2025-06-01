@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
+import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, FollowUpExchange } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 
@@ -48,17 +48,13 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
   }, [savedQuestions, isInitialized]);
 
   const addQuestion = useCallback((questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => {
-    // Ensure 'answer' field exists, even if empty, to match SavedQuestion type
-    const completeQuestionData = {
-      answer: '', // Default if not provided, though typically it should be
-      ...questionData,
-    };
     const newQuestion: SavedQuestion = {
-      ...completeQuestionData,
       id: uuidv4(),
       timestamp: Date.now(),
+      answer: '', // Default answer if not provided
+      ...questionData, // This will include text, context, and optionally followUps
     };
-    setSavedQuestions((prevQuestions) => [...prevQuestions, newQuestion]);
+    setSavedQuestions((prevQuestions) => [newQuestion, ...prevQuestions].sort((a,b) => b.timestamp - a.timestamp));
   }, []);
 
   const addMultipleQuestions = useCallback((questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
@@ -68,18 +64,19 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
       answer: qaPair.answer,
       ...context,
       timestamp: Date.now(),
+      followUps: [], // Initialize with empty followUps for "Save All"
     }));
     setSavedQuestions((prevQuestions) => {
-      const uniqueNewQuestions = newQuestions.filter(nq => 
-        !prevQuestions.some(pq => 
-          pq.text === nq.text && 
+      const uniqueNewQuestions = newQuestions.filter(nq =>
+        !prevQuestions.some(pq =>
+          pq.text === nq.text &&
           pq.subject === nq.subject &&
           pq.chapter === nq.chapter &&
           pq.gradeLevel === nq.gradeLevel &&
           pq.questionType === nq.questionType
         )
       );
-      return [...prevQuestions, ...uniqueNewQuestions];
+      return [...prevQuestions, ...uniqueNewQuestions].sort((a,b) => b.timestamp - a.timestamp);
     });
   }, []);
 
@@ -117,3 +114,4 @@ export const useSavedQuestions = (): SavedQuestionsContextType => {
   }
   return context;
 };
+
