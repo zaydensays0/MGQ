@@ -2,8 +2,9 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
-import { QuestionList } from '@/components/question-list';
+// import { QuestionList } from '@/components/question-list'; // Removed direct import
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +12,41 @@ import type { QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, Sparkles } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
+
+const QuestionListSkeleton = () => (
+  <div className="space-y-6 mt-8">
+    <div className="flex justify-between items-center">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-10 w-1/4" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {[1, 2, 3, 4].map(i => (
+        <CardSkeleton key={i} />
+      ))}
+    </div>
+  </div>
+);
+
+const CardSkeleton = () => (
+  <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
+    <Skeleton className="h-4 w-full" />
+    <Skeleton className="h-4 w-5/6" />
+    <Skeleton className="h-4 w-full mt-2" /> {/* Placeholder for answer area */}
+    <Skeleton className="h-4 w-3/4" />
+    <div className="flex justify-between items-center pt-2">
+      <Skeleton className="h-8 w-28" /> {/* Show Answer button placeholder */}
+      <div className="flex space-x-2">
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-8 w-20" />
+      </div>
+    </div>
+  </div>
+);
+
+const DynamicQuestionList = dynamic(() => import('@/components/question-list').then(mod => mod.QuestionList), {
+  loading: () => <QuestionListSkeleton />,
+  ssr: false // QuestionList interacts with context and localStorage-backed state
+});
 
 export default function ExamPrepPage() {
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestionAnswerPair[]>([]);
@@ -105,37 +141,6 @@ export default function ExamPrepPage() {
     }
   };
   
-  const QuestionListSkeleton = () => (
-    <div className="space-y-6 mt-8">
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-10 w-1/4" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map(i => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
-
-  const CardSkeleton = () => (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-      <Skeleton className="h-4 w-full mt-2" /> {/* Placeholder for answer area */}
-      <Skeleton className="h-4 w-3/4" />
-      <div className="flex justify-between items-center pt-2">
-        <Skeleton className="h-8 w-28" /> {/* Show Answer button placeholder */}
-        <div className="flex space-x-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-      </div>
-    </div>
-  );
-
-
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
@@ -153,7 +158,7 @@ export default function ExamPrepPage() {
 
         {!isGenerating && generatedQuestions.length > 0 && currentContext && (
           <div className="mt-12 w-full max-w-4xl">
-            <QuestionList
+            <DynamicQuestionList
               questions={generatedQuestions}
               questionContext={currentContext}
               onRegenerateQuestion={handleRegenerateQuestion}

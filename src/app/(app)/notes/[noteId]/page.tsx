@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useNotes } from '@/contexts/notes-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { Note, SavedQuestion } from '@/types';
@@ -14,8 +15,13 @@ import { format } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import ReactMarkdown from 'react-markdown';
+// import ReactMarkdown from 'react-markdown'; // Removed direct import
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
+  loading: () => <p>Loading content...</p>,
+  ssr: false
+});
 
 const LinkedQuestionItem: React.FC<{ question: SavedQuestion }> = ({ question }) => {
   const [showAnswer, setShowAnswer] = useState(false);
@@ -147,7 +153,7 @@ export default function ViewNotePage() {
         <CardContent>
           <Separator className="my-4" />
           <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert">
-            <ReactMarkdown>{note.content}</ReactMarkdown>
+            <DynamicReactMarkdown>{note.content}</DynamicReactMarkdown>
           </div>
         </CardContent>
       </Card>
