@@ -76,3 +76,6 @@ export interface SavedJarvisExchange {
   timestamp: number;
 }
 
+// Types for Subject Expert Q&A
+export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
+

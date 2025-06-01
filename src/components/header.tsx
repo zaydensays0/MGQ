@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -17,6 +17,7 @@ const navLinks = [
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
+  { href: '/subject-expert', label: 'Subject Expert', icon: Brain },
 ];
 
 export function Header() {
