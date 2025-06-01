@@ -21,11 +21,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/" className="mr-6 flex items-baseline space-x-2">
           <Sparkles className="h-6 w-6 text-primary" />
-          <span className="font-bold sm:inline-block text-lg font-headline">
-            MGQs
-          </span>
+          <div className="flex flex-col">
+            <span className="font-bold sm:inline-block text-lg font-headline">
+              MGQs
+            </span>
+            <span className="text-xs text-muted-foreground hidden sm:inline-block -mt-1">
+              mehdi gave questions
+            </span>
+          </div>
         </Link>
         <nav className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium">
           {navLinks.map((link) => (
