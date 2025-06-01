@@ -57,7 +57,7 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <div className="text-center">
-          <p className="text-sm font-bold text-primary">
+          <p className="text-sm font-bold text-primary dark:text-destructive">
             VIRAT KOHLI IS THE GREATEST CRICKETER
           </p>
         </div>
