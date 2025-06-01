@@ -55,3 +55,11 @@ export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/
 
 // Types for Jarvis general Q&A
 export type { AskJarvisInput, AskJarvisOutput } from '@/ai/flows/ask-jarvis';
+
+// Types for Saved Jarvis Exchanges
+export interface SavedJarvisExchange {
+  id: string;
+  userQuestion: string;
+  jarvisAnswer: string;
+  timestamp: number;
+}

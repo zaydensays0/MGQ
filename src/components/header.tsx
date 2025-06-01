@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote } from 'lucide-react'; // Changed icons
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
 const navLinks = [
-  { href: '/jarvis', label: 'Jarvis', icon: Bot }, // Added Jarvis link at the top
+  { href: '/jarvis', label: 'Jarvis', icon: Bot },
+  { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
   { href: '/', label: 'Generate Questions', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
@@ -59,7 +60,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[260px] p-6">
-              <SheetHeader className="mb-4">
+               <SheetHeader className="mb-4">
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Sparkles className="h-5 w-5 text-primary" />

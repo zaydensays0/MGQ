@@ -5,12 +5,13 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Bot, Sparkles, Loader2, Terminal } from 'lucide-react'; // Using Bot icon for Jarvis
+import { Bot, Sparkles, Loader2, Terminal, Save, CheckCircle } from 'lucide-react';
 import { askJarvis, type AskJarvisInput, type AskJarvisOutput } from '@/ai/flows/ask-jarvis';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
+import { useJarvisSaved } from '@/contexts/jarvis-saved-context';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <p>Loading answer...</p>,
@@ -23,6 +24,7 @@ export default function JarvisPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { addExchange, isSaved: isExchangeSaved } = useJarvisSaved();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,9 +65,31 @@ export default function JarvisPage() {
       });
     } finally {
       setIsLoading(false);
-      setUserQuestion(''); // Clear the input field
+      // setUserQuestion(''); // Question is cleared only after saving or if not saved
     }
   };
+
+  const handleSaveResponse = () => {
+    if (userQuestion && jarvisAnswer) {
+      if (!isExchangeSaved(userQuestion, jarvisAnswer)) {
+        addExchange({ userQuestion, jarvisAnswer });
+        toast({
+          title: 'Response Saved!',
+          description: 'This conversation with Jarvis has been saved.',
+        });
+        setUserQuestion(''); // Clear question after successful save
+      } else {
+        toast({
+          title: 'Already Saved',
+          description: 'This response has already been saved.',
+          variant: 'default',
+        });
+      }
+    }
+  };
+  
+  const currentExchangeIsSaved = userQuestion && jarvisAnswer ? isExchangeSaved(userQuestion, jarvisAnswer) : false;
+
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -146,6 +170,20 @@ export default function JarvisPage() {
               <DynamicReactMarkdown>{jarvisAnswer}</DynamicReactMarkdown>
             </div>
           </CardContent>
+          <CardFooter className="p-4 border-t">
+            <Button
+              onClick={handleSaveResponse}
+              disabled={currentExchangeIsSaved}
+              variant={currentExchangeIsSaved ? "secondary" : "default"}
+            >
+              {currentExchangeIsSaved ? (
+                <CheckCircle className="mr-2 h-5 w-5" />
+              ) : (
+                <Save className="mr-2 h-5 w-5" />
+              )}
+              {currentExchangeIsSaved ? 'Saved' : 'Save Response'}
+            </Button>
+          </CardFooter>
         </Card>
       )}
     </div>
