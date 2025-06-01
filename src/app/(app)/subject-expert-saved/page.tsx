@@ -43,7 +43,7 @@ const SavedExchangeItem: React.FC<{ exchangeData: SavedSubjectExpertExchange, on
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {exchangeData.exchanges.map((exchange: ConversationExchange, index: number) => (
+        {(exchangeData.exchanges || []).map((exchange: ConversationExchange, index: number) => (
           <div key={index} className="space-y-3">
             <div>
               <p className="font-semibold mb-1 flex items-center text-primary">
@@ -60,7 +60,7 @@ const SavedExchangeItem: React.FC<{ exchangeData: SavedSubjectExpertExchange, on
                 <DynamicReactMarkdown>{exchange.answer}</DynamicReactMarkdown>
               </div>
             </div>
-            {index < exchangeData.exchanges.length - 1 && <hr className="my-3 border-border" />}
+            {index < (exchangeData.exchanges || []).length - 1 && <hr className="my-3 border-border" />}
           </div>
         ))}
       </CardContent>
@@ -117,3 +117,4 @@ export default function SubjectExpertSavedPage() {
     </div>
   );
 }
+
