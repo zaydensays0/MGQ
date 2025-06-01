@@ -19,11 +19,11 @@ const RegenerateQuestionInputSchema = z.object({
   chapter: z.string().describe('The chapter the question is based on.'),
   questionType: z
     .enum([
-      'multiple choice',
-      'short answer',
-      'long answer',
-      'fill in the blanks',
-      'true/false',
+      'multiple_choice',
+      'short_answer',
+      'long_answer',
+      'fill_in_the_blanks',
+      'true_false',
     ])
     .describe('The type of question to generate.'),
   originalQuestion: z.string().describe('The original question that needs to be regenerated.'),
