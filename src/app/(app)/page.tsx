@@ -1,0 +1,169 @@
+'use client';
+
+import { useState } from 'react';
+import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
+import { QuestionList } from '@/components/question-list';
+import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
+import { regenerateQuestion, type RegenerateQuestionInput } from '@/ai/flows/regenerate-question';
+import { useToast } from '@/hooks/use-toast';
+import type { QuestionContext } from '@/types';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal, Sparkles, Loader2 } from "lucide-react";
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function ExamPrepPage() {
+  const [generatedQuestions, setGeneratedQuestions] = useState<string[]>([]);
+  const [currentContext, setCurrentContext] = useState<QuestionContext | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleFormSubmit = async (data: FormValues) => {
+    setIsGenerating(true);
+    setError(null);
+    setGeneratedQuestions([]); // Clear previous questions
+    setCurrentContext(data);
+
+    const input: GenerateQuestionsInput = {
+      gradeLevel: parseInt(data.gradeLevel, 10),
+      subject: data.subject,
+      chapter: data.chapter,
+      questionType: data.questionType,
+    };
+
+    try {
+      const result = await generateQuestions(input);
+      if (result && result.questions) {
+        setGeneratedQuestions(result.questions);
+        if (result.questions.length === 0) {
+          toast({
+            title: "No Questions Generated",
+            description: "The AI couldn't generate questions for the given criteria. Try adjusting your selections.",
+          });
+        } else {
+           toast({
+            title: "Questions Generated!",
+            description: `${result.questions.length} questions are ready.`,
+          });
+        }
+      } else {
+        throw new Error('No questions returned from AI');
+      }
+    } catch (err) {
+      console.error('Error generating questions:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Failed to generate questions. ${errorMessage}`);
+      toast({
+        title: "Generation Failed",
+        description: `Could not generate questions. ${errorMessage}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerateQuestion = async (originalQuestion: string, context: QuestionContext): Promise<string | null> => {
+    const input: RegenerateQuestionInput = {
+      gradeLevel: context.gradeLevel as '9' | '10' | '11' | '12', // Assuming context.gradeLevel is one of these
+      subject: context.subject,
+      chapter: context.chapter,
+      questionType: context.questionType as any, // The flow expects specific enum, this might need mapping
+      originalQuestion: originalQuestion,
+    };
+
+    try {
+      const result = await regenerateQuestion(input);
+      if (result && result.regeneratedQuestion) {
+        // Update the specific question in the list
+        setGeneratedQuestions(prevQuestions => 
+          prevQuestions.map(q => q === originalQuestion ? result.regeneratedQuestion : q)
+        );
+        return result.regeneratedQuestion;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error regenerating question:', err);
+      toast({
+        title: "Regeneration Failed",
+        description: "Could not regenerate the question.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+  
+  const QuestionListSkeleton = () => (
+    <div className="space-y-6 mt-8">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-10 w-1/4" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[1, 2, 3, 4].map(i => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const CardSkeleton = () => (
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <div className="flex justify-end space-x-2 pt-2">
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-8 w-20" />
+      </div>
+    </div>
+  );
+
+
+  return (
+    <div className="container mx-auto p-4 md:p-8">
+      <div className="flex flex-col items-center">
+        <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
+
+        {error && (
+          <Alert variant="destructive" className="mt-8 w-full max-w-2xl">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {isGenerating && !error && <QuestionListSkeleton />}
+
+        {!isGenerating && generatedQuestions.length > 0 && currentContext && (
+          <div className="mt-12 w-full max-w-4xl">
+            <QuestionList
+              questions={generatedQuestions}
+              questionContext={currentContext}
+              onRegenerateQuestion={handleRegenerateQuestion}
+            />
+          </div>
+        )}
+        
+        {!isGenerating && generatedQuestions.length === 0 && currentContext && !error && (
+           <Alert className="mt-8 w-full max-w-2xl">
+            <Sparkles className="h-4 w-4" />
+            <AlertTitle>No Questions Yet</AlertTitle>
+            <AlertDescription>
+              No questions were generated for the selected criteria. You can try different options or subjects.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isGenerating && !currentContext && !error && (
+           <Alert className="mt-8 w-full max-w-lg text-center border-dashed">
+             <Sparkles className="h-5 w-5 mx-auto mb-2 text-primary" />
+            <AlertTitle className="font-headline text-xl">Ready to Generate?</AlertTitle>
+            <AlertDescription className="mt-1">
+             Fill out the form above to start creating questions with Exam PrepAI!
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+    </div>
+  );
+}
