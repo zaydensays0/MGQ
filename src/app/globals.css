@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 230 67% 94%; /* Light Blue #E8EAF6 */
+    --background: 230 67% 94%; /* Light Blue #E8EAF6 - Fallback for light */
     --foreground: 222 47% 11%; /* Dark Slate Blue for text */
     --card: 0 0% 100%; /* White */
     --card-foreground: 222 47% 11%;
@@ -66,5 +66,14 @@
   body {
     @apply bg-background text-foreground;
     /* PT Sans will be applied via tailwind.config.ts and layout.tsx */
+  }
+
+  /* Apply background image only for light theme */
+  html:not(.dark) body {
+    background-image: url('/light-theme-books-bg.jpg'); /* Ensure this image is in /public/light-theme-books-bg.jpg */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Makes the background stay in place during scroll */
   }
 }
