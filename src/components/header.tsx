@@ -35,7 +35,11 @@ export function Header() {
               MGQs
             </span>
             <span className="text-xs -mt-1 inline-block">
-              <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span> <span className="text-muted-foreground">gave questions</span>
+              <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span>{' '}
+              <span className="text-muted-foreground">
+                <span className="font-bold text-primary">G</span>ave{' '}
+                <span className="font-bold text-primary">Q</span>uestions
+              </span>
             </span>
           </div>
         </Link>
