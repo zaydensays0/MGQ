@@ -61,7 +61,7 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
             VIRAT KOHLI IS THE GREATEST CRICKETER
           </p>
           <p className="text-xs font-bold text-red-600 dark:text-red-500 uppercase">
-            E SAALA CUP NAMDE
+            Ee SAALA CUP NAMDE
           </p>
         </div>
         <CardTitle className="text-2xl font-headline flex items-center pt-2"> {/* Added pt-2 for spacing */}
