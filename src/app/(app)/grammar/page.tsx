@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MessageSquareQuestion, Sparkles, Loader2, Terminal } from 'lucide-react';
+import { MessageSquareQuote, Sparkles, Loader2, Terminal } from 'lucide-react';
 import { answerGrammarQuestion, type AnswerGrammarQuestionInput, type AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
@@ -70,7 +70,7 @@ export default function GrammarHelperPage() {
     <div className="container mx-auto p-4 md:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
-          <MessageSquareQuestion className="w-8 h-8 mr-3 text-primary" />
+          <MessageSquareQuote className="w-8 h-8 mr-3 text-primary" />
           Grammar Helper
         </h1>
         <p className="text-muted-foreground mt-1">
