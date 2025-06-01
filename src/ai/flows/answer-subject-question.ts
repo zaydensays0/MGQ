@@ -45,8 +45,7 @@ The user has a question related to this context.
 {{#if conversationHistory}}
 Here is the conversation history so far:
 {{#each conversationHistory}}
-{{#if (eq speaker "user")}}User: {{text}}{{/if}}
-{{#if (eq speaker "ai")}}AI: {{text}}{{/if}}
+{{speaker}}: {{text}}
 {{/each}}
 {{/if}}
 
