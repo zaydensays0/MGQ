@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { GeneratedQuestionAnswerPair, QuestionTypeNCERT } from '@/types';
+import type { QuestionTypeNCERT } from '@/types';
 
 const GenerateQuestionsInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level of the syllabus.'),
@@ -24,7 +24,8 @@ export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema
 
 const QuestionAnswerPairSchema = z.object({
   question: z.string().describe('The generated question.'),
-  answer: z.string().describe('The answer to the generated question.'),
+  options: z.array(z.string()).optional().describe('An array of 4 string options if the questionType is "multiple_choice". Otherwise, this field should be omitted or an empty array.'),
+  answer: z.string().describe('The answer to the generated question. If questionType is "multiple_choice", this should be the exact text of one of the provided options.'),
 });
 
 const GenerateQuestionsOutputSchema = z.object({
@@ -44,15 +45,36 @@ const prompt = ai.definePrompt({
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
   For each question, provide a concise and accurate answer.
-  Return the questions and answers as a JSON array of objects, where each object has a "question" field and an "answer" field.
+  
+  If the questionType is "multiple_choice":
+  - You MUST provide an "options" field, which is an array of 4 distinct string options (e.g., ["Option A", "Option B", "Option C", "Option D"]).
+  - The "answer" field MUST be the exact text of one of these 4 options.
+  
+  If the questionType is NOT "multiple_choice":
+  - The "options" field should be omitted or be an empty array.
+  
+  Return the questions and answers as a JSON array of objects.
   Make sure the questions are relevant to the chapter and suitable for the specified grade level.
   If you cannot generate the exact number of questions requested, generate as many as you can up to that number.
-  Example:
+  
+  Example for "multiple_choice":
   {
     "questions": [
-      { "question": "Question 1 text?", "answer": "Answer 1 text." },
-      { "question": "Question 2 text?", "answer": "Answer 2 text." },
-      { "question": "Question 3 text?", "answer": "Answer 3 text." }
+      { 
+        "question": "What is the capital of France?", 
+        "options": ["London", "Berlin", "Paris", "Madrid"],
+        "answer": "Paris" 
+      }
+    ]
+  }
+
+  Example for "short_answer":
+  {
+    "questions": [
+      { 
+        "question": "What is photosynthesis?",
+        "answer": "Photosynthesis is the process by which green plants use sunlight, water, and carbon dioxide to create their own food and release oxygen."
+      }
     ]
   }
   `,
@@ -72,4 +94,3 @@ const generateQuestionsFlow = ai.defineFlow(
     return output;
   }
 );
-

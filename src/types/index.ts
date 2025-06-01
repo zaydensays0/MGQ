@@ -14,6 +14,7 @@ export interface SavedQuestion {
   id: string;
   text: string;
   answer: string;
+  options?: string[]; // Added for MCQs
   questionType: QuestionTypeNCERT;
   gradeLevel: GradeLevelNCERT;
   subject: string;
@@ -31,11 +32,13 @@ export interface QuestionContext {
 export interface GeneratedQuestionAnswerPair {
   question: string;
   answer: string;
+  options?: string[]; // Added for MCQs
 }
 
 export interface GeneratedQuestionItem extends QuestionContext {
   text: string;
   answer: string;
+  options?: string[]; // Added for MCQs
 }
 
 

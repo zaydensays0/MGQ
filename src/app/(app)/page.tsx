@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
-// import { QuestionList } from '@/components/question-list'; // Removed direct import
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
 import { useToast } from '@/hooks/use-toast';
@@ -31,10 +30,15 @@ const CardSkeleton = () => (
   <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
     <Skeleton className="h-4 w-full" />
     <Skeleton className="h-4 w-5/6" />
-    <Skeleton className="h-4 w-full mt-2" /> {/* Placeholder for answer area */}
+    {/* For MCQs, options would be here */}
+    <div className="space-y-2 mt-2">
+      <Skeleton className="h-6 w-full" />
+      <Skeleton className="h-6 w-full" />
+    </div>
+    <Skeleton className="h-4 w-full mt-2" /> 
     <Skeleton className="h-4 w-3/4" />
     <div className="flex justify-between items-center pt-2">
-      <Skeleton className="h-8 w-28" /> {/* Show Answer button placeholder */}
+      <Skeleton className="h-8 w-28" /> 
       <div className="flex space-x-2">
         <Skeleton className="h-8 w-24" />
         <Skeleton className="h-8 w-20" />
@@ -45,7 +49,7 @@ const CardSkeleton = () => (
 
 const DynamicQuestionList = dynamic(() => import('@/components/question-list').then(mod => mod.QuestionList), {
   loading: () => <QuestionListSkeleton />,
-  ssr: false // QuestionList interacts with context and localStorage-backed state
+  ssr: false 
 });
 
 export default function ExamPrepPage() {
@@ -58,7 +62,7 @@ export default function ExamPrepPage() {
   const handleFormSubmit = async (data: FormValues) => {
     setIsGenerating(true);
     setError(null);
-    setGeneratedQuestions([]); // Clear previous questions
+    setGeneratedQuestions([]); 
     
     const contextData: QuestionContext = {
       gradeLevel: data.gradeLevel as GradeLevelNCERT,
@@ -72,7 +76,7 @@ export default function ExamPrepPage() {
       gradeLevel: parseInt(data.gradeLevel, 10),
       subject: data.subject,
       chapter: data.chapter,
-      questionType: data.questionType,
+      questionType: data.questionType as QuestionTypeNCERT, // Cast here
       numberOfQuestions: parseInt(data.numberOfQuestions, 10),
     };
 
@@ -108,26 +112,45 @@ export default function ExamPrepPage() {
     }
   };
 
-  const handleRegenerateQuestion = async (originalQuestionText: string, context: QuestionContext): Promise<{ question: string; answer: string } | null> => {
+  const handleRegenerateQuestion = async (
+    originalQuestionText: string, 
+    originalOptions?: string[],
+    context?: QuestionContext
+  ): Promise<{ question: string; answer: string; options?: string[] } | null> => {
+    if (!context) { // Ensure context is available
+        toast({
+            title: "Regeneration Error",
+            description: "Question context is missing for regeneration.",
+            variant: "destructive",
+        });
+        return null;
+    }
+
     const input: RegenerateQuestionInput = {
       gradeLevel: context.gradeLevel, 
       subject: context.subject,
       chapter: context.chapter,
       questionType: context.questionType, 
       originalQuestion: originalQuestionText,
+      originalOptions: context.questionType === 'multiple_choice' ? originalOptions : undefined,
     };
 
     try {
       const result: RegenerateQuestionOutput = await regenerateQuestion(input);
       if (result && result.regeneratedQuestion && result.regeneratedAnswer) {
+        const updatedQuestionPair = { 
+          question: result.regeneratedQuestion, 
+          answer: result.regeneratedAnswer,
+          options: result.regeneratedOptions 
+        };
         setGeneratedQuestions(prevQuestions => 
           prevQuestions.map(qaPair => 
             qaPair.question === originalQuestionText 
-              ? { question: result.regeneratedQuestion, answer: result.regeneratedAnswer }
+              ? updatedQuestionPair
               : qaPair
           )
         );
-        return { question: result.regeneratedQuestion, answer: result.regeneratedAnswer };
+        return updatedQuestionPair;
       }
       return null;
     } catch (err) {
@@ -189,4 +212,3 @@ export default function ExamPrepPage() {
     </div>
   );
 }
-

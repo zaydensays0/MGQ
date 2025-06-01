@@ -11,7 +11,8 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 
 const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: string) => void }> = ({ question, onRemove }) => {
-  const [showAnswer, setShowAnswer] = useState(false); // State moved here for individual control
+  const [showAnswer, setShowAnswer] = useState(false);
+  const isMCQ = question.questionType === 'multiple_choice' && question.options && question.options.length > 0;
 
   return (
     <Card className="bg-background shadow-sm">
@@ -20,13 +21,27 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
           Type: {question.questionType.replace(/_/g, ' ')}
         </p>
         <p className="text-foreground leading-relaxed mb-2">{question.text}</p>
+        
+        {isMCQ && (
+          <div className="space-y-1 mb-2">
+            {question.options?.map((option, index) => (
+              <div 
+                key={index}
+                className={`p-1.5 border rounded-md text-sm
+                  ${showAnswer && option === question.answer ? 'bg-green-100 dark:bg-green-700/30 border-green-400 dark:border-green-600 font-medium' : 'bg-muted/20'}`}
+              >
+                <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="answer" className="border-none">
           <AccordionTrigger 
             className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0"
-            onClick={() => setShowAnswer(!showAnswer)} // Toggle showAnswer on trigger click
+            onClick={() => setShowAnswer(!showAnswer)}
           >
             <div className="flex items-center">
               {showAnswer ? <EyeOff className="mr-2 h-4 w-4 text-primary" /> : <Eye className="mr-2 h-4 w-4 text-primary" />}
@@ -34,9 +49,12 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-4 pt-2">
-            {showAnswer && ( // Conditionally render based on showAnswer state
-              <div className="p-3 bg-secondary/50 rounded-md border border-input">
-                <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
+            {showAnswer && (
+              <div className={`p-3 rounded-md border 
+                ${isMCQ ? 'bg-green-50 dark:bg-green-800/20 border-green-200 dark:border-green-700' : 'bg-secondary/50 border-input'}`}>
+                <p className={`text-sm font-semibold mb-1 ${isMCQ ? 'text-green-700 dark:text-green-400' : 'text-primary'}`}>
+                  {isMCQ ? 'Correct Answer:' : 'Answer:'}
+                </p>
                 <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
               </div>
             )}

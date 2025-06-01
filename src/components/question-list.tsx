@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 interface QuestionListProps {
   questions: GeneratedQuestionAnswerPair[];
   questionContext: QuestionContext;
-  onRegenerateQuestion: (originalQuestion: string, context: QuestionContext) => Promise<{ question: string; answer: string } | null>;
+  onRegenerateQuestion: (originalQuestion: string, originalOptions?: string[], context?: QuestionContext) => Promise<{ question: string; answer: string; options?: string[] } | null>;
 }
 
 export function QuestionList({ questions, questionContext, onRegenerateQuestion }: QuestionListProps) {
@@ -47,8 +47,9 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
             key={`${questionContext.subject}-${questionContext.chapter}-${qaPair.question}-${index}`} // Ensure key is unique
             questionText={qaPair.question}
             answerText={qaPair.answer}
+            options={qaPair.options}
             questionContext={questionContext}
-            onRegenerate={(originalQuestion) => onRegenerateQuestion(originalQuestion, questionContext)}
+            onRegenerate={(originalQuestion, originalOptions) => onRegenerateQuestion(originalQuestion, originalOptions, questionContext)}
           />
         ))}
       </div>

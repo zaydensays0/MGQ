@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { QuestionContext } from '@/types';
@@ -13,13 +12,15 @@ import { useToast } from '@/hooks/use-toast';
 interface QuestionCardProps {
   questionText: string;
   answerText: string;
+  options?: string[]; // Added for MCQs
   questionContext: QuestionContext;
-  onRegenerate: (originalQuestion: string) => Promise<{ question: string; answer: string } | null>;
+  onRegenerate: (originalQuestion: string, originalOptions?: string[]) => Promise<{ question: string; answer: string; options?: string[] } | null>;
 }
 
-export function QuestionCard({ questionText, answerText, questionContext, onRegenerate }: QuestionCardProps) {
+export function QuestionCard({ questionText, answerText, options, questionContext, onRegenerate }: QuestionCardProps) {
   const [currentQuestionText, setCurrentQuestionText] = useState(questionText);
   const [currentAnswerText, setCurrentAnswerText] = useState(answerText);
+  const [currentOptions, setCurrentOptions] = useState(options);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const { addQuestion, isSaved } = useSavedQuestions();
@@ -29,11 +30,12 @@ export function QuestionCard({ questionText, answerText, questionContext, onRege
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
-    setShowAnswer(false);
-    const result = await onRegenerate(currentQuestionText);
+    setShowAnswer(false); // Hide answer during regeneration
+    const result = await onRegenerate(currentQuestionText, currentOptions);
     if (result && result.question && result.answer) {
       setCurrentQuestionText(result.question);
       setCurrentAnswerText(result.answer);
+      setCurrentOptions(result.options);
       toast({ title: "Question Regenerated", description: "A new version of the question and its answer has been generated." });
     } else {
       toast({ title: "Error", description: "Failed to regenerate question.", variant: "destructive" });
@@ -46,6 +48,7 @@ export function QuestionCard({ questionText, answerText, questionContext, onRege
       addQuestion({
         text: currentQuestionText,
         answer: currentAnswerText,
+        options: currentOptions,
         ...questionContext,
       });
       toast({ title: "Question Saved!", description: "The question and its answer have been saved." });
@@ -56,16 +59,39 @@ export function QuestionCard({ questionText, answerText, questionContext, onRege
     setShowAnswer(prev => !prev);
   };
 
+  const isMCQ = questionContext.questionType === 'multiple_choice' && currentOptions && currentOptions.length > 0;
+
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <CardContent className="p-4 flex-grow">
         <p className="text-foreground leading-relaxed mb-3">{currentQuestionText}</p>
-        {showAnswer && (
+        
+        {isMCQ && (
+          <div className="space-y-2 mb-3">
+            {currentOptions?.map((option, index) => (
+              <div
+                key={index}
+                className={`p-2 border rounded-md text-sm transition-colors
+                  ${showAnswer && option === currentAnswerText ? 'bg-green-100 dark:bg-green-700/30 border-green-400 dark:border-green-600 font-medium' : 'bg-muted/30 hover:bg-muted/50'}`}
+              >
+                <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showAnswer && !isMCQ && ( // Show answer for non-MCQs when toggled
           <div className="p-3 bg-secondary/50 rounded-md border border-input">
             <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
             <p className="text-foreground/90 leading-relaxed">{currentAnswerText}</p>
           </div>
         )}
+         {showAnswer && isMCQ && ( // For MCQs, the correct option is highlighted above. This can be a small confirmation.
+          <div className="mt-2 p-2 bg-green-50 dark:bg-green-800/20 border border-green-200 dark:border-green-700 rounded-md text-sm">
+            <span className="font-semibold text-green-700 dark:text-green-400">Correct Answer:</span> {currentAnswerText}
+          </div>
+        )}
+
       </CardContent>
       <CardFooter className="p-0 flex-col items-stretch">
         <div className="p-4 flex flex-wrap justify-between items-center gap-2 bg-muted/50">

@@ -51,7 +51,8 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const newQuestion: SavedQuestion = {
       id: uuidv4(),
       timestamp: Date.now(),
-      answer: '', 
+      answer: questionData.answer || '', // Ensure answer exists
+      options: questionData.options, // Persist options
       ...questionData, 
     };
     setSavedQuestions((prevQuestions) => [newQuestion, ...prevQuestions].sort((a,b) => b.timestamp - a.timestamp));
@@ -62,6 +63,7 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
       id: uuidv4(),
       text: qaPair.question,
       answer: qaPair.answer,
+      options: qaPair.options, // Persist options
       ...context,
       timestamp: Date.now(),
     }));

@@ -28,12 +28,14 @@ const RegenerateQuestionInputSchema = z.object({
     ]>(['multiple_choice', 'short_answer', 'long_answer', 'fill_in_the_blanks', 'true_false'])
     .describe('The type of question to generate.'),
   originalQuestion: z.string().describe('The original question that needs to be regenerated.'),
+  originalOptions: z.array(z.string()).optional().describe('The original options if the questionType was "multiple_choice".'),
 });
 export type RegenerateQuestionInput = z.infer<typeof RegenerateQuestionInputSchema>;
 
 const RegenerateQuestionOutputSchema = z.object({
   regeneratedQuestion: z.string().describe('The regenerated question.'),
-  regeneratedAnswer: z.string().describe('The answer to the regenerated question.'),
+  regeneratedOptions: z.array(z.string()).optional().describe('An array of 4 regenerated string options if the questionType is "multiple_choice". Otherwise, this field should be omitted or an empty array.'),
+  regeneratedAnswer: z.string().describe('The answer to the regenerated question. If questionType is "multiple_choice", this should be the exact text of one of the regenerated options.'),
 });
 export type RegenerateQuestionOutput = z.infer<typeof RegenerateQuestionOutputSchema>;
 
@@ -47,13 +49,28 @@ const prompt = ai.definePrompt({
   output: {schema: RegenerateQuestionOutputSchema},
   prompt: `You are an expert teacher specializing in creating NCERT textbook questions and answers for classes 9-12.
 
-You will generate a new question of type "{{{questionType}}}" and its corresponding answer for grade level "{{{gradeLevel}}}", subject "{{{subject}}}", and chapter "{{{chapter}}}".
+You will generate a NEW question of type "{{{questionType}}}" and its corresponding answer for grade level "{{{gradeLevel}}}", subject "{{{subject}}}", and chapter "{{{chapter}}}".
 
-The original question was: "{{{originalQuestion}}}".
+The original question was: "{{{originalQuestion}}}"
+{{#if originalOptions}}
+The original options were:
+{{#each originalOptions}}
+- {{{this}}}
+{{/each}}
+{{/if}}
 
-Ensure the new question is different from the original but still relevant to the topic. Provide a concise and accurate answer for the new question.
+Ensure the new question is different from the original but still relevant to the topic.
 
-New Question and Answer:`,
+If the questionType is "multiple_choice":
+- You MUST provide a "regeneratedOptions" field, which is an array of 4 distinct string options.
+- The "regeneratedAnswer" field MUST be the exact text of one of these 4 regenerated options.
+
+If the questionType is NOT "multiple_choice":
+- The "regeneratedOptions" field should be omitted or be an empty array.
+
+Provide a concise and accurate answer for the new question.
+
+New Question, Options (if any), and Answer:`,
 });
 
 const regenerateQuestionFlow = ai.defineFlow(
@@ -65,16 +82,16 @@ const regenerateQuestionFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output) {
-      // Return a structure that satisfies the schema but indicates failure to regenerate
       return { 
         regeneratedQuestion: "Failed to regenerate question. Please try again.", 
-        regeneratedAnswer: "N/A" 
+        regeneratedAnswer: "N/A",
+        regeneratedOptions: input.questionType === 'multiple_choice' ? [] : undefined,
       };
     }
     return {
       regeneratedQuestion: output.regeneratedQuestion,
+      regeneratedOptions: output.regeneratedOptions,
       regeneratedAnswer: output.regeneratedAnswer,
     };
   }
 );
-
