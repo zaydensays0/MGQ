@@ -76,25 +76,25 @@ export interface SavedJarvisExchange {
   timestamp: number;
 }
 
-// Types for Subject Expert Q&A
-export interface ConversationTurn { // Used by AI Flow
-  speaker: 'user' | 'ai';
-  text: string;
-}
-export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
+// Types for Subject Expert Q&A - REMOVED
+// export interface ConversationTurn { // Used by AI Flow
+//   speaker: 'user' | 'ai';
+//   text: string;
+// }
+// export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question'; // Source file will be empty
 
-// Represents a single question-answer pair in a conversation
-export interface ConversationExchange {
-  question: string;
-  answer: string;
-}
+// Represents a single question-answer pair in a conversation - REMOVED
+// export interface ConversationExchange {
+//   question: string;
+//   answer: string;
+// }
 
-// Types for Saved Subject Expert Exchanges
-export interface SavedSubjectExpertExchange {
-  id: string;
-  gradeLevel: GradeLevelNCERT;
-  subject: string;
-  chapter: string;
-  exchanges: ConversationExchange[]; // Stores the entire conversation thread
-  timestamp: number;
-}
+// Types for Saved Subject Expert Exchanges - REMOVED
+// export interface SavedSubjectExpertExchange {
+//   id: string;
+//   gradeLevel: GradeLevelNCERT;
+//   subject: string;
+//   chapter: string;
+//   exchanges: ConversationExchange[]; // Stores the entire conversation thread
+//   timestamp: number;
+// }

@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SavedQuestionsProvider } from '@/contexts/saved-questions-context';
 import { NotesProvider } from '@/contexts/notes-context';
 import { JarvisSavedProvider } from '@/contexts/jarvis-saved-context';
-import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context'; // Added
+// import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context'; // Removed
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
@@ -51,7 +51,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SubjectExpertSavedProvider> {/* Added */}
+          {/* <SubjectExpertSavedProvider> */} {/* Removed */}
             <JarvisSavedProvider>
               <SavedQuestionsProvider>
                 <NotesProvider>
@@ -59,7 +59,7 @@ export default function RootLayout({
                 </NotesProvider>
               </SavedQuestionsProvider>
             </JarvisSavedProvider>
-          </SubjectExpertSavedProvider> {/* Added */}
+          {/* </SubjectExpertSavedProvider> */} {/* Removed */}
           <Toaster />
         </ThemeProvider>
       </body>
