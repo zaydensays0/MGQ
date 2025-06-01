@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 interface QuestionCardProps {
   questionText: string;
   answerText: string;
-  options?: string[]; // Added for MCQs
+  options?: string[];
   questionContext: QuestionContext;
   onRegenerate: (originalQuestion: string, originalOptions?: string[]) => Promise<{ question: string; answer: string; options?: string[] } | null>;
 }
@@ -23,19 +23,33 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [currentOptions, setCurrentOptions] = useState(options);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+
+  const [userSelection, setUserSelection] = useState<string | null>(null);
+  const [isAttempted, setIsAttempted] = useState(false);
+
   const { addQuestion, isSaved } = useSavedQuestions();
   const { toast } = useToast();
+
+  // Effect to reset state when props change (e.g., after regeneration leads to new questionText)
+  useEffect(() => {
+    setCurrentQuestionText(questionText);
+    setCurrentAnswerText(answerText);
+    setCurrentOptions(options);
+    setUserSelection(null);
+    setIsAttempted(false);
+    setShowAnswer(false); // Optionally hide answer on new question
+  }, [questionText, answerText, options]);
 
   const isCurrentlySaved = isSaved(currentQuestionText, questionContext);
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
-    setShowAnswer(false); // Hide answer during regeneration
+    setShowAnswer(false);
+    setUserSelection(null);
+    setIsAttempted(false);
     const result = await onRegenerate(currentQuestionText, currentOptions);
     if (result && result.question && result.answer) {
-      setCurrentQuestionText(result.question);
-      setCurrentAnswerText(result.answer);
-      setCurrentOptions(result.options);
+      // State updates will be handled by the useEffect hook listening to prop changes
       toast({ title: "Question Regenerated", description: "A new version of the question and its answer has been generated." });
     } else {
       toast({ title: "Error", description: "Failed to regenerate question.", variant: "destructive" });
@@ -59,7 +73,22 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setShowAnswer(prev => !prev);
   };
 
+  const handleSelectOption = (selected: string) => {
+    if (isAttempted && questionContext.questionType !== 'short_answer' && questionContext.questionType !== 'long_answer' && questionContext.questionType !== 'fill_in_the_blanks') return; 
+    
+    setUserSelection(selected);
+    setIsAttempted(true);
+    setShowAnswer(true); // Automatically show answer feedback area
+
+    if (selected.trim().toLowerCase() === currentAnswerText.trim().toLowerCase()) {
+      toast({ title: "Correct!", description: "Well done!" });
+    } else {
+      toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
+    }
+  };
+  
   const isMCQ = questionContext.questionType === 'multiple_choice' && currentOptions && currentOptions.length > 0;
+  const isTrueFalse = questionContext.questionType === 'true_false';
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
@@ -68,33 +97,82 @@ export function QuestionCard({ questionText, answerText, options, questionContex
         
         {isMCQ && (
           <div className="space-y-2 mb-3">
-            {currentOptions?.map((option, index) => (
-              <div
-                key={index}
-                className={`p-2 border rounded-md text-sm transition-colors
-                  ${showAnswer && option === currentAnswerText ? 'bg-green-100 dark:bg-green-700/30 border-green-400 dark:border-green-600 font-medium' : 'bg-muted/30 hover:bg-muted/50'}`}
-              >
-                <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
-              </div>
-            ))}
+            {currentOptions?.map((option, index) => {
+              const isSelectedOption = userSelection === option;
+              const isCorrectOption = currentAnswerText === option;
+              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20"; // Default
+
+              if (isAttempted) {
+                if (isSelectedOption) {
+                  optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                } else if (isCorrectOption) {
+                  // Highlight correct answer if user picked wrong and answer is shown
+                  optionStyle = showAnswer ? "bg-green-50 dark:bg-green-800/30 border-green-400" : optionStyle;
+                }
+              }
+
+              return (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
+                  onClick={() => handleSelectOption(option)}
+                  disabled={isAttempted && !showAnswer} // Disable after attempt, re-enable if Show Answer makes it interactive again? Or just keep disabled. Let's keep disabled.
+                >
+                  <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
+                </Button>
+              );
+            })}
           </div>
         )}
 
-        {showAnswer && !isMCQ && ( // Show answer for non-MCQs when toggled
-          <div className="p-3 bg-secondary/50 rounded-md border border-input">
-            <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
-            <p className="text-foreground/90 leading-relaxed">{currentAnswerText}</p>
+        {isTrueFalse && (
+          <div className="flex space-x-2 mb-3">
+            {['True', 'False'].map((tfOption) => {
+              const isSelectedOption = userSelection === tfOption;
+              const isCorrectOption = currentAnswerText.toLowerCase() === tfOption.toLowerCase();
+              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
+
+              if (isAttempted) {
+                if (isSelectedOption) {
+                  optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                } else if (isCorrectOption && showAnswer) {
+                   optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
+                }
+              }
+              return (
+                <Button
+                  key={tfOption}
+                  variant="outline"
+                  className={`flex-1 p-2 text-sm ${optionStyle}`}
+                  onClick={() => handleSelectOption(tfOption)}
+                  disabled={isAttempted && !showAnswer}
+                >
+                  {tfOption}
+                </Button>
+              );
+            })}
           </div>
         )}
-         {showAnswer && isMCQ && ( // For MCQs, the correct option is highlighted above. This can be a small confirmation.
-          <div className="mt-2 p-2 bg-green-50 dark:bg-green-800/20 border border-green-200 dark:border-green-700 rounded-md text-sm">
-            <span className="font-semibold text-green-700 dark:text-green-400">Correct Answer:</span> {currentAnswerText}
+
+        {showAnswer && (
+          <div className={`mt-3 p-3 rounded-md border 
+            ${isMCQ || isTrueFalse ? 
+              (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
+              : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
+            <p className={`text-sm font-semibold mb-1 
+              ${isMCQ || isTrueFalse ? 
+                (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
+                : 'text-primary'}`}>
+              Answer:
+            </p>
+            <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{currentAnswerText}</p>
           </div>
         )}
 
       </CardContent>
       <CardFooter className="p-0 flex-col items-stretch">
-        <div className="p-4 flex flex-wrap justify-between items-center gap-2 bg-muted/50">
+        <div className="p-3 flex flex-wrap justify-between items-center gap-2 bg-muted/50 dark:bg-muted/10 border-t">
           <Button
               variant="outline"
               size="sm"
