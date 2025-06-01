@@ -3,10 +3,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SavedQuestionsProvider } from '@/contexts/saved-questions-context';
+import { NotesProvider } from '@/contexts/notes-context'; // Added NotesProvider
 
 export const metadata: Metadata = {
   title: 'MGQs',
-  description: 'Generate NCERT-based questions for Classes 9-12',
+  description: 'Generate NCERT-based questions for Classes 9-12 and create notes.',
 };
 
 export default function RootLayout({
@@ -23,7 +24,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
         <SavedQuestionsProvider>
-          {children}
+          <NotesProvider> {/* Added NotesProvider wrapper */}
+            {children}
+          </NotesProvider>
         </SavedQuestionsProvider>
         <Toaster />
       </body>

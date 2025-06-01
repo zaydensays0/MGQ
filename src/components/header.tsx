@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu } from 'lucide-react';
+import { Sparkles, Menu, Edit3 } from 'lucide-react'; // Added Edit3 for Notes
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -12,6 +12,7 @@ import { useState } from 'react';
 const navLinks = [
   { href: '/', label: 'Generate Questions' },
   { href: '/saved', label: 'Saved Questions' },
+  { href: '/notes', label: 'Notes' }, // Added Notes link
 ];
 
 export function Header() {
@@ -27,7 +28,7 @@ export function Header() {
             <span className="font-bold sm:inline-block text-lg font-headline">
               MGQs
             </span>
-            <span className="text-xs text-muted-foreground sm:inline-block -mt-1">
+            <span className="text-xs text-muted-foreground -mt-1 inline-block">
               mehdi gave questions
             </span>
           </div>
