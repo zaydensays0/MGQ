@@ -1,0 +1,37 @@
+{
+  "name": "MGQs - Mehdi Gave Questions",
+  "short_name": "MGQs",
+  "description": "Generate NCERT-based questions for Classes 9-12 and create notes with AI.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E8EAF6",
+  "theme_color": "#3F51B5",
+  "scope": "/",
+  "orientation": "portrait-primary"
+}
