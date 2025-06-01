@@ -34,8 +34,8 @@ export function Header() {
             <span className="font-bold sm:inline-block text-lg font-headline">
               MGQs
             </span>
-            <span className="text-xs text-muted-foreground -mt-1 inline-block">
-              mehdi gave questions
+            <span className="text-xs -mt-1 inline-block">
+              <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span> <span className="text-muted-foreground">gave questions</span>
             </span>
           </div>
         </Link>
