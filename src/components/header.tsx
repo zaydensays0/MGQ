@@ -27,7 +27,7 @@ export function Header() {
             <span className="font-bold sm:inline-block text-lg font-headline">
               MGQs
             </span>
-            <span className="text-xs text-muted-foreground hidden sm:inline-block -mt-1">
+            <span className="text-xs text-muted-foreground sm:inline-block -mt-1">
               mehdi gave questions
             </span>
           </div>
