@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { SavedSubjectExpertExchange, GradeLevelNCERT } from '@/types';
+import type { SavedSubjectExpertExchange, GradeLevelNCERT, ConversationExchange } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,12 +9,26 @@ interface SubjectExpertSavedContextType {
   savedExchanges: SavedSubjectExpertExchange[];
   addExchange: (data: Omit<SavedSubjectExpertExchange, 'id' | 'timestamp'>) => void;
   removeExchange: (id: string) => void;
-  isSaved: (gradeLevel: GradeLevelNCERT, subject: string, chapter: string, userQuestion: string, aiAnswer: string) => boolean;
+  isSaved: (gradeLevel: GradeLevelNCERT, subject: string, chapter: string, exchanges: ConversationExchange[]) => boolean;
 }
 
 const SubjectExpertSavedContext = createContext<SubjectExpertSavedContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY_SUBJECT_EXPERT = 'MGQsSavedSubjectExpertExchanges';
+
+// Helper function for deep comparison of exchange arrays
+const areExchangeArraysEqual = (arr1: ConversationExchange[], arr2: ConversationExchange[]): boolean => {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i].question !== arr2[i].question || arr1[i].answer !== arr2[i].answer) {
+      return false;
+    }
+  }
+  return true;
+};
+
 
 export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedExchanges, setSavedExchanges] = useState<SavedSubjectExpertExchange[]>([]);
@@ -49,7 +63,7 @@ export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ 
     const newExchange: SavedSubjectExpertExchange = {
       id: uuidv4(),
       timestamp: Date.now(),
-      ...data,
+      ...data, // data now includes the 'exchanges' array
     };
     setSavedExchanges((prevExchanges) => [newExchange, ...prevExchanges].sort((a,b) => b.timestamp - a.timestamp));
   }, []);
@@ -58,14 +72,13 @@ export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ 
     setSavedExchanges((prevExchanges) => prevExchanges.filter((ex) => ex.id !== id));
   }, []);
 
-  const isSaved = useCallback((gradeLevel: GradeLevelNCERT, subject: string, chapter: string, userQuestion: string, aiAnswer: string): boolean => {
+  const isSaved = useCallback((gradeLevel: GradeLevelNCERT, subject: string, chapter: string, exchangesToCompare: ConversationExchange[]): boolean => {
     return savedExchanges.some(
       (ex) => 
         ex.gradeLevel === gradeLevel &&
         ex.subject === subject &&
         ex.chapter === chapter &&
-        ex.userQuestion === userQuestion &&
-        ex.aiAnswer === aiAnswer
+        areExchangeArraysEqual(ex.exchanges, exchangesToCompare)
     );
   }, [savedExchanges]);
 
@@ -83,4 +96,3 @@ export const useSubjectExpertSaved = (): SubjectExpertSavedContextType => {
   }
   return context;
 };
-

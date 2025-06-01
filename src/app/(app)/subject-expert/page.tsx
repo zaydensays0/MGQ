@@ -20,18 +20,13 @@ import { answerSubjectQuestion, type AnswerSubjectQuestionInput, type AnswerSubj
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
-import type { GradeLevelNCERT, SubjectOption, ConversationTurn } from '@/types';
+import type { GradeLevelNCERT, SubjectOption, ConversationTurn, ConversationExchange } from '@/types';
 import { useSubjectExpertSaved } from '@/contexts/subject-expert-saved-context';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <p>Loading explanation...</p>,
   ssr: false
 });
-
-interface ConversationExchange {
-  question: string;
-  answer: string;
-}
 
 interface CurrentConversation {
   context: {
@@ -52,12 +47,11 @@ export default function SubjectExpertPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { addExchange, isSaved: isExchangeSaved } = useSubjectExpertSaved();
+  const { addExchange, isSaved: isConversationSaved } = useSubjectExpertSaved();
 
-  // Reset conversation if context changes
   useEffect(() => {
     setCurrentConversation(null);
-    setUserQuestionInput(''); // Also clear question input
+    setUserQuestionInput(''); 
   }, [gradeLevelInput, subjectInput, chapterInput]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -88,7 +82,7 @@ export default function SubjectExpertPage() {
       chapter: chapterInput,
     };
 
-    const conversationHistory: ConversationTurn[] = currentConversation?.exchanges.flatMap(ex => [
+    const conversationHistoryForAI: ConversationTurn[] = currentConversation?.exchanges.flatMap(ex => [
       { speaker: 'user', text: ex.question },
       { speaker: 'ai', text: ex.answer },
     ]) || [];
@@ -98,7 +92,7 @@ export default function SubjectExpertPage() {
       subject: currentContext.subject, 
       chapter: currentContext.chapter, 
       userQuestion: userQuestionInput,
-      conversationHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
+      conversationHistory: conversationHistoryForAI.length > 0 ? conversationHistoryForAI : undefined,
     };
 
     try {
@@ -112,7 +106,7 @@ export default function SubjectExpertPage() {
           context: currentContext,
           exchanges: [...(prev?.exchanges || []), newExchange],
         }));
-        setUserQuestionInput(''); // Clear input for next question
+        setUserQuestionInput(''); 
         toast({
           title: 'Answer Received!',
           description: "Here's the expert explanation.",
@@ -136,38 +130,33 @@ export default function SubjectExpertPage() {
 
   const handleSaveResponse = () => {
     if (currentConversation && currentConversation.exchanges.length > 0) {
-      const initialQuestion = currentConversation.exchanges[0].question;
-      const latestAnswer = currentConversation.exchanges[currentConversation.exchanges.length - 1].answer;
-      
-      if (!isExchangeSaved(currentConversation.context.gradeLevel, currentConversation.context.subject, currentConversation.context.chapter, initialQuestion, latestAnswer)) {
+      if (!isConversationSaved(currentConversation.context.gradeLevel, currentConversation.context.subject, currentConversation.context.chapter, currentConversation.exchanges)) {
         addExchange({
           gradeLevel: currentConversation.context.gradeLevel,
           subject: currentConversation.context.subject,
           chapter: currentConversation.context.chapter,
-          userQuestion: initialQuestion, // Save initial question
-          aiAnswer: latestAnswer,      // Save latest answer
+          exchanges: currentConversation.exchanges, // Save all exchanges
         });
         toast({
           title: 'Conversation Saved!',
-          description: 'This expert explanation thread (initial question, latest answer) has been saved.',
+          description: 'This expert conversation thread has been saved.',
         });
       } else {
          toast({
           title: 'Already Saved',
-          description: 'This conversation (based on initial Q and latest A) has already been saved.',
+          description: 'This exact conversation thread has already been saved.',
           variant: 'default',
         });
       }
     }
   };
   
-  const currentExchangeIsSaved = currentConversation && currentConversation.exchanges.length > 0
-    ? isExchangeSaved(
+  const currentThreadIsSaved = currentConversation && currentConversation.exchanges.length > 0
+    ? isConversationSaved(
         currentConversation.context.gradeLevel, 
         currentConversation.context.subject, 
         currentConversation.context.chapter, 
-        currentConversation.exchanges[0].question, // Check against initial question
-        currentConversation.exchanges[currentConversation.exchanges.length - 1].answer // Check against latest answer
+        currentConversation.exchanges
       )
     : false;
 
@@ -237,7 +226,7 @@ export default function SubjectExpertPage() {
                 onChange={(e) => setChapterInput(e.target.value)}
                 placeholder="e.g., The French Revolution"
                 className="text-base"
-                disabled={isLoading && !!currentConversation} // Disable if loading a follow-up
+                disabled={isLoading && !!currentConversation} 
               />
             </div>
         </CardContent>
@@ -287,15 +276,15 @@ export default function SubjectExpertPage() {
             <CardFooter className="p-4 border-t bg-muted/30 rounded-b-md">
               <Button
                 onClick={handleSaveResponse}
-                disabled={currentExchangeIsSaved || isLoading}
-                variant={currentExchangeIsSaved ? "secondary" : "default"}
+                disabled={currentThreadIsSaved || isLoading}
+                variant={currentThreadIsSaved ? "secondary" : "default"}
               >
-                {currentExchangeIsSaved ? (
+                {currentThreadIsSaved ? (
                   <CheckCircle className="mr-2 h-5 w-5" />
                 ) : (
                   <Save className="mr-2 h-5 w-5" />
                 )}
-                {currentExchangeIsSaved ? 'Saved' : 'Save Conversation'}
+                {currentThreadIsSaved ? 'Saved' : 'Save Conversation'}
               </Button>
             </CardFooter>
            )}
@@ -315,7 +304,6 @@ export default function SubjectExpertPage() {
         </Card>
       )}
 
-      {/* Always show question input form if context is set */}
       {gradeLevelInput && subjectInput && chapterInput && (
         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-lg">
           <CardHeader>

@@ -77,12 +77,17 @@ export interface SavedJarvisExchange {
 }
 
 // Types for Subject Expert Q&A
-export interface ConversationTurn {
+export interface ConversationTurn { // Used by AI Flow
   speaker: 'user' | 'ai';
   text: string;
 }
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 
+// Represents a single question-answer pair in a conversation
+export interface ConversationExchange {
+  question: string;
+  answer: string;
+}
 
 // Types for Saved Subject Expert Exchanges
 export interface SavedSubjectExpertExchange {
@@ -90,7 +95,6 @@ export interface SavedSubjectExpertExchange {
   gradeLevel: GradeLevelNCERT;
   subject: string;
   chapter: string;
-  userQuestion: string; // This will store the initial question of a thread
-  aiAnswer: string;     // This will store the latest AI answer in that thread
+  exchanges: ConversationExchange[]; // Stores the entire conversation thread
   timestamp: number;
 }
