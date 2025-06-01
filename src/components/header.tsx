@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import { Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Added SheetHeader and SheetTitle
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState } from 'react'; // Added useState
+import { useState } from 'react';
 
 const navLinks = [
   { href: '/', label: 'Generate Questions' },
@@ -16,7 +16,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -50,7 +50,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[240px] p-6">
-              <nav className="flex flex-col space-y-4">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col space-y-4 mt-4"> {/* Added mt-4 for spacing after sr-only title */}
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -59,7 +62,7 @@ export function Header() {
                       "text-lg font-medium transition-colors hover:text-primary",
                       pathname === link.href ? "text-primary" : "text-foreground/80"
                     )}
-                    onClick={() => setIsMobileMenuOpen(false)} // Close menu on link click
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
