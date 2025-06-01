@@ -79,3 +79,14 @@ export interface SavedJarvisExchange {
 // Types for Subject Expert Q&A
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 
+// Types for Saved Subject Expert Exchanges
+export interface SavedSubjectExpertExchange {
+  id: string;
+  gradeLevel: GradeLevelNCERT;
+  subject: string;
+  chapter: string;
+  userQuestion: string;
+  aiAnswer: string;
+  timestamp: number;
+}
+

@@ -2,13 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History } from 'lucide-react'; // Added History
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/theme-toggle'; 
 
 const navLinks = [
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
@@ -18,6 +18,7 @@ const navLinks = [
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/subject-expert', label: 'Subject Expert', icon: Brain },
+  { href: '/subject-expert-saved', label: 'Expert Archive', icon: History }, // Added
 ];
 
 export function Header() {

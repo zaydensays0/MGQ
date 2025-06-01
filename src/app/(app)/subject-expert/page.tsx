@@ -13,33 +13,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain, Sparkles, Loader2, Terminal } from 'lucide-react';
+import { Brain, Sparkles, Loader2, Terminal, Save, CheckCircle } from 'lucide-react';
 import { answerSubjectQuestion, type AnswerSubjectQuestionInput, type AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 import type { GradeLevelNCERT, SubjectOption } from '@/types';
+import { useSubjectExpertSaved } from '@/contexts/subject-expert-saved-context';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <p>Loading explanation...</p>,
   ssr: false
 });
 
+interface CurrentExpertExchange {
+  gradeLevel: GradeLevelNCERT;
+  subject: string;
+  chapter: string;
+  userQuestion: string;
+  aiAnswer: string;
+}
+
 export default function SubjectExpertPage() {
-  const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
-  const [subject, setSubject] = useState<string>('');
-  const [chapter, setChapter] = useState<string>('');
-  const [userQuestion, setUserQuestion] = useState('');
-  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [gradeLevelInput, setGradeLevelInput] = useState<GradeLevelNCERT | ''>('');
+  const [subjectInput, setSubjectInput] = useState<string>('');
+  const [chapterInput, setChapterInput] = useState<string>('');
+  const [userQuestionInput, setUserQuestionInput] = useState('');
+  
+  const [activeExchange, setActiveExchange] = useState<CurrentExpertExchange | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { addExchange, isSaved: isExchangeSaved } = useSubjectExpertSaved();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!gradeLevel || !subject.trim() || !chapter.trim() || !userQuestion.trim()) {
+    if (!gradeLevelInput || !subjectInput.trim() || !chapterInput.trim() || !userQuestionInput.trim()) {
       toast({
         title: 'Missing Information',
         description: 'Please fill in all fields: grade, subject, chapter, and your question.',
@@ -50,19 +61,27 @@ export default function SubjectExpertPage() {
 
     setIsLoading(true);
     setError(null);
-    setAiAnswer(null);
+    // setActiveExchange(null); // Keep previous active exchange visible during loading if preferred
 
     const input: AnswerSubjectQuestionInput = { 
-      gradeLevel: gradeLevel as GradeLevelNCERT, 
-      subject, 
-      chapter, 
-      userQuestion 
+      gradeLevel: gradeLevelInput as GradeLevelNCERT, 
+      subject: subjectInput, 
+      chapter: chapterInput, 
+      userQuestion: userQuestionInput 
     };
 
     try {
       const result: AnswerSubjectQuestionOutput = await answerSubjectQuestion(input);
       if (result && result.aiAnswer) {
-        setAiAnswer(result.aiAnswer);
+        setActiveExchange({
+            gradeLevel: gradeLevelInput as GradeLevelNCERT,
+            subject: subjectInput,
+            chapter: chapterInput,
+            userQuestion: userQuestionInput,
+            aiAnswer: result.aiAnswer
+        });
+        // Optionally clear input fields here if desired
+        // setUserQuestionInput('');
         toast({
           title: 'Answer Received!',
           description: "Here's the expert explanation.",
@@ -84,7 +103,26 @@ export default function SubjectExpertPage() {
     }
   };
 
-  const selectedSubjectDetails = SUBJECTS.find(s => s.value === subject);
+  const handleSaveResponse = () => {
+    if (activeExchange) {
+      if (!isExchangeSaved(activeExchange.gradeLevel, activeExchange.subject, activeExchange.chapter, activeExchange.userQuestion, activeExchange.aiAnswer)) {
+        addExchange(activeExchange);
+        toast({
+          title: 'Response Saved!',
+          description: 'This expert explanation has been saved.',
+        });
+      } else {
+         toast({
+          title: 'Already Saved',
+          description: 'This response has already been saved.',
+          variant: 'default',
+        });
+      }
+    }
+  };
+  
+  const currentExchangeIsSaved = activeExchange ? isExchangeSaved(activeExchange.gradeLevel, activeExchange.subject, activeExchange.chapter, activeExchange.userQuestion, activeExchange.aiAnswer) : false;
+  const selectedSubjectDetails = SUBJECTS.find(s => s.value === subjectInput);
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -110,7 +148,7 @@ export default function SubjectExpertPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="gradeLevel">Grade Level</Label>
-                <Select value={gradeLevel} onValueChange={(value) => setGradeLevel(value as GradeLevelNCERT)} required>
+                <Select value={gradeLevelInput} onValueChange={(value) => setGradeLevelInput(value as GradeLevelNCERT)} required>
                   <SelectTrigger id="gradeLevel"><SelectValue placeholder="Select Grade" /></SelectTrigger>
                   <SelectContent>
                     {GRADE_LEVELS.map((grade) => (
@@ -121,7 +159,7 @@ export default function SubjectExpertPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
-                <Select value={subject} onValueChange={setSubject} required>
+                <Select value={subjectInput} onValueChange={setSubjectInput} required>
                   <SelectTrigger id="subject">
                      <SelectValue placeholder="Select Subject">
                         {selectedSubjectDetails && selectedSubjectDetails.icon && (
@@ -148,8 +186,8 @@ export default function SubjectExpertPage() {
               <Label htmlFor="chapter">Chapter</Label>
               <Input
                 id="chapter"
-                value={chapter}
-                onChange={(e) => setChapter(e.target.value)}
+                value={chapterInput}
+                onChange={(e) => setChapterInput(e.target.value)}
                 placeholder="e.g., The French Revolution"
                 className="text-base"
                 disabled={isLoading}
@@ -160,8 +198,8 @@ export default function SubjectExpertPage() {
               <Label htmlFor="userQuestion">Your Question</Label>
               <Textarea
                 id="userQuestion"
-                value={userQuestion}
-                onChange={(e) => setUserQuestion(e.target.value)}
+                value={userQuestionInput}
+                onChange={(e) => setUserQuestionInput(e.target.value)}
                 placeholder="e.g., What were the main causes of the French Revolution?"
                 rows={4}
                 className="text-base"
@@ -188,7 +226,7 @@ export default function SubjectExpertPage() {
         </Alert>
       )}
 
-      {isLoading && !error && (
+      {isLoading && !error && !activeExchange &&(
          <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md animate-pulse">
           <CardHeader>
             <div className="h-6 bg-muted rounded w-3/4"></div>
@@ -201,22 +239,40 @@ export default function SubjectExpertPage() {
         </Card>
       )}
 
-      {aiAnswer && !isLoading && (
+      {activeExchange && !isLoading && (
         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Sparkles className="w-5 h-5 mr-2 text-primary" />
               Expert's Explanation
             </CardTitle>
+             <CardDescription>
+                Class {activeExchange.gradeLevel} {activeExchange.subject} - Chapter: {activeExchange.chapter}
+             </CardDescription>
           </CardHeader>
           <CardContent>
+             <p className="font-semibold mb-1">Your Question:</p>
+             <p className="mb-3 text-muted-foreground">{activeExchange.userQuestion}</p>
             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-              <DynamicReactMarkdown>{aiAnswer}</DynamicReactMarkdown>
+              <DynamicReactMarkdown>{activeExchange.aiAnswer}</DynamicReactMarkdown>
             </div>
           </CardContent>
+          <CardFooter className="p-4 border-t bg-muted/30 rounded-b-md">
+            <Button
+              onClick={handleSaveResponse}
+              disabled={currentExchangeIsSaved}
+              variant={currentExchangeIsSaved ? "secondary" : "default"}
+            >
+              {currentExchangeIsSaved ? (
+                <CheckCircle className="mr-2 h-5 w-5" />
+              ) : (
+                <Save className="mr-2 h-5 w-5" />
+              )}
+              {currentExchangeIsSaved ? 'Saved' : 'Save Explanation'}
+            </Button>
+          </CardFooter>
         </Card>
       )}
     </div>
   );
 }
-
