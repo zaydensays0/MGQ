@@ -10,6 +10,7 @@ export const SUBJECTS: SubjectOption[] = [
   { value: 'english', label: 'English', icon: BookOpenText as LucideIcon },
   { value: 'social_science', label: 'Social Science', icon: Globe2 as LucideIcon },
   { value: 'hindi', label: 'Hindi', icon: NotebookText as LucideIcon },
+  { value: 'assamese', label: 'Assamese', icon: NotebookText as LucideIcon },
 ];
 
 export const QUESTION_TYPES: QuestionTypeOption[] = [
