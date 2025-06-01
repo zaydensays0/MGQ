@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { AnswerGrammarQuestionInput as AnswerGrammarQuestionInputType, AnswerGrammarQuestionOutput as AnswerGrammarQuestionOutputType } from '@/types';
 
 const AnswerGrammarQuestionInputSchema = z.object({
   userQuestion: z.string().describe('The grammar-related question asked by the user.'),
@@ -22,7 +21,7 @@ const AnswerGrammarQuestionOutputSchema = z.object({
 });
 export type AnswerGrammarQuestionOutput = z.infer<typeof AnswerGrammarQuestionOutputSchema>;
 
-export async function answerGrammarQuestion(input: AnswerGrammarQuestionInputType): Promise<AnswerGrammarQuestionOutputType> {
+export async function answerGrammarQuestion(input: AnswerGrammarQuestionInput): Promise<AnswerGrammarQuestionOutput> {
   return answerGrammarQuestionFlow(input);
 }
 

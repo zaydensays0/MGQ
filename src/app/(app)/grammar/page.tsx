@@ -5,11 +5,10 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquareQuestion, Sparkles, Loader2, Terminal } from 'lucide-react';
-import { answerGrammarQuestion } from '@/ai/flows/answer-grammar-question';
-import type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/types';
+import { answerGrammarQuestion, type AnswerGrammarQuestionInput, type AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 
