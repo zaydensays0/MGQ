@@ -63,6 +63,7 @@ export default function JarvisPage() {
       });
     } finally {
       setIsLoading(false);
+      setUserQuestion(''); // Clear the input field
     }
   };
 
