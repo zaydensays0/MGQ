@@ -60,10 +60,12 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[260px] p-6">
               <SheetHeader className="mb-4">
-                 <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                <SheetTitle asChild>
+                  <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Sparkles className="h-5 w-5 text-primary" />
                     <span className="font-bold text-md font-headline">MGQs</span>
-                 </Link>
+                  </Link>
+                </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col space-y-3">
                 {navLinks.map((link) => (
