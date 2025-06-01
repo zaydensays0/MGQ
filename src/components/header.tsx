@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Edit3, MessageSquareQuestion } from 'lucide-react'; // Added MessageSquareQuestion for Grammar Helper
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote } from 'lucide-react'; // Changed icons
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -10,10 +10,11 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
 const navLinks = [
-  { href: '/', label: 'Generate Questions' },
-  { href: '/saved', label: 'Saved Questions' },
-  { href: '/notes', label: 'Notes' },
-  { href: '/grammar', label: 'Grammar Helper' }, // Added Grammar Helper link
+  { href: '/jarvis', label: 'Jarvis', icon: Bot }, // Added Jarvis link at the top
+  { href: '/', label: 'Generate Questions', icon: Sparkles },
+  { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
+  { href: '/notes', label: 'Notes', icon: FileText },
+  { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
 ];
 
 export function Header() {
@@ -34,16 +35,17 @@ export function Header() {
             </span>
           </div>
         </Link>
-        <nav className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium">
+        <nav className="hidden md:flex flex-1 items-center space-x-4 text-sm font-medium">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "transition-colors hover:text-foreground/80",
+                "flex items-center transition-colors hover:text-foreground/80",
                 pathname === link.href ? "text-foreground" : "text-foreground/60"
               )}
             >
+              {link.icon && <link.icon className="mr-2 h-4 w-4" />}
               {link.label}
             </Link>
           ))}
@@ -56,21 +58,25 @@ export function Header() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[240px] p-6">
-              <SheetHeader>
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <SheetContent side="right" className="w-[260px] p-6">
+              <SheetHeader className="mb-4">
+                 <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <span className="font-bold text-md font-headline">MGQs</span>
+                 </Link>
               </SheetHeader>
-              <nav className="flex flex-col space-y-4 mt-4">
+              <nav className="flex flex-col space-y-3">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "text-lg font-medium transition-colors hover:text-primary",
-                      pathname === link.href ? "text-primary" : "text-foreground/80"
+                      "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
+                      pathname === link.href ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
                   >
+                    {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                     {link.label}
                   </Link>
                 ))}

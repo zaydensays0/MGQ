@@ -5,3 +5,4 @@ config();
 import '@/ai/flows/regenerate-question.ts';
 import '@/ai/flows/generate-questions.ts';
 import '@/ai/flows/answer-grammar-question.ts';
+import '@/ai/flows/ask-jarvis.ts'; // Added Jarvis flow

@@ -51,10 +51,7 @@ export interface Note {
 }
 
 // Types for Grammar Helper
-export interface AnswerGrammarQuestionInput {
-  userQuestion: string;
-}
+export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 
-export interface AnswerGrammarQuestionOutput {
-  aiAnswer: string;
-}
+// Types for Jarvis general Q&A
+export type { AskJarvisInput, AskJarvisOutput } from '@/ai/flows/ask-jarvis';
