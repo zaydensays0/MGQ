@@ -82,7 +82,7 @@ export default function GrammarHelperPage() {
         <CardHeader>
           <CardTitle>Ask a Grammar Question</CardTitle>
           <CardDescription>
-            Type your question below, and our AI tutor will help you understand the grammar concepts.
+            Type your question below, and Jarvis will help you understand the grammar concepts.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -105,7 +105,7 @@ export default function GrammarHelperPage() {
               ) : (
                 <Sparkles className="mr-2 h-5 w-5" />
               )}
-              {isLoading ? 'Getting Answer...' : 'Ask AI Tutor'}
+              {isLoading ? 'Getting Answer...' : 'Ask Jarvis'}
             </Button>
           </form>
         </CardContent>
@@ -137,7 +137,7 @@ export default function GrammarHelperPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Sparkles className="w-5 h-5 mr-2 text-primary" />
-              AI Tutor's Explanation
+              Jarvis's Explanation
             </CardTitle>
           </CardHeader>
           <CardContent>
