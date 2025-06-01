@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
 
 const navLinks = [
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
@@ -51,41 +52,49 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="flex flex-1 items-center justify-end space-x-4 md:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[260px] p-6">
-               <SheetHeader className="mb-4">
-                <SheetTitle asChild>
-                  <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <span className="font-bold text-md font-headline">MGQs</span>
-                  </Link>
-                </SheetTitle>
-              </SheetHeader>
-              <nav className="flex flex-col space-y-3">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
-                      pathname === link.href ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
-                  >
-                    {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+        <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+          <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[260px] p-6">
+                 <SheetHeader className="mb-4">
+                  <SheetTitle asChild>
+                    <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <span className="font-bold text-md font-headline">MGQs</span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col space-y-3">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
+                        pathname === link.href ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
+                    >
+                      {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="mt-auto pt-6">
+                  <ThemeToggle />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>
