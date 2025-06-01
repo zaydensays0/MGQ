@@ -12,10 +12,9 @@ interface QuestionListProps {
   questions: GeneratedQuestionAnswerPair[];
   questionContext: QuestionContext;
   onRegenerateQuestion: (originalQuestion: string, context: QuestionContext) => Promise<{ question: string; answer: string } | null>;
-  onAskFollowUp: (originalQuestion: string, originalAnswer: string, userQuery: string, context: QuestionContext) => Promise<string | null>;
 }
 
-export function QuestionList({ questions, questionContext, onRegenerateQuestion, onAskFollowUp }: QuestionListProps) {
+export function QuestionList({ questions, questionContext, onRegenerateQuestion }: QuestionListProps) {
   const { addMultipleQuestions } = useSavedQuestions();
   const { toast } = useToast();
 
@@ -50,7 +49,6 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion,
             answerText={qaPair.answer}
             questionContext={questionContext}
             onRegenerate={(originalQuestion) => onRegenerateQuestion(originalQuestion, questionContext)}
-            onAskFollowUp={onAskFollowUp}
           />
         ))}
       </div>

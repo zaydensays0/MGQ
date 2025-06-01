@@ -2,20 +2,20 @@
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SavedQuestion, FollowUpExchange } from '@/types';
+import type { SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff, MessageSquare } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState } from 'react';
 
 const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: string) => void }> = ({ question, onRemove }) => {
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false); // State moved here for individual control
 
   return (
     <Card className="bg-background shadow-sm">
-      <CardContent className="p-4 pb-0"> {/* Adjust padding */}
+      <CardContent className="p-4 pb-0">
         <p className="text-sm text-muted-foreground mb-1">
           Type: {question.questionType.replace(/_/g, ' ')}
         </p>
@@ -23,46 +23,25 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
       </CardContent>
 
       <Accordion type="single" collapsible className="w-full">
-        {/* Answer Accordion Item */}
         <AccordionItem value="answer" className="border-none">
-          <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0">
+          <AccordionTrigger 
+            className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0"
+            onClick={() => setShowAnswer(!showAnswer)} // Toggle showAnswer on trigger click
+          >
             <div className="flex items-center">
               {showAnswer ? <EyeOff className="mr-2 h-4 w-4 text-primary" /> : <Eye className="mr-2 h-4 w-4 text-primary" />}
               {showAnswer ? 'Hide Answer' : 'Show Answer'}
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-4 pt-2">
-            <div className="p-3 bg-secondary/50 rounded-md border border-input">
-              <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
-              <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
-            </div>
+            {showAnswer && ( // Conditionally render based on showAnswer state
+              <div className="p-3 bg-secondary/50 rounded-md border border-input">
+                <p className="text-sm font-semibold text-primary mb-1">Answer:</p>
+                <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
+              </div>
+            )}
           </AccordionContent>
         </AccordionItem>
-
-        {/* Follow-up History Accordion Item */}
-        {question.followUps && question.followUps.length > 0 && (
-          <AccordionItem value="follow-ups" className="border-t">
-            <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none">
-              <div className="flex items-center">
-                <MessageSquare className="mr-2 h-4 w-4 text-primary" />
-                View Follow-up History ({question.followUps.length})
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="p-4 pt-2 space-y-3">
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {question.followUps.map((exchange, index) => (
-                  <div key={index} className="text-sm">
-                    <p className="font-semibold text-primary">You:</p>
-                    <p className="mb-1 pl-2 whitespace-pre-wrap">{exchange.userQuery}</p>
-                    <p className="font-semibold text-accent">MGQs Bot:</p>
-                    <p className="pl-2 whitespace-pre-wrap">{exchange.aiResponse}</p>
-                    {index < (question.followUps?.length ?? 0) - 1 && <hr className="my-2"/>}
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        )}
       </Accordion>
 
       <CardFooter className="p-3 flex justify-end items-center bg-muted/50 rounded-b-md border-t">
@@ -85,7 +64,6 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
 export function SavedQuestionsList() {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
 
-  // Sort questions by timestamp descending (newest first)
   const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
 
   if (sortedSavedQuestions.length === 0) {
@@ -103,7 +81,6 @@ export function SavedQuestionsList() {
     );
   }
 
-  // Group questions by subject, then by chapter
   const groupedQuestions = sortedSavedQuestions.reduce((acc, q) => {
     const subjectKey = `${q.subject} (Class ${q.gradeLevel})`;
     if (!acc[subjectKey]) {
@@ -132,7 +109,7 @@ export function SavedQuestionsList() {
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 space-y-4 p-4 bg-muted/20">
                     {questionsInChapter
-                      .map((q) => ( // No need to sort again if already sorted
+                      .map((q) => ( 
                         <SavedQuestionItem key={q.id} question={q} onRemove={removeQuestion} />
                     ))}
                   </AccordionContent>

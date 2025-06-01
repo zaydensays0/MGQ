@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, FollowUpExchange } from '@/types';
+import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 
@@ -51,8 +51,8 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const newQuestion: SavedQuestion = {
       id: uuidv4(),
       timestamp: Date.now(),
-      answer: '', // Default answer if not provided
-      ...questionData, // This will include text, context, and optionally followUps
+      answer: '', 
+      ...questionData, 
     };
     setSavedQuestions((prevQuestions) => [newQuestion, ...prevQuestions].sort((a,b) => b.timestamp - a.timestamp));
   }, []);
@@ -64,7 +64,6 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
       answer: qaPair.answer,
       ...context,
       timestamp: Date.now(),
-      followUps: [], // Initialize with empty followUps for "Save All"
     }));
     setSavedQuestions((prevQuestions) => {
       const uniqueNewQuestions = newQuestions.filter(nq =>
@@ -114,4 +113,3 @@ export const useSavedQuestions = (): SavedQuestionsContextType => {
   }
   return context;
 };
-

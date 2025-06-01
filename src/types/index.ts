@@ -1,11 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
 
-export interface FollowUpExchange {
-  userQuery: string;
-  aiResponse: string;
-}
-
 export interface SavedQuestion {
   id: string;
   text: string;
@@ -15,7 +10,6 @@ export interface SavedQuestion {
   subject: string;
   chapter: string;
   timestamp: number;
-  followUps?: FollowUpExchange[]; // Added for storing follow-up history
 }
 
 export interface QuestionContext {
@@ -55,4 +49,3 @@ export interface Note {
   createdAt: number;
   updatedAt: number;
 }
-
