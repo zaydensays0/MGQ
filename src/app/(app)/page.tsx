@@ -8,7 +8,7 @@ import { ContentSelectionForm, type FormValues } from '@/components/content-sele
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
 import { useToast } from '@/hooks/use-toast';
-import type { QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
+import type { QuestionContext, GeneratedQuestionAnswerPair, GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, Sparkles } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,10 +61,10 @@ export default function ExamPrepPage() {
     setGeneratedQuestions([]); // Clear previous questions
     
     const contextData: QuestionContext = {
-      gradeLevel: data.gradeLevel,
+      gradeLevel: data.gradeLevel as GradeLevelNCERT,
       subject: data.subject,
       chapter: data.chapter,
-      questionType: data.questionType,
+      questionType: data.questionType as QuestionTypeNCERT,
     };
     setCurrentContext(contextData);
 
@@ -110,10 +110,10 @@ export default function ExamPrepPage() {
 
   const handleRegenerateQuestion = async (originalQuestionText: string, context: QuestionContext): Promise<{ question: string; answer: string } | null> => {
     const input: RegenerateQuestionInput = {
-      gradeLevel: context.gradeLevel as '9' | '10' | '11' | '12', 
+      gradeLevel: context.gradeLevel, 
       subject: context.subject,
       chapter: context.chapter,
-      questionType: context.questionType as any, 
+      questionType: context.questionType, 
       originalQuestion: originalQuestionText,
     };
 
@@ -189,3 +189,4 @@ export default function ExamPrepPage() {
     </div>
   );
 }
+

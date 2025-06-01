@@ -48,6 +48,10 @@ const askJarvisFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      return { jarvisAnswer: "I'm sorry, I couldn't process your request at this time. Please try again." };
+    }
+    return output;
   }
 );
+

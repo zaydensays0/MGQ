@@ -1,22 +1,31 @@
 
 import type { LucideIcon } from 'lucide-react';
 
+// Specific types for NCERT context
+export type GradeLevelNCERT = '9' | '10' | '11' | '12';
+export type QuestionTypeNCERT =
+  | 'multiple_choice'
+  | 'short_answer'
+  | 'long_answer'
+  | 'fill_in_the_blanks'
+  | 'true_false';
+
 export interface SavedQuestion {
   id: string;
   text: string;
   answer: string;
-  questionType: string;
-  gradeLevel: string;
+  questionType: QuestionTypeNCERT;
+  gradeLevel: GradeLevelNCERT;
   subject: string;
   chapter: string;
   timestamp: number;
 }
 
 export interface QuestionContext {
-  gradeLevel: string;
+  gradeLevel: GradeLevelNCERT;
   subject: string;
   chapter: string;
-  questionType: string;
+  questionType: QuestionTypeNCERT;
 }
 
 export interface GeneratedQuestionAnswerPair {
@@ -37,7 +46,7 @@ export interface SubjectOption {
 }
 
 export interface QuestionTypeOption {
-  value: string;
+  value: QuestionTypeNCERT; // Use specific type
   label: string;
 }
 
@@ -63,3 +72,4 @@ export interface SavedJarvisExchange {
   jarvisAnswer: string;
   timestamp: number;
 }
+

@@ -47,6 +47,10 @@ const answerGrammarQuestionFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      return { aiAnswer: "I'm sorry, I couldn't generate an answer at this time. Please try again." };
+    }
+    return output;
   }
 );
+

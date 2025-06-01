@@ -11,13 +11,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { GeneratedQuestionAnswerPair } from '@/types';
+import type { GeneratedQuestionAnswerPair, QuestionTypeNCERT } from '@/types';
 
 const GenerateQuestionsInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level of the syllabus.'),
   subject: z.string().describe('The subject of the syllabus.'),
   chapter: z.string().describe('The chapter of the syllabus.'),
-  questionType: z.string().describe('The type of questions to generate (e.g., MCQ, short answer, long answer).'),
+  questionType: z.custom<QuestionTypeNCERT>().describe('The type of questions to generate (e.g., MCQ, short answer, long answer).'),
   numberOfQuestions: z.number().int().positive().describe('The number of questions to generate.'),
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
@@ -66,6 +66,10 @@ const generateQuestionsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      return { questions: [] };
+    }
+    return output;
   }
 );
+

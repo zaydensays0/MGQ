@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Bot, Sparkles, Loader2, Terminal, Save, CheckCircle } from 'lucide-react';
+import { Bot, Sparkles, Loader2, Terminal, Save, CheckCircle, User } from 'lucide-react'; // Added User icon
 import { askJarvis, type AskJarvisInput, type AskJarvisOutput } from '@/ai/flows/ask-jarvis';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
@@ -19,8 +19,8 @@ const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
 });
 
 export default function JarvisPage() {
-  const [userQuestion, setUserQuestion] = useState('');
-  const [jarvisAnswer, setJarvisAnswer] = useState<string | null>(null);
+  const [userQuestionInput, setUserQuestionInput] = useState('');
+  const [activeConversation, setActiveConversation] = useState<{ question: string; answer: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -28,7 +28,7 @@ export default function JarvisPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!userQuestion.trim()) {
+    if (!userQuestionInput.trim()) {
       toast({
         title: 'Empty Question',
         description: 'Please enter your question for Jarvis.',
@@ -39,14 +39,17 @@ export default function JarvisPage() {
 
     setIsLoading(true);
     setError(null);
-    setJarvisAnswer(null);
+    // Don't reset activeConversation here if you want to keep the previous one visible during loading
+    // setActiveConversation(null); 
 
-    const input: AskJarvisInput = { userQuestion };
+    const questionToSubmit = userQuestionInput;
+    const input: AskJarvisInput = { userQuestion: questionToSubmit };
 
     try {
       const result: AskJarvisOutput = await askJarvis(input);
       if (result && result.jarvisAnswer) {
-        setJarvisAnswer(result.jarvisAnswer);
+        setActiveConversation({ question: questionToSubmit, answer: result.jarvisAnswer });
+        setUserQuestionInput(''); // Clear input bar after successful response
         toast({
           title: 'Jarvis Responded!',
           description: "Here's what Jarvis has to say.",
@@ -65,19 +68,19 @@ export default function JarvisPage() {
       });
     } finally {
       setIsLoading(false);
-      // setUserQuestion(''); // Question is cleared only after saving or if not saved
     }
   };
 
   const handleSaveResponse = () => {
-    if (userQuestion && jarvisAnswer) {
-      if (!isExchangeSaved(userQuestion, jarvisAnswer)) {
-        addExchange({ userQuestion, jarvisAnswer });
+    if (activeConversation) {
+      if (!isExchangeSaved(activeConversation.question, activeConversation.answer)) {
+        addExchange({ userQuestion: activeConversation.question, jarvisAnswer: activeConversation.answer });
         toast({
           title: 'Response Saved!',
           description: 'This conversation with Jarvis has been saved.',
         });
-        setUserQuestion(''); // Clear question after successful save
+        // Optionally, clear the active conversation from view after saving
+        // setActiveConversation(null);
       } else {
         toast({
           title: 'Already Saved',
@@ -88,7 +91,7 @@ export default function JarvisPage() {
     }
   };
   
-  const currentExchangeIsSaved = userQuestion && jarvisAnswer ? isExchangeSaved(userQuestion, jarvisAnswer) : false;
+  const currentExchangeIsSaved = activeConversation ? isExchangeSaved(activeConversation.question, activeConversation.answer) : false;
 
 
   return (
@@ -116,8 +119,8 @@ export default function JarvisPage() {
               <Label htmlFor="jarvisQuestion">Your Question</Label>
               <Textarea
                 id="jarvisQuestion"
-                value={userQuestion}
-                onChange={(e) => setUserQuestion(e.target.value)}
+                value={userQuestionInput}
+                onChange={(e) => setUserQuestionInput(e.target.value)}
                 placeholder="e.g., What is the theory of relativity? or What's the weather like today?"
                 rows={4}
                 className="text-base"
@@ -144,10 +147,12 @@ export default function JarvisPage() {
         </Alert>
       )}
 
-      {isLoading && !error && (
+      {isLoading && !error && !activeConversation && ( // Show skeleton only if no active conversation
          <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md animate-pulse">
           <CardHeader>
-            <div className="h-6 bg-muted rounded w-3/4"></div>
+            <div className="h-6 bg-muted rounded w-3/4"></div> {/* For Question title */}
+            <div className="h-4 bg-muted rounded w-full mt-2"></div> {/* For Question text */}
+            <div className="h-6 bg-muted rounded w-3/4 mt-4"></div> {/* For Answer title */}
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="h-4 bg-muted rounded w-full"></div>
@@ -157,20 +162,32 @@ export default function JarvisPage() {
         </Card>
       )}
 
-      {jarvisAnswer && !isLoading && (
+      {activeConversation && !isLoading && (
         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bot className="w-5 h-5 mr-2 text-primary" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold flex items-center">
+              <User className="w-5 h-5 mr-2 text-primary flex-shrink-0" />
+              Your Question
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 pb-4">
+            <p className="text-foreground leading-relaxed">{activeConversation.question}</p>
+          </CardContent>
+          
+          <hr className="mx-6 border-border" />
+
+          <CardHeader className="pt-4 pb-3">
+            <CardTitle className="text-xl font-semibold flex items-center">
+              <Bot className="w-5 h-5 mr-2 text-accent flex-shrink-0" />
               Jarvis's Answer
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-              <DynamicReactMarkdown>{jarvisAnswer}</DynamicReactMarkdown>
+              <DynamicReactMarkdown>{activeConversation.answer}</DynamicReactMarkdown>
             </div>
           </CardContent>
-          <CardFooter className="p-4 border-t">
+          <CardFooter className="p-4 border-t bg-muted/30 rounded-b-md">
             <Button
               onClick={handleSaveResponse}
               disabled={currentExchangeIsSaved}
@@ -189,3 +206,4 @@ export default function JarvisPage() {
     </div>
   );
 }
+

@@ -12,19 +12,20 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
 
 const RegenerateQuestionInputSchema = z.object({
-  gradeLevel: z.enum(['9', '10', '11', '12']).describe('The grade level of the question.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level of the question.'),
   subject: z.string().describe('The subject of the question.'),
   chapter: z.string().describe('The chapter the question is based on.'),
   questionType: z
-    .enum([
+    .enum<QuestionTypeNCERT, [
       'multiple_choice',
       'short_answer',
       'long_answer',
       'fill_in_the_blanks',
       'true_false',
-    ])
+    ]>(['multiple_choice', 'short_answer', 'long_answer', 'fill_in_the_blanks', 'true_false'])
     .describe('The type of question to generate.'),
   originalQuestion: z.string().describe('The original question that needs to be regenerated.'),
 });
@@ -63,9 +64,17 @@ const regenerateQuestionFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
+    if (!output) {
+      // Return a structure that satisfies the schema but indicates failure to regenerate
+      return { 
+        regeneratedQuestion: "Failed to regenerate question. Please try again.", 
+        regeneratedAnswer: "N/A" 
+      };
+    }
     return {
-      regeneratedQuestion: output!.regeneratedQuestion,
-      regeneratedAnswer: output!.regeneratedAnswer,
+      regeneratedQuestion: output.regeneratedQuestion,
+      regeneratedAnswer: output.regeneratedAnswer,
     };
   }
 );
+
