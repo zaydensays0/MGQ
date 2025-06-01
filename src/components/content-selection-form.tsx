@@ -60,8 +60,11 @@ export function ContentSelectionForm({ onSubmit, isGenerating }: ContentSelectio
           <p className="text-sm font-bold text-primary dark:text-red-400">
             VIRAT KOHLI IS THE GREATEST CRICKETER
           </p>
+          <p className="text-sm font-bold text-red-600 dark:text-red-500 uppercase">
+            Ee saala cup namde
+          </p>
         </div>
-        <CardTitle className="text-2xl font-headline flex items-center">
+        <CardTitle className="text-2xl font-headline flex items-center pt-2"> {/* Added pt-2 for spacing */}
           <Sparkles className="w-6 h-6 mr-2 text-primary" />
           Create Your Questions
         </CardTitle>
