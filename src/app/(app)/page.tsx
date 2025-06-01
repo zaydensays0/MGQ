@@ -176,7 +176,7 @@ export default function ExamPrepPage() {
              <Sparkles className="h-5 w-5 mx-auto mb-2 text-primary" />
             <AlertTitle className="font-headline text-xl">Ready to Generate?</AlertTitle>
             <AlertDescription className="mt-1">
-             Fill out the form above to start creating questions with Exam PrepAI!
+             Fill out the form above to start creating questions with MGQs!
             </AlertDescription>
           </Alert>
         )}

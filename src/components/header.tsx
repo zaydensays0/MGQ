@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Added SheetHeader and SheetTitle
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -24,7 +24,7 @@ export function Header() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-lg font-headline">
-            Exam PrepAI
+            MGQs
           </span>
         </Link>
         <nav className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium">
@@ -53,7 +53,7 @@ export function Header() {
               <SheetHeader>
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col space-y-4 mt-4"> {/* Added mt-4 for spacing after sr-only title */}
+              <nav className="flex flex-col space-y-4 mt-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}

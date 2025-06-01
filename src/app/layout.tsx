@@ -1,10 +1,11 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SavedQuestionsProvider } from '@/contexts/saved-questions-context';
 
 export const metadata: Metadata = {
-  title: 'Exam PrepAI',
+  title: 'MGQs',
   description: 'Generate NCERT-based questions for Classes 9-12',
 };
 

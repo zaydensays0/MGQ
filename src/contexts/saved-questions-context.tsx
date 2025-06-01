@@ -16,7 +16,7 @@ interface SavedQuestionsContextType {
 
 const SavedQuestionsContext = createContext<SavedQuestionsContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'examPrepAISavedQuestions';
+const LOCAL_STORAGE_KEY = 'MGQsSavedQuestions';
 
 export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedQuestions, setSavedQuestions] = useState<SavedQuestion[]>([]);
