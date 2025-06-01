@@ -319,7 +319,12 @@ export default function SubjectExpertPage() {
       {gradeLevelInput && subjectInput && chapterInput && (
         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-lg">
           <CardHeader>
-            <CardTitle>{currentConversation && currentConversation.exchanges.length > 0 ? 'Ask a Follow-up Question' : 'Ask Your First Question'}</CardTitle>
+            <CardTitle>
+              {currentConversation && currentConversation.exchanges.length > 0 ? 'Ask a Follow-up Question' : 'Ask Your First Question'}
+            </CardTitle>
+            {currentConversation && currentConversation.exchanges.length > 0 && (
+              <CardDescription>You can ask questions about the expert's previous answers. The conversation history will be considered.</CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
