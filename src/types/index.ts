@@ -14,7 +14,7 @@ export interface SavedQuestion {
   id: string;
   text: string;
   answer: string;
-  options?: string[]; // Added for MCQs
+  options?: string[];
   questionType: QuestionTypeNCERT;
   gradeLevel: GradeLevelNCERT;
   subject: string;
@@ -32,13 +32,13 @@ export interface QuestionContext {
 export interface GeneratedQuestionAnswerPair {
   question: string;
   answer: string;
-  options?: string[]; // Added for MCQs
+  options?: string[];
 }
 
 export interface GeneratedQuestionItem extends QuestionContext {
   text: string;
   answer: string;
-  options?: string[]; // Added for MCQs
+  options?: string[];
 }
 
 
@@ -77,7 +77,12 @@ export interface SavedJarvisExchange {
 }
 
 // Types for Subject Expert Q&A
+export interface ConversationTurn {
+  speaker: 'user' | 'ai';
+  text: string;
+}
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
+
 
 // Types for Saved Subject Expert Exchanges
 export interface SavedSubjectExpertExchange {
@@ -85,8 +90,7 @@ export interface SavedSubjectExpertExchange {
   gradeLevel: GradeLevelNCERT;
   subject: string;
   chapter: string;
-  userQuestion: string;
-  aiAnswer: string;
+  userQuestion: string; // This will store the initial question of a thread
+  aiAnswer: string;     // This will store the latest AI answer in that thread
   timestamp: number;
 }
-
