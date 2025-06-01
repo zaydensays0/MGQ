@@ -1,6 +1,6 @@
 
 import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
-import { Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon, Code2 } from 'lucide-react';
+import { Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon } from 'lucide-react';
 
 export const GRADE_LEVELS: GradeLevelNCERT[] = ['9', '10', '11', '12'];
 
@@ -10,7 +10,6 @@ export const SUBJECTS: SubjectOption[] = [
   { value: 'english', label: 'English', icon: BookOpenText as LucideIcon },
   { value: 'social_science', label: 'Social Science', icon: Globe2 as LucideIcon },
   { value: 'hindi', label: 'Hindi', icon: NotebookText as LucideIcon },
-  { value: 'python', label: 'Python', icon: Code2 as LucideIcon },
 ];
 
 export const QUESTION_TYPES: QuestionTypeOption[] = [
@@ -20,3 +19,4 @@ export const QUESTION_TYPES: QuestionTypeOption[] = [
   { value: 'fill_in_the_blanks', label: 'Fill in the Blanks' },
   { value: 'true_false', label: 'True/False' },
 ];
+
