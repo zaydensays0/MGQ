@@ -5,7 +5,7 @@ import { useSubjectExpertSaved } from '@/contexts/subject-expert-saved-context';
 import type { SavedSubjectExpertExchange, ConversationExchange } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+// Removed Accordion imports as they are no longer used to wrap individual items
 import { History, User, Bot, Trash2, Brain, FolderArchive } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -107,22 +107,12 @@ export default function SubjectExpertSavedPage() {
           </AlertDescription>
         </Alert>
       ) : (
-         <Accordion type="multiple" className="w-full space-y-6">
+         <div className="space-y-6"> {/* Changed from Accordion to a simple div */}
           {sortedExchanges.map((exchange) => (
-             <AccordionItem value={exchange.id} key={exchange.id} className="border-none">
-                {/* The AccordionTrigger and Content are not strictly necessary here if SavedExchangeItem handles its own display
-                    but we can keep it for consistency if we want each saved item to be collapsible itself, though not requested.
-                    For now, SavedExchangeItem will render the full content.
-                */}
-                <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>svg]:hidden sr-only">
-                    Trigger for {exchange.id}
-                </AccordionTrigger>
-                 <AccordionContent className="p-0 border-none">
-                    <SavedExchangeItem exchangeData={exchange} onRemove={removeExchange} />
-                 </AccordionContent>
-             </AccordionItem>
+            // Removed AccordionItem, AccordionTrigger, AccordionContent wrappers
+            <SavedExchangeItem key={exchange.id} exchangeData={exchange} onRemove={removeExchange} />
           ))}
-        </Accordion>
+        </div>
       )}
     </div>
   );
