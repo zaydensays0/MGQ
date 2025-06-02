@@ -228,6 +228,24 @@ export default function ExamPrepPage() {
         src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js"
         strategy="afterInteractive"
       />
+
+      {/* New set of scripts */}
+      <Script id="atoptions-config-2" strategy="afterInteractive">
+        {`
+          window.atOptions = {
+            'key' : 'a050636a31b3077dc1bbe04ffd14a25a',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+          };
+        `}
+      </Script>
+      <Script
+        id="highperformanceformat-invoke-2"
+        src="//www.highperformanceformat.com/a050636a31b3077dc1bbe04ffd14a25a/invoke.js"
+        strategy="afterInteractive"
+      />
     </div>
   );
 }
