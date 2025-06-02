@@ -176,7 +176,17 @@ export default function ExamPrepPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
-        {/* Ad Unit at the top */}
+        {/* New Ad Unit for app open */}
+        <div className="mb-8 w-full flex flex-col items-center">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-app-pub-3513387458252949"
+               data-ad-slot="6298142972"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
+        
+        {/* Existing Ad Unit at the top */}
         <div className="mb-8 w-full flex flex-col items-center">
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
@@ -229,7 +239,7 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* Ad Unit at the bottom */}
+      {/* Existing Ad Unit at the bottom */}
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
