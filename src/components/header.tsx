@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive } from 'lucide-react'; // Removed Brain, History
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -13,12 +13,12 @@ import { ThemeToggle } from '@/components/theme-toggle';
 const navLinks = [
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
+  { href: '/subject-expert', label: 'Subject Expert', icon: Brain },
+  { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/', label: 'Generate Questions', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
-  // { href: '/subject-expert', label: 'Subject Expert', icon: Brain }, // Removed
-  // { href: '/subject-expert-saved', label: 'Expert Archive', icon: History }, // Removed
 ];
 
 export function Header() {
@@ -106,3 +106,4 @@ export function Header() {
     </header>
   );
 }
+

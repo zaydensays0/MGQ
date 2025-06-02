@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SavedQuestionsProvider } from '@/contexts/saved-questions-context';
 import { NotesProvider } from '@/contexts/notes-context';
 import { JarvisSavedProvider } from '@/contexts/jarvis-saved-context';
+import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context'; // Added
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Determine if in development environment
@@ -62,16 +63,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-            <JarvisSavedProvider>
+          <JarvisSavedProvider>
+            <SubjectExpertSavedProvider> {/* Added */}
               <SavedQuestionsProvider>
                 <NotesProvider>
                   {children}
                 </NotesProvider>
               </SavedQuestionsProvider>
-            </JarvisSavedProvider>
+            </SubjectExpertSavedProvider>
+          </JarvisSavedProvider>
           <Toaster />
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
