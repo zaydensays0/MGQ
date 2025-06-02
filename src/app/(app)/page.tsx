@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react'; // Removed useEffect as it's no longer needed
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
@@ -164,23 +164,18 @@ export default function ExamPrepPage() {
     }
   };
 
-  // useEffect hook for ads removed
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.error("Adsense error: ", e);
+    }
+  }, []);
   
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
-
-        {/* AdMob Ad Unit at the top - REMOVED */}
-        {/*
-        <div className="mb-8 w-full flex flex-col items-center">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-app-pub-3513387458252949"
-               data-ad-slot="1513779641"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-        */}
 
         <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
 
@@ -225,24 +220,14 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* AdMob Ad Units Container at the bottom - REMOVED */}
-      {/*
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
-             data-ad-slot="1334425057"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        
-        <ins className="adsbygoogle"
-             style={{ display: 'block' }}
-             data-ad-client="ca-app-pub-3513387458252949"
-             data-ad-slot="2455935034"
+             data-ad-slot="3313721134"
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
       </div>
-      */}
     </div>
   );
 }
