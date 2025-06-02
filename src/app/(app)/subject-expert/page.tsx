@@ -52,15 +52,14 @@ export default function SubjectExpertPage() {
 
   useEffect(() => {
     if (currentContext) {
-      // If context is active and user changes grade/subject/chapter selections from the dropdowns/input
-      if (gradeLevel && // Ensure gradeLevel is not empty string from initial state
+      if (gradeLevel && 
           (currentContext.gradeLevel !== gradeLevel ||
            currentContext.subject !== subject ||
            currentContext.chapter !== chapter)) {
-        setCurrentContext(null); // Force re-setting context
+        setCurrentContext(null); 
         setActiveConversation([]);
         setCurrentQuestion('');
-        setError(null); // Clear previous errors
+        setError(null); 
         toast({ 
             title: "Context Changed", 
             description: "Selections updated. Click 'Start Chat' to begin with the new context.", 
@@ -76,7 +75,6 @@ export default function SubjectExpertPage() {
       toast({ title: 'Missing Context', description: 'Please select grade, subject, and enter chapter.', variant: 'destructive' });
       return false;
     }
-    // gradeLevel here is GradeLevelNCERT because the check above ensures it's not ''
     setCurrentContext({ gradeLevel, subject, chapter });
     setActiveConversation([]);
     setCurrentQuestion('');
@@ -151,80 +149,80 @@ export default function SubjectExpertPage() {
     : "Ask a follow-up question or start a new one...";
 
   return (
-    <div className="container mx-auto p-4 md:p-8 flex flex-col h-[calc(100vh-4rem)]"> {/* Adjust height based on header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-headline font-bold flex items-center">
-          <Brain className="w-8 h-8 mr-3 text-primary" />
-          Subject Expert
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Ask questions about a specific grade, subject, and chapter. Get contextual help from our AI expert.
-        </p>
-      </div>
+    <div className="flex flex-col h-full">
+      <div className="container mx-auto p-4 md:p-8 flex flex-col flex-grow min-h-0">
+        <div className="mb-8">
+          <h1 className="text-3xl font-headline font-bold flex items-center">
+            <Brain className="w-8 h-8 mr-3 text-primary" />
+            Subject Expert
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Ask questions about a specific grade, subject, and chapter. Get contextual help from our AI expert.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="space-y-2">
-          <Label htmlFor="gradeLevel-se">Grade Level</Label>
-          <Select 
-            value={gradeLevel} 
-            onValueChange={(value) => setGradeLevel(value as GradeLevelNCERT | '')} 
-            required
-          >
-            <SelectTrigger id="gradeLevel-se"><SelectValue placeholder="Select Grade" /></SelectTrigger>
-            <SelectContent>
-              {GRADE_LEVELS.map(gl => <SelectItem key={gl} value={gl}>Class {gl}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="space-y-2">
+            <Label htmlFor="gradeLevel-se">Grade Level</Label>
+            <Select 
+              value={gradeLevel} 
+              onValueChange={(value) => setGradeLevel(value as GradeLevelNCERT | '')} 
+              required
+            >
+              <SelectTrigger id="gradeLevel-se"><SelectValue placeholder="Select Grade" /></SelectTrigger>
+              <SelectContent>
+                {GRADE_LEVELS.map(gl => <SelectItem key={gl} value={gl}>Class {gl}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="subject-se">Subject</Label>
+            <Select value={subject} onValueChange={setSubject} required>
+              <SelectTrigger id="subject-se">
+                <SelectValue placeholder="Select Subject">
+                  {selectedSubjectDetails && selectedSubjectDetails.icon && (
+                      <selectedSubjectDetails.icon className="w-4 h-4 mr-2 inline-block" />
+                  )}
+                  {selectedSubjectDetails?.label || "Select Subject"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SUBJECTS.map(s => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <div className="flex items-center">
+                      {s.icon && <s.icon className="w-4 h-4 mr-2" />}
+                      {s.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="chapter-se">Chapter</Label>
+            <Input id="chapter-se" value={chapter} onChange={e => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="subject-se">Subject</Label>
-          <Select value={subject} onValueChange={setSubject} required>
-            <SelectTrigger id="subject-se">
-              <SelectValue placeholder="Select Subject">
-                {selectedSubjectDetails && selectedSubjectDetails.icon && (
-                    <selectedSubjectDetails.icon className="w-4 h-4 mr-2 inline-block" />
-                )}
-                {selectedSubjectDetails?.label || "Select Subject"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SUBJECTS.map(s => (
-                <SelectItem key={s.value} value={s.value}>
-                  <div className="flex items-center">
-                    {s.icon && <s.icon className="w-4 h-4 mr-2" />}
-                    {s.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="chapter-se">Chapter</Label>
-          <Input id="chapter-se" value={chapter} onChange={e => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
-        </div>
-      </div>
-      
-      {!currentContext && (
-        <div className="flex-grow flex flex-col items-center justify-center">
-            <Card className="w-full max-w-md text-center p-6 shadow-lg">
-                <CardHeader>
-                    <CardTitle>Set Learning Context</CardTitle>
-                    <CardDescription>Please select a grade, subject, and chapter above to begin your session with the Subject Expert.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button onClick={startNewConversation} disabled={!canStartChat || isLoading} className="w-full">
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Start Chat
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
-      )}
+        
+        {!currentContext && (
+          <div className="flex-grow flex flex-col items-center justify-center">
+              <Card className="w-full max-w-md text-center p-6 shadow-lg">
+                  <CardHeader>
+                      <CardTitle>Set Learning Context</CardTitle>
+                      <CardDescription>Please select a grade, subject, and chapter above to begin your session with the Subject Expert.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Button onClick={startNewConversation} disabled={!canStartChat || isLoading} className="w-full">
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          Start Chat
+                      </Button>
+                  </CardContent>
+              </Card>
+          </div>
+        )}
 
-      {currentContext && (
-        <>
-          <Card className="flex-grow flex flex-col shadow-lg overflow-hidden">
+        {currentContext && (
+          <Card className="flex-grow flex flex-col shadow-lg overflow-hidden min-h-0">
             <CardHeader className="bg-muted/50 border-b p-4">
               <CardTitle className="text-lg">
                 Chat: Class {currentContext.gradeLevel} {currentContext.subject} - Ch: {currentContext.chapter}
@@ -303,16 +301,16 @@ export default function SubjectExpertPage() {
               </form>
             </CardFooter>
           </Card>
-        </>
-      )}
+        )}
 
-      {error && (
-        <Alert variant="destructive" className="mt-6">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive" className="mt-6">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
     </div>
   );
 }
