@@ -165,13 +165,32 @@ export default function ExamPrepPage() {
   };
 
   useEffect(() => {
-    try {
-      // @ts-ignore
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-      console.error("Adsense error: ", e);
-    }
-  }, []);
+    const LIKELY_ADSENSE_SCRIPT_LOAD_TIME_MS = 100; // A small delay
+
+    const attemptPush = () => {
+      try {
+        // @ts-ignore
+        if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function') {
+          // console.log('Attempting adsbygoogle.push()');
+          // @ts-ignore
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } else {
+          // Script might not be loaded yet, try again shortly if not too many retries
+          // console.warn('adsbygoogle.push is not a function yet or adsbygoogle is undefined. Ads might not load.');
+        }
+      } catch (e) {
+        // Catching errors from the push itself.
+        console.error("Adsense push error: ", e);
+      }
+    };
+
+    // Give the browser a moment to render and the AdSense script to potentially load/initialize
+    const timeoutId = setTimeout(attemptPush, LIKELY_ADSENSE_SCRIPT_LOAD_TIME_MS);
+
+    return () => {
+      clearTimeout(timeoutId); // Clean up the timeout if the component unmounts
+    };
+  }, []); // Empty dependency array means this runs once after initial render
   
   return (
     <div className="container mx-auto p-4 md:p-8">
