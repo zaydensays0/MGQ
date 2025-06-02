@@ -54,7 +54,7 @@ export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ 
     const newExchange: SavedSubjectExpertExchange = {
       id: uuidv4(),
       timestamp: Date.now(),
-      ...data,
+      ...data, // Ensures exchanges array is part of the new object if provided in data
     };
     setSavedExchanges((prevExchanges) => [newExchange, ...prevExchanges].sort((a,b) => b.timestamp - a.timestamp));
   }, []);
@@ -74,11 +74,14 @@ export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ 
         savedEx.gradeLevel === gradeLevel &&
         savedEx.subject === subject &&
         savedEx.chapter === chapter &&
+        // Check if savedEx.exchanges is an array before trying to access its properties
+        Array.isArray(savedEx.exchanges) && 
         savedEx.exchanges.length === exchangesToCompare.length &&
-        savedEx.exchanges.every((ex, index) => 
-          ex.question === exchangesToCompare[index].question &&
-          ex.answer === exchangesToCompare[index].answer
-        )
+        savedEx.exchanges.every((ex, index) => {
+          const compareEx = exchangesToCompare[index];
+          // Ensure compareEx is defined (it should be if lengths match)
+          return compareEx && ex.question === compareEx.question && ex.answer === compareEx.answer;
+        })
     );
   }, [savedExchanges]);
 
