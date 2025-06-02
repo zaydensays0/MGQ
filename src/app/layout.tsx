@@ -7,6 +7,7 @@ import { NotesProvider } from '@/contexts/notes-context';
 import { JarvisSavedProvider } from '@/contexts/jarvis-saved-context';
 import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context'; // Added
 import { ThemeProvider } from "@/components/theme-provider";
+import Script from 'next/script'; // Added Script import
 
 // Determine if in development environment
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -55,6 +56,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+        
+        {/* Google AdSense Script */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-3513387458252949"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
         <ThemeProvider
@@ -78,4 +87,3 @@ export default function RootLayout({
     </html>
   );
 }
-

@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 import dynamic from 'next/dynamic';
-// import Script from 'next/script'; // Script component no longer needed for this file
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
@@ -164,6 +163,17 @@ export default function ExamPrepPage() {
       return null;
     }
   };
+
+  useEffect(() => {
+    // Initialize ad unit
+    try {
+      if (typeof window !== "undefined" && window.adsbygoogle) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (e) {
+      console.error("Error pushing AdSense ad:", e);
+    }
+  }, []);
   
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -211,8 +221,15 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* Removed script tags */}
-
+      {/* AdMob Ad Unit */}
+      <div className="mt-12 w-full flex justify-center">
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-app-pub-3513387458252949"
+             data-ad-slot="1334425057"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
     </div>
   );
 }
