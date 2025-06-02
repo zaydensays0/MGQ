@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { GradeLevelNCERT, ConversationTurn } from '@/types';
+import type { GradeLevelNCERT } from '@/types'; // Removed ConversationTurn as it's implicitly defined by the schema
 
 const AnswerSubjectQuestionInputSchema = z.object({
   gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the question context.'),
@@ -35,7 +35,7 @@ export async function answerSubjectQuestion(input: AnswerSubjectQuestionInput): 
 
 const prompt = ai.definePrompt({
   name: 'answerSubjectQuestionPrompt',
-  input: {schema: AnswerSubjectQuestionInputSchema},
+  input: {schema: AnswerSubjectQuestionInputSchema}, // This schema describes the 'input' param to the prompt() call
   output: {schema: AnswerSubjectQuestionOutputSchema},
   prompt: `You are a knowledgeable and helpful Subject Expert AI focusing on the NCERT syllabus.
 You are assisting a student in Class {{gradeLevel}} with the subject: {{subject}}, specifically the chapter: "{{chapter}}".
@@ -46,8 +46,8 @@ If the conversation history is empty, this is the first question.
 {{#if conversationHistory.length}}
 Conversation History:
 {{#each conversationHistory}}
-  {{#if (eq speaker "user")}}User: {{text}}{{/if}}
-  {{#if (eq speaker "ai")}}Expert: {{text}}{{/if}}
+  {{#if this.isUser}}User: {{this.text}}{{/if}}
+  {{#if this.isAI}}Expert: {{this.text}}{{/if}}
 {{/each}}
 {{/if}}
 
@@ -56,10 +56,6 @@ Current User Question: "{{userQuestion}}"
 Your expert answer:`,
 });
 
-// Helper function to determine equality for Handlebars, as Genkit's Handlebars might be basic.
-// However, Genkit Handlebars typically supports {{#if (eq value1 value2)}}
-// If not, this logic would need to be in the flow before calling the prompt,
-// or the prompt template simplified. For now, assuming 'eq' helper works as it's common.
 
 const answerSubjectQuestionFlow = ai.defineFlow(
   {
@@ -68,7 +64,21 @@ const answerSubjectQuestionFlow = ai.defineFlow(
     outputSchema: AnswerSubjectQuestionOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    // Pre-process conversation history for easier templating, adding isUser and isAI flags
+    const processedHistory = input.conversationHistory?.map(turn => ({
+      text: turn.text,
+      speaker: turn.speaker, // Keep original speaker if needed, or omit if only flags are used by template
+      isUser: turn.speaker === 'user',
+      isAI: turn.speaker === 'ai',
+    }));
+
+    // Pass the original input structure, but with the processed conversationHistory
+    const promptInput = {
+        ...input,
+        conversationHistory: processedHistory,
+    };
+    
+    const {output} = await prompt(promptInput);
     if (!output) {
       return { aiAnswer: "I'm sorry, I couldn't generate an answer for this specific topic at this time. Please try rephrasing or ask a different question." };
     }
