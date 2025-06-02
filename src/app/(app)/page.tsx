@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Script from 'next/script'; // Import the Script component
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
@@ -209,6 +210,24 @@ export default function ExamPrepPage() {
           </Alert>
         )}
       </div>
+
+      {/* Added scripts using next/script */}
+      <Script id="atoptions-config" strategy="afterInteractive">
+        {`
+          window.atOptions = {
+            'key' : '0762c37cdf81985c469d1cebece2886f',
+            'format' : 'iframe',
+            'height' : 300,
+            'width' : 160,
+            'params' : {}
+          };
+        `}
+      </Script>
+      <Script
+        id="highperformanceformat-invoke"
+        src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js"
+        strategy="afterInteractive"
+      />
     </div>
   );
 }
