@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { SavedJarvisExchange } from '@/types';
+import type { SavedJarvisExchange, ConversationExchange } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,12 +9,12 @@ interface JarvisSavedContextType {
   savedExchanges: SavedJarvisExchange[];
   addExchange: (data: Omit<SavedJarvisExchange, 'id' | 'timestamp'>) => void;
   removeExchange: (id: string) => void;
-  isSaved: (userQuestion: string, jarvisAnswer: string) => boolean;
+  isSaved: (title: string, exchanges: ConversationExchange[]) => boolean;
 }
 
 const JarvisSavedContext = createContext<JarvisSavedContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_JARVIS = 'MGQsSavedJarvisExchanges';
+const LOCAL_STORAGE_KEY_JARVIS = 'MGQsSavedJarvisExchanges_v2'; // New key for new structure
 
 export const JarvisSavedProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedExchanges, setSavedExchanges] = useState<SavedJarvisExchange[]>([]);
@@ -49,7 +49,7 @@ export const JarvisSavedProvider: React.FC<{ children: ReactNode }> = ({ childre
     const newExchange: SavedJarvisExchange = {
       id: uuidv4(),
       timestamp: Date.now(),
-      ...data,
+      ...data, // Contains title and exchanges array
     };
     setSavedExchanges((prevExchanges) => [newExchange, ...prevExchanges].sort((a,b) => b.timestamp - a.timestamp));
   }, []);
@@ -58,9 +58,19 @@ export const JarvisSavedProvider: React.FC<{ children: ReactNode }> = ({ childre
     setSavedExchanges((prevExchanges) => prevExchanges.filter((ex) => ex.id !== id));
   }, []);
 
-  const isSaved = useCallback((userQuestion: string, jarvisAnswer: string): boolean => {
+  const isSaved = useCallback((
+    title: string,
+    exchangesToCompare: ConversationExchange[]
+  ): boolean => {
     return savedExchanges.some(
-      (ex) => ex.userQuestion === userQuestion && ex.jarvisAnswer === jarvisAnswer
+      (savedEx) =>
+        savedEx.title === title &&
+        Array.isArray(savedEx.exchanges) &&
+        savedEx.exchanges.length === exchangesToCompare.length &&
+        savedEx.exchanges.every((ex, index) => {
+          const compareEx = exchangesToCompare[index];
+          return compareEx && ex.question === compareEx.question && ex.answer === compareEx.answer;
+        })
     );
   }, [savedExchanges]);
 

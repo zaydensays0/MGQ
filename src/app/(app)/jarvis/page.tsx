@@ -1,17 +1,17 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Bot, Sparkles, Loader2, Terminal, Save, CheckCircle, User } from 'lucide-react'; // Added User icon
+import { Bot, Sparkles, Loader2, Terminal, User, Send, Save, CheckCircle, MessageSquarePlus } from 'lucide-react';
 import { askJarvis, type AskJarvisInput, type AskJarvisOutput } from '@/ai/flows/ask-jarvis';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 import { useJarvisSaved } from '@/contexts/jarvis-saved-context';
+import type { ConversationExchange, ConversationTurn } from '@/types';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <p>Loading answer...</p>,
@@ -20,14 +20,19 @@ const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
 
 export default function JarvisPage() {
   const [userQuestionInput, setUserQuestionInput] = useState('');
-  const [activeConversation, setActiveConversation] = useState<{ question: string; answer: string } | null>(null);
+  const [chatLog, setChatLog] = useState<ConversationExchange[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { addExchange, isSaved: isExchangeSaved } = useJarvisSaved();
+  const { addExchange, isSaved: isConversationSaved } = useJarvisSaved();
+  const conversationEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatLog]);
+
+  const handleSubmit = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (!userQuestionInput.trim()) {
       toast({
         title: 'Empty Question',
@@ -39,21 +44,24 @@ export default function JarvisPage() {
 
     setIsLoading(true);
     setError(null);
-    // Don't reset activeConversation here if you want to keep the previous one visible during loading
-    // setActiveConversation(null); 
 
     const questionToSubmit = userQuestionInput;
-    const input: AskJarvisInput = { userQuestion: questionToSubmit };
+
+    const conversationHistoryForAI: ConversationTurn[] = chatLog.flatMap(exchange => [
+      { speaker: 'user' as 'user', text: exchange.question },
+      { speaker: 'ai' as 'ai', text: exchange.answer }
+    ]);
+
+    const input: AskJarvisInput = { 
+      userQuestion: questionToSubmit,
+      conversationHistory: conversationHistoryForAI,
+    };
 
     try {
       const result: AskJarvisOutput = await askJarvis(input);
       if (result && result.jarvisAnswer) {
-        setActiveConversation({ question: questionToSubmit, answer: result.jarvisAnswer });
-        setUserQuestionInput(''); // Clear input bar after successful response
-        toast({
-          title: 'Jarvis Responded!',
-          description: "Here's what Jarvis has to say.",
-        });
+        setChatLog(prev => [...prev, { question: questionToSubmit, answer: result.jarvisAnswer }]);
+        setUserQuestionInput(''); 
       } else {
         throw new Error('No answer received from Jarvis.');
       }
@@ -71,139 +79,142 @@ export default function JarvisPage() {
     }
   };
 
-  const handleSaveResponse = () => {
-    if (activeConversation) {
-      if (!isExchangeSaved(activeConversation.question, activeConversation.answer)) {
-        addExchange({ userQuestion: activeConversation.question, jarvisAnswer: activeConversation.answer });
+  const handleSaveConversation = () => {
+    if (chatLog.length > 0) {
+      const conversationTitle = chatLog[0].question; // Use the first question as title
+      if (!isConversationSaved(conversationTitle, chatLog)) {
+        addExchange({ title: conversationTitle, exchanges: chatLog });
         toast({
-          title: 'Response Saved!',
-          description: 'This conversation with Jarvis has been saved.',
+          title: 'Conversation Saved!',
+          description: 'This chat with Jarvis has been saved.',
         });
-        // Optionally, clear the active conversation from view after saving
-        // setActiveConversation(null);
       } else {
         toast({
           title: 'Already Saved',
-          description: 'This response has already been saved.',
+          description: 'This conversation has already been saved.',
           variant: 'default',
         });
       }
     }
   };
   
-  const currentExchangeIsSaved = activeConversation ? isExchangeSaved(activeConversation.question, activeConversation.answer) : false;
+  const currentConversationIsSaved = chatLog.length > 0 ? isConversationSaved(chatLog[0].question, chatLog) : false;
 
+  const handleNewConversation = () => {
+    setUserQuestionInput('');
+    setChatLog([]);
+    setError(null);
+    toast({
+      title: "New Conversation Started",
+      description: "Ask Jarvis anything!",
+    });
+  };
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-headline font-bold flex items-center">
-          <Bot className="w-8 h-8 mr-3 text-primary" />
-          Ask Jarvis
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Jarvis is here to help. Ask any question, study-related or otherwise!
-        </p>
-      </div>
+    <div className="flex flex-col h-full">
+      <div className="container mx-auto p-4 md:p-8 flex flex-col flex-grow min-h-0">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center">
+            <Bot className="w-8 h-8 mr-3 text-primary" />
+            <div>
+              <h1 className="text-3xl font-headline font-bold">Ask Jarvis</h1>
+              <p className="text-muted-foreground mt-1">
+                Jarvis is here to help. Ask any question, study-related or otherwise!
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={handleNewConversation}>
+            <MessageSquarePlus className="mr-2 h-5 w-5" />
+            New Chat
+          </Button>
+        </div>
 
-      <Card className="w-full max-w-2xl mx-auto shadow-lg">
-        <CardHeader>
-          <CardTitle>What's on your mind?</CardTitle>
-          <CardDescription>
-            Type your question below, and Jarvis will do its best to answer.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="jarvisQuestion">Your Question</Label>
+        <Card className="flex-grow flex flex-col shadow-lg overflow-hidden min-h-0">
+          <CardHeader className="bg-muted/50 border-b p-4">
+            <CardTitle className="text-lg">Jarvis Chat</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-grow p-4 space-y-4 overflow-y-auto">
+            {chatLog.length === 0 && !isLoading && (
+              <div className="text-center text-muted-foreground py-8">
+                <Bot className="w-12 h-12 mx-auto mb-2 text-primary/50" />
+                What's on your mind? Ask Jarvis...
+              </div>
+            )}
+            {chatLog.map((exchange, index) => (
+              <div key={index} className="space-y-3">
+                <div className="flex items-start space-x-3 justify-end">
+                  <div className="bg-primary text-primary-foreground p-3 rounded-lg rounded-br-none max-w-xl shadow">
+                    <p className="font-semibold text-sm mb-0.5 flex items-center"><User className="w-4 h-4 mr-1.5 flex-shrink-0" /> You</p>
+                    <p className="text-sm leading-relaxed">{exchange.question}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                    <div className="bg-card border p-3 rounded-lg rounded-bl-none max-w-xl shadow">
+                      <p className="font-semibold text-sm mb-0.5 flex items-center text-accent"><Bot className="w-4 h-4 mr-1.5 flex-shrink-0" /> Jarvis</p>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <DynamicReactMarkdown>{exchange.answer}</DynamicReactMarkdown>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex items-start space-x-3">
+                  <div className="bg-card border p-3 rounded-lg rounded-bl-none max-w-xl shadow animate-pulse">
+                      <p className="font-semibold text-sm mb-0.5 flex items-center text-accent"><Bot className="w-4 h-4 mr-1.5 flex-shrink-0" /> Jarvis</p>
+                      <div className="space-y-2 mt-1">
+                          <div className="h-3 bg-muted rounded w-3/4"></div>
+                          <div className="h-3 bg-muted rounded w-full"></div>
+                          <div className="h-3 bg-muted rounded w-5/6"></div>
+                      </div>
+                  </div>
+              </div>
+            )}
+            <div ref={conversationEndRef} />
+          </CardContent>
+          <CardFooter className="p-4 border-t bg-muted/30">
+            <form onSubmit={handleSubmit} className="flex w-full items-start space-x-2">
               <Textarea
-                id="jarvisQuestion"
                 value={userQuestionInput}
                 onChange={(e) => setUserQuestionInput(e.target.value)}
-                placeholder="e.g., What is the theory of relativity? or What's the weather like today?"
-                rows={4}
-                className="text-base"
+                placeholder="Type your question for Jarvis..."
+                rows={2}
+                className="flex-grow text-sm resize-none"
                 disabled={isLoading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-5 w-5" />
-              )}
-              {isLoading ? 'Jarvis is thinking...' : 'Ask Jarvis'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {error && (
-        <Alert variant="destructive" className="mt-6 w-full max-w-2xl mx-auto">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {isLoading && !error && !activeConversation && ( // Show skeleton only if no active conversation
-         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md animate-pulse">
-          <CardHeader>
-            <div className="h-6 bg-muted rounded w-3/4"></div> {/* For Question title */}
-            <div className="h-4 bg-muted rounded w-full mt-2"></div> {/* For Question text */}
-            <div className="h-6 bg-muted rounded w-3/4 mt-4"></div> {/* For Answer title */}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="h-4 bg-muted rounded w-full"></div>
-            <div className="h-4 bg-muted rounded w-full"></div>
-            <div className="h-4 bg-muted rounded w-5/6"></div>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeConversation && !isLoading && (
-        <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <User className="w-5 h-5 mr-2 text-primary flex-shrink-0" />
-              Your Question
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 pb-4">
-            <p className="text-foreground leading-relaxed">{activeConversation.question}</p>
-          </CardContent>
-          
-          <hr className="mx-6 border-border" />
-
-          <CardHeader className="pt-4 pb-3">
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <Bot className="w-5 h-5 mr-2 text-accent flex-shrink-0" />
-              Jarvis's Answer
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
-              <DynamicReactMarkdown>{activeConversation.answer}</DynamicReactMarkdown>
-            </div>
-          </CardContent>
-          <CardFooter className="p-4 border-t bg-muted/30 rounded-b-md">
-            <Button
-              onClick={handleSaveResponse}
-              disabled={currentExchangeIsSaved}
-              variant={currentExchangeIsSaved ? "secondary" : "default"}
-            >
-              {currentExchangeIsSaved ? (
-                <CheckCircle className="mr-2 h-5 w-5" />
-              ) : (
-                <Save className="mr-2 h-5 w-5" />
-              )}
-              {currentExchangeIsSaved ? 'Saved' : 'Save Response'}
-            </Button>
+              <Button type="submit" size="icon" disabled={isLoading || !userQuestionInput.trim()}>
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                <span className="sr-only">Send</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleSaveConversation}
+                disabled={isLoading || chatLog.length === 0 || currentConversationIsSaved}
+                aria-label={currentConversationIsSaved ? "Conversation Saved" : "Save Conversation"}
+              >
+                {currentConversationIsSaved ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Save className="h-5 w-5" />}
+                  <span className="sr-only">{currentConversationIsSaved ? "Conversation Saved" : "Save Conversation"}</span>
+              </Button>
+            </form>
           </CardFooter>
         </Card>
-      )}
+
+        {error && (
+          <Alert variant="destructive" className="mt-6">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
     </div>
   );
 }
-

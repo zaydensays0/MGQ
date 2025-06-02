@@ -66,13 +66,19 @@ export interface Note {
 export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 
 // Types for Jarvis general Q&A
-export type { AskJarvisInput, AskJarvisOutput } from '@/ai/flows/ask-jarvis';
+// export type { AskJarvisInput, AskJarvisOutput } from '@/ai/flows/ask-jarvis'; // Will be re-defined by the flow itself
 
-// Types for Saved Jarvis Exchanges
+// Represents a single question-answer pair in a conversation, used for storing
+export interface ConversationExchange {
+  question: string;
+  answer: string;
+}
+
+// Types for Saved Jarvis Exchanges - Updated Structure
 export interface SavedJarvisExchange {
   id: string;
-  userQuestion: string;
-  jarvisAnswer: string;
+  title: string; // e.g., the first question of the conversation
+  exchanges: ConversationExchange[];
   timestamp: number;
 }
 
@@ -82,12 +88,6 @@ export interface ConversationTurn { // Used by AI Flow input
   text: string;
 }
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
-
-// Represents a single question-answer pair in a conversation, used for storing
-export interface ConversationExchange {
-  question: string;
-  answer: string;
-}
 
 // Types for Saved Subject Expert Exchanges
 export interface SavedSubjectExpertExchange {
