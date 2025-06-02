@@ -178,6 +178,17 @@ export default function ExamPrepPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
+
+        {/* AdMob Ad Unit at the top */}
+        <div className="mb-8 w-full flex flex-col items-center">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-app-pub-3513387458252949"
+               data-ad-slot="1513779641"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
+
         <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
 
         {error && (
@@ -221,9 +232,9 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* AdMob Ad Units Container */}
+      {/* AdMob Ad Units Container at the bottom */}
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
-        {/* First Ad Unit */}
+        {/* First Bottom Ad Unit */}
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
@@ -231,7 +242,7 @@ export default function ExamPrepPage() {
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
         
-        {/* Second Ad Unit */}
+        {/* Second Bottom Ad Unit */}
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
