@@ -246,16 +246,6 @@ export default function ExamPrepPage() {
         src="//www.highperformanceformat.com/a050636a31b3077dc1bbe04ffd14a25a/invoke.js"
         strategy="afterInteractive"
       />
-
-      {/* Third set of scripts */}
-      <Script
-        id="profitableratecpm-invoke"
-        src="//pl26817799.profitableratecpm.com/557a252c055ae7b7626b87b6a2c95d51/invoke.js"
-        strategy="lazyOnload" // Use lazyOnload for async scripts that don't block rendering
-        async // The original script had async
-        data-cfasync="false" // The original script had data-cfasync
-      />
-      <div id="container-557a252c055ae7b7626b87b6a2c95d51"></div>
     </div>
   );
 }
