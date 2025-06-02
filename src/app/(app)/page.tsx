@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState } from 'react'; // Removed useEffect as it's no longer needed
 import dynamic from 'next/dynamic';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
@@ -164,22 +164,14 @@ export default function ExamPrepPage() {
     }
   };
 
-  useEffect(() => {
-    // Initialize ad units
-    try {
-      if (typeof window !== "undefined" && window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      }
-    } catch (e) {
-      console.error("Error pushing AdSense ad:", e);
-    }
-  }, []);
+  // useEffect hook for ads removed
   
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
 
-        {/* AdMob Ad Unit at the top */}
+        {/* AdMob Ad Unit at the top - REMOVED */}
+        {/*
         <div className="mb-8 w-full flex flex-col items-center">
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
@@ -188,6 +180,7 @@ export default function ExamPrepPage() {
                data-ad-format="auto"
                data-full-width-responsive="true"></ins>
         </div>
+        */}
 
         <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
 
@@ -232,9 +225,9 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* AdMob Ad Units Container at the bottom */}
+      {/* AdMob Ad Units Container at the bottom - REMOVED */}
+      {/*
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
-        {/* First Bottom Ad Unit */}
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
@@ -242,7 +235,6 @@ export default function ExamPrepPage() {
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
         
-        {/* Second Bottom Ad Unit */}
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
@@ -250,6 +242,7 @@ export default function ExamPrepPage() {
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
       </div>
+      */}
     </div>
   );
 }
