@@ -165,7 +165,7 @@ export default function ExamPrepPage() {
   };
 
   useEffect(() => {
-    // Initialize ad unit
+    // Initialize ad units
     try {
       if (typeof window !== "undefined" && window.adsbygoogle) {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -221,12 +221,21 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* AdMob Ad Unit */}
-      <div className="mt-12 w-full flex justify-center">
+      {/* AdMob Ad Units Container */}
+      <div className="mt-12 w-full flex flex-col items-center space-y-8">
+        {/* First Ad Unit */}
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
              data-ad-slot="1334425057"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        
+        {/* Second Ad Unit */}
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-app-pub-3513387458252949"
+             data-ad-slot="2455935034"
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
       </div>
