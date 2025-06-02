@@ -50,15 +50,38 @@ export default function SubjectExpertPage() {
     conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConversation]);
 
+  useEffect(() => {
+    if (currentContext) {
+      // If context is active and user changes grade/subject/chapter selections from the dropdowns/input
+      if (gradeLevel && // Ensure gradeLevel is not empty string from initial state
+          (currentContext.gradeLevel !== gradeLevel ||
+           currentContext.subject !== subject ||
+           currentContext.chapter !== chapter)) {
+        setCurrentContext(null); // Force re-setting context
+        setActiveConversation([]);
+        setCurrentQuestion('');
+        setError(null); // Clear previous errors
+        toast({ 
+            title: "Context Changed", 
+            description: "Selections updated. Click 'Start Chat' to begin with the new context.", 
+            variant: "default"
+        });
+      }
+    }
+  }, [gradeLevel, subject, chapter, currentContext, toast]);
+
+
   const startNewConversation = () => {
     if (!gradeLevel || !subject.trim() || !chapter.trim()) {
       toast({ title: 'Missing Context', description: 'Please select grade, subject, and enter chapter.', variant: 'destructive' });
       return false;
     }
+    // gradeLevel here is GradeLevelNCERT because the check above ensures it's not ''
     setCurrentContext({ gradeLevel, subject, chapter });
     setActiveConversation([]);
     setCurrentQuestion('');
     setError(null);
+    toast({title: "Context Set", description: `Ready to chat about Class ${gradeLevel} ${subject} - Ch: ${chapter}. Ask your first question!`})
     return true;
   };
 
@@ -69,16 +92,9 @@ export default function SubjectExpertPage() {
       return;
     }
 
-    let contextToUse = currentContext;
-    if (!contextToUse) {
-      if (!startNewConversation()) return;
-      // Since startNewConversation sets context asynchronously if called for the first time,
-      // we need to use the just-set values.
-      contextToUse = { gradeLevel: gradeLevel as GradeLevelNCERT, subject, chapter };
-       if (!contextToUse.gradeLevel) { // ensure gradeLevel is set
-            toast({ title: 'Missing Grade Level', description: 'Please select a grade level.', variant: 'destructive' });
-            return;
-        }
+    if (!currentContext) {
+      toast({ title: 'Error', description: 'Chat context not set. Please set grade, subject, and chapter, then click "Start Chat".', variant: 'destructive' });
+      return;
     }
     
     setIsLoading(true);
@@ -90,7 +106,9 @@ export default function SubjectExpertPage() {
     ]);
 
     const input: AnswerSubjectQuestionInput = {
-      ...contextToUse,
+      gradeLevel: currentContext.gradeLevel,
+      subject: currentContext.subject,
+      chapter: currentContext.chapter,
       userQuestion: currentQuestion,
       conversationHistory: conversationHistoryForAI,
     };
@@ -126,7 +144,11 @@ export default function SubjectExpertPage() {
 
   const currentExchangeIsActuallySaved = currentContext ? isConversationSaved(currentContext.gradeLevel, currentContext.subject, currentContext.chapter, activeConversation) : false;
 
-  const canStartChat = gradeLevel && subject && chapter;
+  const canStartChat = gradeLevel && subject.trim() && chapter.trim();
+
+  const placeholderText = currentContext && activeConversation.length === 0
+    ? `Ask your first question about ${currentContext.chapter}...`
+    : "Ask a follow-up question or start a new one...";
 
   return (
     <div className="container mx-auto p-4 md:p-8 flex flex-col h-[calc(100vh-4rem)]"> {/* Adjust height based on header */}
@@ -143,7 +165,11 @@ export default function SubjectExpertPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="space-y-2">
           <Label htmlFor="gradeLevel-se">Grade Level</Label>
-          <Select value={gradeLevel} onValueChange={(value) => setGradeLevel(value as GradeLevelNCERT)} required>
+          <Select 
+            value={gradeLevel} 
+            onValueChange={(value) => setGradeLevel(value as GradeLevelNCERT | '')} 
+            required
+          >
             <SelectTrigger id="gradeLevel-se"><SelectValue placeholder="Select Grade" /></SelectTrigger>
             <SelectContent>
               {GRADE_LEVELS.map(gl => <SelectItem key={gl} value={gl}>Class {gl}</SelectItem>)}
@@ -208,7 +234,7 @@ export default function SubjectExpertPage() {
               {activeConversation.length === 0 && !isLoading && (
                 <div className="text-center text-muted-foreground py-8">
                   <Brain className="w-12 h-12 mx-auto mb-2 text-primary/50" />
-                  Ask your first question below.
+                  {placeholderText}
                 </div>
               )}
               {activeConversation.map((exchange, index) => (
@@ -248,7 +274,7 @@ export default function SubjectExpertPage() {
                 <Textarea
                   value={currentQuestion}
                   onChange={(e) => setCurrentQuestion(e.target.value)}
-                  placeholder="Ask a follow-up question or start a new one..."
+                  placeholder={placeholderText}
                   rows={2}
                   className="flex-grow text-sm resize-none"
                   disabled={isLoading || !currentContext}
@@ -290,3 +316,5 @@ export default function SubjectExpertPage() {
     </div>
   );
 }
+    
+    
