@@ -172,20 +172,15 @@ export default function ExamPrepPage() {
       try {
         // @ts-ignore
         if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function') {
-          // console.log('Attempting adsbygoogle.push()');
           // @ts-ignore
           (window.adsbygoogle = window.adsbygoogle || []).push({});
         } else {
-          // Script might not be loaded yet, try again shortly if not too many retries
-          // console.warn('adsbygoogle.push is not a function yet or adsbygoogle is undefined. Ads might not load.');
         }
       } catch (e) {
-        // Catching errors from the push itself.
         console.error("Adsense push error: ", e);
       }
     };
 
-    // Give the browser a moment to render and the AdSense script to potentially load/initialize
     const timeoutId = setTimeout(attemptPush, LIKELY_ADSENSE_SCRIPT_LOAD_TIME_MS);
 
     return () => {
@@ -276,7 +271,7 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* Existing Ad Unit at the bottom */}
+      {/* Ad units at the bottom */}
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
@@ -285,10 +280,24 @@ export default function ExamPrepPage() {
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
         
-        {/* New Ad Code at the bottom */}
         <div>
           <Script id="profitableratecpm-script" data-cfasync="false" src="//pl26817799.profitableratecpm.com/557a252c055ae7b7626b87b6a2c95d51/invoke.js" strategy="lazyOnload" />
           <div id="container-557a252c055ae7b7626b87b6a2c95d51"></div>
+        </div>
+
+        <div className="mt-4">
+          <Script id="ad-options-a05063" strategy="lazyOnload">
+              {`
+                  atOptions = {
+                      'key' : 'a050636a31b3077dc1bbe04ffd14a25a',
+                      'format' : 'iframe',
+                      'height' : 50,
+                      'width' : 320,
+                      'params' : {}
+                  };
+              `}
+          </Script>
+          <Script id="ad-invoke-a05063" strategy="lazyOnload" src="//www.highperformanceformat.com/a050636a31b3077dc1bbe04ffd14a25a/invoke.js" />
         </div>
       </div>
     </div>
