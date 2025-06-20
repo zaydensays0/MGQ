@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Script from 'next/script';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
@@ -195,6 +196,23 @@ export default function ExamPrepPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
+        {/* Banner Ad Code */}
+        <div className="mb-8 w-full flex justify-center">
+          <Script id="ad-options-0762c3" strategy="lazyOnload">
+              {`
+                  atOptions = {
+                      'key' : '0762c37cdf81985c469d1cebece2886f',
+                      'format' : 'iframe',
+                      'height' : 300,
+                      'width' : 160,
+                      'params' : {}
+                  };
+              `}
+          </Script>
+          <Script id="ad-invoke-0762c3" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
+        </div>
+        {/* End Banner Ad Code */}
+
         {/* New Ad Unit for app open */}
         <div className="mb-8 w-full flex flex-col items-center">
           <ins className="adsbygoogle"
