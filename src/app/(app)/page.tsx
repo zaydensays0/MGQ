@@ -191,7 +191,7 @@ export default function ExamPrepPage() {
     return () => {
       clearTimeout(timeoutId); // Clean up the timeout if the component unmounts
     };
-  }, []); // Empty dependency array means this runs once after initial render
+  }, []);
   
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -284,6 +284,12 @@ export default function ExamPrepPage() {
              data-ad-slot="3313721134"
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
+        
+        {/* New Ad Code at the bottom */}
+        <div>
+          <Script id="profitableratecpm-script" data-cfasync="false" src="//pl26817799.profitableratecpm.com/557a252c055ae7b7626b87b6a2c95d51/invoke.js" strategy="lazyOnload" />
+          <div id="container-557a252c055ae7b7626b87b6a2c95d51"></div>
+        </div>
       </div>
     </div>
   );
