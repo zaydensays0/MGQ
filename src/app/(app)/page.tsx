@@ -344,9 +344,22 @@ export default function ExamPrepPage() {
           </Script>
           <Script id="ad-invoke-0762c3-bottom" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
         </div>
+
+        <div className="mt-4">
+          <Script id="ad-options-a8beb8" strategy="lazyOnload">
+            {`
+              atOptions = {
+                'key' : 'a8beb8f536aa61aff90243619a81f50b',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            `}
+          </Script>
+          <Script id="ad-invoke-a8beb8" strategy="lazyOnload" src="//www.highperformanceformat.com/a8beb8f536aa61aff90243619a81f50b/invoke.js" />
+        </div>
       </div>
     </div>
   );
 }
-
-    
