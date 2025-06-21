@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -313,6 +312,21 @@ export default function ExamPrepPage() {
             `}
           </Script>
           <Script id="ad-invoke-75057e" strategy="lazyOnload" src="//www.highperformanceformat.com/75057e2ffb836a6d012a94807538929c/invoke.js" />
+        </div>
+
+        <div className="mt-4">
+          <Script id="ad-options-d5f36f" strategy="lazyOnload">
+            {`
+              atOptions = {
+                'key' : 'd5f36f5d6cfdd21702a20f39a221dba2',
+                'format' : 'iframe',
+                'height' : 90,
+                'width' : 728,
+                'params' : {}
+              };
+            `}
+          </Script>
+          <Script id="ad-invoke-d5f36f" strategy="lazyOnload" src="//www.highperformanceformat.com/d5f36f5d6cfdd21702a20f39a221dba2/invoke.js" />
         </div>
       </div>
     </div>
