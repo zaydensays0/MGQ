@@ -83,11 +83,6 @@ export default function RootLayout({
             strategy="lazyOnload"
             src="//pl26970112.profitableratecpm.com/20/99/40/209940fa2f43fa5b345a9d9e679bc3f8.js"
         />
-        <Script
-            id="popunder-ad"
-            strategy="lazyOnload"
-            src="//pl26970103.profitableratecpm.com/15/f1/4d/15f14d020e6a559af466476c1804314f.js"
-        />
       </body>
     </html>
   );
