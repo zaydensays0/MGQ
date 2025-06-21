@@ -191,43 +191,6 @@ export default function ExamPrepPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
-        {/* Banner Ad Code */}
-        <div className="mb-8 w-full flex justify-center">
-          <Script id="ad-options-0762c3" strategy="lazyOnload">
-              {`
-                  atOptions = {
-                      'key' : '0762c37cdf81985c469d1cebece2886f',
-                      'format' : 'iframe',
-                      'height' : 300,
-                      'width' : 160,
-                      'params' : {}
-                  };
-              `}
-          </Script>
-          <Script id="ad-invoke-0762c3" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
-        </div>
-        {/* End Banner Ad Code */}
-
-        {/* New Ad Unit for app open */}
-        <div className="mb-8 w-full flex flex-col items-center">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-app-pub-3513387458252949"
-               data-ad-slot="6298142972"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-        
-        {/* Existing Ad Unit at the top */}
-        <div className="mb-8 w-full flex flex-col items-center">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-app-pub-3513387458252949"
-               data-ad-slot="5615857943"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-
         <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
 
         {error && (
@@ -271,8 +234,45 @@ export default function ExamPrepPage() {
         )}
       </div>
 
-      {/* Ad units at the bottom */}
+      {/* All ad units are consolidated at the bottom */}
       <div className="mt-12 w-full flex flex-col items-center space-y-8">
+        
+        {/* Banner Ad Code */}
+        <div className="w-full flex justify-center">
+          <Script id="ad-options-0762c3-top" strategy="lazyOnload">
+              {`
+                  atOptions = {
+                      'key' : '0762c37cdf81985c469d1cebece2886f',
+                      'format' : 'iframe',
+                      'height' : 300,
+                      'width' : 160,
+                      'params' : {}
+                  };
+              `}
+          </Script>
+          <Script id="ad-invoke-0762c3-top" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
+        </div>
+        
+        {/* Ad Unit for app open */}
+        <div className="w-full flex flex-col items-center">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-app-pub-3513387458252949"
+               data-ad-slot="6298142972"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
+        
+        {/* Top Ad Unit */}
+        <div className="w-full flex flex-col items-center">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-app-pub-3513387458252949"
+               data-ad-slot="5615857943"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
+      
         <ins className="adsbygoogle"
              style={{ display: 'block' }}
              data-ad-client="ca-app-pub-3513387458252949"
@@ -285,7 +285,7 @@ export default function ExamPrepPage() {
           <div id="container-557a252c055ae7b7626b87b6a2c95d51"></div>
         </div>
 
-        <div className="mt-4">
+        <div>
           <Script id="ad-options-a05063" strategy="lazyOnload">
               {`
                   atOptions = {
@@ -300,7 +300,7 @@ export default function ExamPrepPage() {
           <Script id="ad-invoke-a05063" strategy="lazyOnload" src="//www.highperformanceformat.com/a050636a31b3077dc1bbe04ffd14a25a/invoke.js" />
         </div>
 
-        <div className="mt-4">
+        <div>
           <Script id="ad-options-75057e" strategy="lazyOnload">
             {`
               atOptions = {
@@ -315,7 +315,7 @@ export default function ExamPrepPage() {
           <Script id="ad-invoke-75057e" strategy="lazyOnload" src="//www.highperformanceformat.com/75057e2ffb836a6d012a94807538929c/invoke.js" />
         </div>
 
-        <div className="mt-4">
+        <div>
           <Script id="ad-options-d5f36f" strategy="lazyOnload">
             {`
               atOptions = {
@@ -330,7 +330,7 @@ export default function ExamPrepPage() {
           <Script id="ad-invoke-d5f36f" strategy="lazyOnload" src="//www.highperformanceformat.com/d5f36f5d6cfdd21702a20f39a221dba2/invoke.js" />
         </div>
 
-        <div className="mt-4">
+        <div>
           <Script id="ad-options-0762c3-bottom" strategy="lazyOnload">
               {`
                   atOptions = {
@@ -345,7 +345,7 @@ export default function ExamPrepPage() {
           <Script id="ad-invoke-0762c3-bottom" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
         </div>
 
-        <div className="mt-4">
+        <div>
           <Script id="ad-options-a8beb8" strategy="lazyOnload">
             {`
               atOptions = {
