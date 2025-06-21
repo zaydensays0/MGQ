@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
@@ -165,29 +165,6 @@ export default function ExamPrepPage() {
     }
   };
 
-  useEffect(() => {
-    const LIKELY_ADSENSE_SCRIPT_LOAD_TIME_MS = 100; // A small delay
-
-    const attemptPush = () => {
-      try {
-        // @ts-ignore
-        if (window.adsbygoogle && typeof window.adsbygoogle.push === 'function') {
-          // @ts-ignore
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } else {
-        }
-      } catch (e) {
-        console.error("Adsense push error: ", e);
-      }
-    };
-
-    const timeoutId = setTimeout(attemptPush, LIKELY_ADSENSE_SCRIPT_LOAD_TIME_MS);
-
-    return () => {
-      clearTimeout(timeoutId); // Clean up the timeout if the component unmounts
-    };
-  }, []);
-  
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
@@ -252,33 +229,6 @@ export default function ExamPrepPage() {
           </Script>
           <Script id="ad-invoke-0762c3-top" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
         </div>
-        
-        {/* Ad Unit for app open */}
-        <div className="w-full flex flex-col items-center">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-app-pub-3513387458252949"
-               data-ad-slot="6298142972"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-        
-        {/* Top Ad Unit */}
-        <div className="w-full flex flex-col items-center">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-app-pub-3513387458252949"
-               data-ad-slot="5615857943"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-      
-        <ins className="adsbygoogle"
-             style={{ display: 'block' }}
-             data-ad-client="ca-app-pub-3513387458252949"
-             data-ad-slot="3313721134"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
         
         <div>
           <Script id="profitableratecpm-script" data-cfasync="false" src="//pl26817799.profitableratecpm.com/557a252c055ae7b7626b87b6a2c95d51/invoke.js" strategy="lazyOnload" />
