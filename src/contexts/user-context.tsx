@@ -104,7 +104,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let xpGained = 3; // Base XP for correct answer
     let newStreak = user.streak;
-    let newBadges = [...user.badges];
+    let newBadges = [...(user.badges || [])];
     let justLeveledUp = false;
 
     const today = new Date();
