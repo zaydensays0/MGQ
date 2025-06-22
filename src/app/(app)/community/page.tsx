@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SharedQuestion, GradeLevelNCERT } from '@/types';
+import type { SharedQuestion, GradeLevelNCERT, QuestionContext } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,21 @@ const SubjectIcon: React.FC<{ subject: string }> = ({ subject }) => {
 const QuestionItem: React.FC<{ question: SharedQuestion }> = ({ question }) => {
     const { addQuestion, isSaved } = useSavedQuestions();
     const { toast } = useToast();
-    const [saved, setSaved] = useState(isSaved(question.text, question));
+    
+    // Correctly create context for the isSaved check
+    const questionContext: QuestionContext = {
+        gradeLevel: question.gradeLevel,
+        subject: question.subject,
+        chapter: question.chapter,
+        questionType: 'short_answer', // Assuming default type for community questions
+    };
+
+    const [saved, setSaved] = useState(isSaved(question.text, questionContext));
+
+    useEffect(() => {
+        setSaved(isSaved(question.text, questionContext));
+    }, [isSaved, question.text, questionContext]);
+
 
     const handleSave = () => {
         if (!saved) {
@@ -142,7 +156,7 @@ export default function CommunityPage() {
                         </SelectContent>
                     </Select>
                     <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                        <SelectTrigger><SelectValue placeholder="Filter by Subject" /></SelectValue>
+                        <SelectTrigger><SelectValue placeholder="Filter by Subject" /></SelectTrigger>
                         <SelectContent>
                             {SUBJECTS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                         </SelectContent>
