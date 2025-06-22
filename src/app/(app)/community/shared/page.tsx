@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, GraduationCap, BookOpen, ThumbsUp, Save, CheckCircle, Copy, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, GraduationCap, BookOpen, ThumbsUp, Save, CheckCircle, Copy, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SUBJECTS } from '@/lib/constants';
 
@@ -29,6 +29,7 @@ const MOCK_SHARED_QUESTIONS: SharedQuestion[] = [
 const SharedQuestionCard: React.FC<{ question: SharedQuestion }> = ({ question }) => {
     const { addQuestion, isSaved } = useSavedQuestions();
     const { toast } = useToast();
+    const [showAnswer, setShowAnswer] = useState(false);
 
     const questionContext: QuestionContext = {
         gradeLevel: question.gradeLevel,
@@ -56,9 +57,9 @@ const SharedQuestionCard: React.FC<{ question: SharedQuestion }> = ({ question }
     };
     
     const handleCopy = () => {
-        navigator.clipboard.writeText(question.text)
-            .then(() => toast({ title: "Copied!", description: "Question copied to clipboard." }))
-            .catch(() => toast({ title: "Error", description: "Could not copy question.", variant: "destructive" }));
+        navigator.clipboard.writeText(`${question.text}\n\nAnswer: ${question.answer}`)
+            .then(() => toast({ title: "Copied!", description: "Question and answer copied to clipboard." }))
+            .catch(() => toast({ title: "Error", description: "Could not copy content.", variant: "destructive" }));
     };
     
     // Mock likes count
@@ -68,12 +69,22 @@ const SharedQuestionCard: React.FC<{ question: SharedQuestion }> = ({ question }
         <Card className="shadow-md">
             <CardContent className="p-4">
                 <p className="text-foreground leading-relaxed">{question.text}</p>
+                {showAnswer && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                        <h4 className="font-semibold text-primary mb-2">Answer:</h4>
+                        <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="p-3 bg-muted/50 flex justify-between items-center">
                 <div className="flex items-center space-x-2 text-muted-foreground">
                     <Button variant="ghost" size="sm" onClick={handleLike} className="flex items-center">
                         <ThumbsUp className="h-4 w-4 mr-1.5" />
                         <span className="text-sm font-medium">{mockLikes}</span>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setShowAnswer(!showAnswer)}>
+                        {showAnswer ? <EyeOff className="h-4 w-4 mr-1.5" /> : <Eye className="h-4 w-4 mr-1.5" />}
+                        {showAnswer ? 'Hide Answer' : 'Show Answer'}
                     </Button>
                 </div>
                 <div className="flex items-center space-x-2">
