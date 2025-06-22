@@ -88,13 +88,11 @@ const SharedQuestionCard: React.FC<{ question: SharedQuestion }> = ({ question }
                     </Button>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={handleSave} disabled={saved}>
-                        {saved ? <CheckCircle className="h-4 w-4 mr-1.5 text-green-500" /> : <Save className="h-4 w-4 mr-1.5" />}
-                        {saved ? 'Saved' : 'Save'}
+                    <Button variant="outline" size="icon" onClick={handleSave} disabled={saved} aria-label={saved ? "Question saved" : "Save question"}>
+                        {saved ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Save className="h-4 w-4" />}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                        <Copy className="h-4 w-4 mr-1.5" />
-                        Copy
+                    <Button variant="outline" size="icon" onClick={handleCopy} aria-label="Copy question and answer">
+                        <Copy className="h-4 w-4" />
                     </Button>
                 </div>
             </CardFooter>
