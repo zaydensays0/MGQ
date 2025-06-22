@@ -18,7 +18,7 @@ export default function DonationPage() {
         <CardContent className="flex flex-col items-center text-center space-y-6">
           <div className="p-4 bg-white rounded-lg">
             <Image
-              src="/donation-qr-code.png"
+              src="https://placehold.co/300x300.png"
               alt="Donation QR Code"
               width={300}
               height={300}
