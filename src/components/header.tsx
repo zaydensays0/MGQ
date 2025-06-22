@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -57,80 +58,80 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    // In a real app with a login page, you'd redirect.
-    // Here we just reload to reset to the default user state.
     window.location.reload(); 
   };
 
   const getIsActive = (href: string) => {
-    if (href === '/groups') {
-      return pathname.startsWith('/groups');
-    }
     return pathname.startsWith(href);
   };
 
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <div className="flex flex-col">
-            <span className="font-bold sm:inline-block text-lg font-headline">
-              MGQs
-            </span>
-            <span className="text-xs -mt-1 inline-block">
-              <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span>{' '}
-              <span className="text-muted-foreground">
-                <span className="font-bold text-primary">G</span>ave{' '}
-                <span className="font-bold text-primary">Q</span>uestions
-              </span>
-            </span>
-          </div>
-        </Link>
+      <div className="container relative flex h-16 max-w-screen-2xl items-center justify-between">
         
-        {isInitialized && user && (
-          <nav className="hidden md:flex items-center space-x-4 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "flex items-center transition-colors hover:text-foreground/80",
-                  getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                {link.icon && <link.icon className="mr-2 h-4 w-4" />}
-                {link.label}
-              </Link>
-            ))}
-              <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
-                          <LayoutGrid className="mr-2 h-4 w-4" />
-                          More Tools
-                      </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                      {moreToolsLinks.map((link) => (
-                           <DropdownMenuItem key={link.href} asChild>
-                               <Link href={link.href} className="w-full flex">
-                                  <link.icon className="mr-2 h-4 w-4" />
-                                  {link.label}
-                               </Link>
-                           </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
-              </DropdownMenu>
-          </nav>
-        )}
-
-        <div className="flex-1 hidden md:flex justify-center">
+        {/* LEFT SECTION */}
+        <div className="flex items-center">
+          <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <div className="flex flex-col">
+              <span className="font-bold sm:inline-block text-lg font-headline">
+                MGQs
+              </span>
+              <span className="text-xs -mt-1 inline-block">
+                <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span>{' '}
+                <span className="text-muted-foreground">
+                  <span className="font-bold text-primary">G</span>ave{' '}
+                  <span className="font-bold text-primary">Q</span>uestions
+                </span>
+              </span>
+            </div>
+          </Link>
+          
+          {isInitialized && user && (
+            <nav className="hidden md:flex items-center space-x-4 text-sm font-medium">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "flex items-center transition-colors hover:text-foreground/80",
+                    getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
+                  )}
+                >
+                  {link.icon && <link.icon className="mr-2 h-4 w-4" />}
+                  {link.label}
+                </Link>
+              ))}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
+                            <LayoutGrid className="mr-2 h-4 w-4" />
+                            More Tools
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        {moreToolsLinks.map((link) => (
+                             <DropdownMenuItem key={link.href} asChild>
+                                 <Link href={link.href} className="w-full flex">
+                                    <link.icon className="mr-2 h-4 w-4" />
+                                    {link.label}
+                                 </Link>
+                             </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </nav>
+          )}
+        </div>
+        
+        {/* CENTER SECTION - ABSOLUTELY POSITIONED */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
             <span className="font-extrabold text-lg bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-accent animate-pulse">
                 A GUY WITH MRF BAT
             </span>
         </div>
 
+        {/* RIGHT SECTION */}
         <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
