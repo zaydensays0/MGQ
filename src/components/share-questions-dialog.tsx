@@ -1,168 +1,95 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useGroups } from '@/contexts/groups-context';
+import { useSharedPosts } from '@/contexts/shared-posts-context';
+import { useUser } from '@/contexts/user-context';
+import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Users } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Send, Loader2 } from 'lucide-react';
 
 interface ShareQuestionsDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  selectedQuestionCount: number;
+  selectedQuestionIds: string[];
+  onShare: () => void; // Callback to clear selection after sharing
 }
 
-export const ShareQuestionsDialog: React.FC<ShareQuestionsDialogProps> = ({ isOpen, onOpenChange, selectedQuestionCount }) => {
-  const { groups, addGroup } = useGroups();
+export const ShareQuestionsDialog: React.FC<ShareQuestionsDialogProps> = ({ isOpen, onOpenChange, selectedQuestionIds, onShare }) => {
+  const { addPost } = useSharedPosts();
+  const { user } = useUser();
+  const { savedQuestions } = useSavedQuestions();
   const { toast } = useToast();
   
-  // State for sharing with a single user
-  const [targetUsername, setTargetUsername] = useState('');
+  const [message, setMessage] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
-  // State for sharing with a group
-  const [selectedGroupId, setSelectedGroupId] = useState('');
-
-  // State for creating a new group
-  const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupUsernames, setNewGroupUsernames] = useState('');
-
-  const handleSend = (target: string, type: 'user' | 'group') => {
-    if (!target) {
-      toast({ title: 'No Target Specified', description: `Please enter a ${type} to share with.`, variant: 'destructive' });
+  const handlePostToCommunity = () => {
+    if (!user) {
+      toast({ title: 'Authentication Error', description: 'You must be logged in to post.', variant: 'destructive' });
       return;
     }
-    // In a real app, this would trigger an API call. Here, we just log and show a toast.
-    console.log(`Sharing ${selectedQuestionCount} questions with ${type} "${target}"`);
-    toast({
-      title: 'Shared Successfully!',
-      description: `${selectedQuestionCount} question(s) have been sent to ${target}. (This is a prototype feature)`,
+    if (selectedQuestionIds.length === 0) {
+      toast({ title: 'No Questions Selected', description: 'Please select at least one question to share.', variant: 'destructive' });
+      return;
+    }
+
+    setIsPosting(true);
+    
+    const questionsToShare = savedQuestions.filter(q => selectedQuestionIds.includes(q.id));
+
+    addPost({
+      author: { username: user.username, avatarUrl: user.avatarUrl },
+      questions: questionsToShare,
+      message: message.trim() || null,
     });
-    onOpenChange(false); // Close dialog on successful send
-    // Reset fields
-    setTargetUsername('');
-    setSelectedGroupId('');
-  };
 
-  const handleCreateAndSendGroup = () => {
-    if (!newGroupName.trim() || !newGroupUsernames.trim()) {
-      toast({ title: 'Incomplete Group Info', description: 'Please provide a group name and at least one username.', variant: 'destructive' });
-      return;
-    }
-    const usernames = newGroupUsernames.split(',').map(u => u.trim()).filter(Boolean);
-    if (usernames.length === 0) {
-      toast({ title: 'No Usernames', description: 'Please add usernames separated by commas.', variant: 'destructive' });
-      return;
-    }
-    
-    const newGroup = addGroup({ name: newGroupName, usernames });
-    toast({ title: 'Group Created!', description: `Group "${newGroupName}" has been created.` });
-    
-    handleSend(newGroup.name, 'group');
-
-    // Reset create group form
-    setNewGroupName('');
-    setNewGroupUsernames('');
+    // Simulate network latency for better UX
+    setTimeout(() => {
+        toast({
+          title: 'Posted to Community!',
+          description: `${questionsToShare.length} question(s) have been shared.`,
+        });
+        setIsPosting(false);
+        onOpenChange(false); // Close the dialog
+        setMessage(''); // Reset message input
+        onShare(); // Clear selection in parent component
+    }, 500);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Share Questions</DialogTitle>
+          <DialogTitle>Post to Community Hub</DialogTitle>
           <DialogDescription>
-            Share {selectedQuestionCount} selected question(s) with other users or groups.
+            Share {selectedQuestionIds.length} selected question(s) with the entire community. Add an optional message to provide context.
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue="user" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="user">With a User</TabsTrigger>
-            <TabsTrigger value="group">With a Group</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="user" className="pt-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Recipient's Username</Label>
-                <Input 
-                  id="username" 
-                  placeholder="e.g., study_with_anu" 
-                  value={targetUsername}
-                  onChange={(e) => setTargetUsername(e.target.value)}
-                />
-              </div>
-              <Button className="w-full" onClick={() => handleSend(targetUsername, 'user')} disabled={!targetUsername.trim()}>
-                <Send className="mr-2 h-4 w-4" /> Send to User
-              </Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="group" className="pt-4 space-y-6">
-            {/* Share with existing group */}
-            <div className="space-y-4 p-4 border rounded-md">
-                <h4 className="font-semibold text-md">Share with an Existing Group</h4>
-                <div className="space-y-2">
-                    <Label htmlFor="group-select">Select Group</Label>
-                    <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
-                        <SelectTrigger id="group-select">
-                            <SelectValue placeholder="Select a group..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {groups.map(group => (
-                                <SelectItem key={group.id} value={group.id}>{group.name} ({group.usernames.length})</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <Button className="w-full" onClick={() => {
-                     const group = groups.find(g => g.id === selectedGroupId);
-                     if (group) handleSend(group.name, 'group');
-                 }} disabled={!selectedGroupId}>
-                    <Send className="mr-2 h-4 w-4" /> Send to Group
-                </Button>
-            </div>
-
-            {/* Create new group */}
-            <div className="space-y-4 p-4 border rounded-md">
-                 <h4 className="font-semibold text-md">Create a New Group & Share</h4>
-                <div className="space-y-2">
-                    <Label htmlFor="new-group-name">New Group Name</Label>
-                    <Input 
-                        id="new-group-name" 
-                        placeholder="e.g., My Study Circle" 
-                        value={newGroupName}
-                        onChange={(e) => setNewGroupName(e.target.value)}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="new-group-users">Usernames (comma-separated)</Label>
-                    <Textarea 
-                        id="new-group-users" 
-                        placeholder="user1, user2, realmehdi"
-                        value={newGroupUsernames}
-                        onChange={(e) => setNewGroupUsernames(e.target.value)}
-                        rows={2}
-                    />
-                </div>
-                 <Button className="w-full" variant="secondary" onClick={handleCreateAndSendGroup} disabled={!newGroupName.trim() || !newGroupUsernames.trim()}>
-                    <Users className="mr-2 h-4 w-4" /> Create & Send
-                </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="py-4 space-y-2">
+          <Label htmlFor="share-message">Optional Message</Label>
+          <Textarea 
+            id="share-message"
+            placeholder="e.g., 'Found these helpful for the upcoming test!'"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+          />
+        </div>
         
-        <DialogFooter className="sm:justify-start mt-4">
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              Cancel
-            </Button>
+        <DialogFooter>
+           <DialogClose asChild>
+            <Button type="button" variant="ghost">Cancel</Button>
           </DialogClose>
+          <Button onClick={handlePostToCommunity} disabled={isPosting}>
+            {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            {isPosting ? 'Posting...' : 'Post to Hub'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

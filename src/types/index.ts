@@ -124,6 +124,18 @@ export interface UserGroup {
   createdAt: number;
 }
 
+// Type for community shared posts
+export interface SharedPost {
+  id: string;
+  author: {
+    username: string;
+    avatarUrl: string;
+  };
+  message: string | null;
+  questions: SavedQuestion[];
+  timestamp: number;
+}
+
 
 // Badge types for gamification
 export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -19,7 +19,8 @@ const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/community', label: 'Groups', icon: Users },
+  { href: '/community', label: 'Community', icon: Users },
+  { href: '/groups', label: 'Groups', icon: MessageSquare },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
@@ -55,6 +56,14 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isInitialized } = useUser();
 
+  const getIsActive = (href: string) => {
+    if (href === '/groups') {
+      return pathname.startsWith('/groups') || pathname.startsWith('/community');
+    }
+    return pathname.startsWith(href);
+  };
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
@@ -80,7 +89,7 @@ export function Header() {
               href={link.href}
               className={cn(
                 "flex items-center transition-colors hover:text-foreground/80",
-                pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
+                getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
               )}
             >
               {link.icon && <link.icon className="mr-2 h-4 w-4" />}
@@ -181,7 +190,7 @@ export function Header() {
                       href={link.href}
                       className={cn(
                         "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
-                        pathname.startsWith(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
+                        getIsActive(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

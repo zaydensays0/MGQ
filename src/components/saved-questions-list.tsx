@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
@@ -178,6 +179,10 @@ export function SavedQuestionsList() {
     );
   };
   
+  const handleClearSelection = () => {
+    setSelectedQuestionIds([]);
+  };
+
   const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
 
   if (sortedSavedQuestions.length === 0) {
@@ -212,8 +217,8 @@ export function SavedQuestionsList() {
       <Card className="p-4 shadow-md sticky top-20 z-10 bg-background/90 backdrop-blur-sm">
         <div className="flex justify-between items-center">
             <div>
-                <h3 className="text-lg font-semibold">Share Questions</h3>
-                <p className="text-sm text-muted-foreground">Select one or more questions below to share with others.</p>
+                <h3 className="text-lg font-semibold">Share to Community</h3>
+                <p className="text-sm text-muted-foreground">Select one or more questions below to post to the Community Hub.</p>
             </div>
             <Button 
                 onClick={() => setIsShareDialogOpen(true)} 
@@ -228,7 +233,8 @@ export function SavedQuestionsList() {
       <ShareQuestionsDialog 
         isOpen={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
-        selectedQuestionCount={selectedQuestionIds.length}
+        selectedQuestionIds={selectedQuestionIds}
+        onShare={handleClearSelection}
       />
 
       {Object.entries(groupedQuestions).map(([subjectKey, chapters]) => (

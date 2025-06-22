@@ -1,121 +1,81 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useGroups, type GroupCreationData } from '@/contexts/groups-context';
-import { useUser } from '@/contexts/user-context';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import React from 'react';
+import { useSharedPosts } from '@/contexts/shared-posts-context';
+import type { SharedPost, SavedQuestion } from '@/types';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Users, PlusCircle, ChevronRight, MessageSquare } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Users, HelpCircle, Bot } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const QuestionItem: React.FC<{ question: SavedQuestion }> = ({ question }) => {
+    return (
+        <div className="p-3 bg-background/50 rounded-md border">
+            <p className="text-sm font-semibold mb-1 flex items-center"><HelpCircle className="w-4 h-4 mr-2 text-primary flex-shrink-0" /> {question.text}</p>
+            <p className="text-sm text-muted-foreground pl-6"><span className="font-semibold text-primary">Answer:</span> {question.answer}</p>
+        </div>
+    )
+};
+
+const SharedPostCard: React.FC<{ post: SharedPost }> = ({ post }) => {
+    return (
+        <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center gap-4">
+                <Avatar className="h-11 w-11">
+                    <AvatarImage src={post.author.avatarUrl} alt={post.author.username} />
+                    <AvatarFallback>{post.author.username.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">{post.author.username}</p>
+                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(post.timestamp), { addSuffix: true })}</p>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {post.message && <p className="text-foreground/90 mb-4 italic border-l-4 pl-3">"{post.message}"</p>}
+                
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-base">
+                            View {post.questions.length} Shared Question(s)
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 space-y-3">
+                            {post.questions.map(q => <QuestionItem key={q.id} question={q} />)}
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+            </CardContent>
+        </Card>
+    );
+};
+
 
 export default function CommunityPage() {
-    const { groups, addGroup } = useGroups();
-    const { user } = useUser();
-    const { toast } = useToast();
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [newGroupName, setNewGroupName] = useState('');
-
-    const handleCreateGroup = () => {
-        if (!newGroupName.trim()) {
-            toast({ title: 'Group name is required.', variant: 'destructive' });
-            return;
-        }
-        if (!user) {
-             toast({ title: 'You must be logged in to create a group.', variant: 'destructive' });
-            return;
-        }
-
-        const groupData: GroupCreationData = {
-            name: newGroupName,
-            adminUsername: user.username,
-            members: [{ username: user.username, avatarUrl: user.avatarUrl }]
-        };
-
-        addGroup(groupData);
-        toast({ title: 'Group Created!', description: `You can now start chatting in "${newGroupName}".` });
-        setNewGroupName('');
-        setIsCreateDialogOpen(false);
-    };
+    const { posts } = useSharedPosts();
 
     return (
         <div className="container mx-auto p-4 md:p-8">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-headline font-bold flex items-center">
                     <Users className="w-8 h-8 mr-3 text-primary" />
-                    Groups
+                    Community Hub
                 </h1>
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Create Group
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create a New Group</DialogTitle>
-                            <DialogDescription>
-                                Give your new chat group a name. You can invite others later.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <Label htmlFor="group-name">Group Name</Label>
-                            <Input 
-                                id="group-name"
-                                value={newGroupName}
-                                onChange={(e) => setNewGroupName(e.target.value)}
-                                placeholder="e.g., Exam Warriors"
-                            />
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="ghost">Cancel</Button>
-                            </DialogClose>
-                            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>Create</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
             </div>
 
-            {groups.length > 0 ? (
-                <div className="space-y-4">
-                    {groups.map(group => (
-                        <Card key={group.id} className="shadow-md hover:shadow-lg transition-shadow">
-                            <CardContent className="p-4 flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                     <Avatar className="h-12 w-12">
-                                        <AvatarFallback>{group.name.charAt(0).toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <h2 className="text-lg font-semibold font-headline">{group.name}</h2>
-                                        <p className="text-sm text-muted-foreground">{group.members.length} member(s)</p>
-                                    </div>
-                                </div>
-                                <Button asChild variant="outline" size="sm">
-                                    <Link href={`/community/chat/${group.id}`}>
-                                        Open Chat <ChevronRight className="ml-2 h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
+            {posts.length > 0 ? (
+                <div className="space-y-6 max-w-3xl mx-auto">
+                    {posts.map(post => <SharedPostCard key={post.id} post={post} />)}
                 </div>
             ) : (
-                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold">No Groups Yet</h3>
-                    <p className="mb-4">Create a group to start collaborating with your study partners!</p>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Group
-                    </Button>
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg max-w-2xl mx-auto">
+                    <Users className="w-12 h-12 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold">The Community Hub is Quiet...</h3>
+                    <p>No questions have been shared yet. Be the first to post from your "Saved Questions"!</p>
                 </div>
             )}
         </div>
     );
 }
-
