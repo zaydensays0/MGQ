@@ -11,27 +11,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-export const GenerateMockTestInputSchema = z.object({
-  gradeLevel: z.number().describe('The grade level for the test.'),
-  subject: z.string().describe('The subject of the test.'),
-  chapters: z.string().describe('A comma-separated list of chapter names for the test.'),
-  numberOfQuestions: z.number().int().positive().describe('The total number of questions to generate for the test.'),
-});
-export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
-
-export const MockTestQuestionSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false']).describe('The type of the question.'),
-  text: z.string().describe('The question text itself.'),
-  options: z.array(z.string()).optional().describe('An array of 4 strings for "multiple_choice" questions, or 2 strings (["True", "False"]) for "true_false".'),
-  answer: z.string().describe('The correct answer. For "multiple_choice", it must match one of the options. For "true_false", it must be "True" or "False".'),
-});
-export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
-
-const GenerateMockTestOutputSchema = z.object({
-  questions: z.array(MockTestQuestionSchema).describe('An array of generated test questions.'),
-});
-export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;
+import { 
+    GenerateMockTestInputSchema,
+    GenerateMockTestOutputSchema,
+    type GenerateMockTestInput,
+    type GenerateMockTestOutput
+} from '@/types';
 
 export async function generateMockTest(input: GenerateMockTestInput): Promise<GenerateMockTestOutput> {
   return generateMockTestFlow(input);

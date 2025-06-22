@@ -5,11 +5,11 @@ import React, { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { generateMockTest, type GenerateMockTestInput, type MockTestQuestion } from '@/ai/flows/generate-mock-test';
+import { generateMockTest } from '@/ai/flows/generate-mock-test';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
