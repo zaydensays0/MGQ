@@ -5,11 +5,17 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff, Layers } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useFlashcards } from '@/contexts/flashcards-context';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { SUBJECTS } from '@/lib/constants';
+
 
 const SavedQuestionItem: React.FC<{ 
   question: SavedQuestion, 
@@ -153,6 +159,56 @@ const SavedQuestionItem: React.FC<{
   );
 };
 
+const CreateDeckFromChapterDialog = ({ questionsInChapter, chapter, subject, gradeLevel }: {
+  questionsInChapter: SavedQuestion[],
+  chapter: string,
+  subject: string,
+  gradeLevel: string,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [deckName, setDeckName] = useState(`Deck: ${chapter}`);
+  const { createDeckFromSavedQuestions } = useFlashcards();
+  const { toast } = useToast();
+
+  const handleCreateDeck = () => {
+    if (!deckName.trim()) {
+      toast({ title: 'Deck name required', variant: 'destructive' });
+      return;
+    }
+    createDeckFromSavedQuestions(deckName, questionsInChapter);
+    toast({ title: 'Deck Created!', description: `A new flashcard deck "${deckName}" has been created.` });
+    setIsOpen(false);
+  };
+  
+  const subjectLabel = SUBJECTS.find(s => s.value === subject)?.label || subject;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Layers className="mr-2 h-4 w-4" /> Create Deck
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Flashcard Deck</DialogTitle>
+          <DialogDescription>
+            Create a new deck from the {questionsInChapter.length} question(s) in "{chapter}" (Class {gradeLevel} - {subjectLabel}).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-2">
+          <Label htmlFor="deck-name">Deck Name</Label>
+          <Input id="deck-name" value={deckName} onChange={(e) => setDeckName(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+          <Button onClick={handleCreateDeck}>Create</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 
 export function SavedQuestionsList() {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
@@ -198,17 +254,32 @@ export function SavedQuestionsList() {
               {Object.entries(chapters).map(([chapter, questionsInChapter]) => (
                 <AccordionItem value={`${subjectKey}-${chapter}`} key={`${subjectKey}-${chapter}`} className="border rounded-md overflow-hidden">
                   <AccordionTrigger className="text-lg hover:no-underline px-4 py-3 bg-background hover:bg-muted/50">
-                    Chapter: {chapter} ({questionsInChapter.length} questions)
+                    <div>
+                      Chapter: {chapter}
+                      <span className="text-sm font-normal text-muted-foreground ml-2">({questionsInChapter.length} questions)</span>
+                    </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-2 space-y-4 p-4 bg-muted/20 dark:bg-muted/5">
-                    {questionsInChapter
-                      .map((q) => ( 
-                        <SavedQuestionItem 
-                            key={q.id} 
-                            question={q} 
-                            onRemove={removeQuestion}
+                  <AccordionContent className="pt-2 p-4 bg-muted/20 dark:bg-muted/5">
+                    <div className="flex justify-end mb-4">
+                      {questionsInChapter.length > 0 && (
+                        <CreateDeckFromChapterDialog 
+                          questionsInChapter={questionsInChapter} 
+                          chapter={chapter}
+                          subject={questionsInChapter[0]?.subject}
+                          gradeLevel={questionsInChapter[0]?.gradeLevel}
                         />
-                    ))}
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      {questionsInChapter
+                        .map((q) => ( 
+                          <SavedQuestionItem 
+                              key={q.id} 
+                              question={q} 
+                              onRemove={removeQuestion}
+                          />
+                      ))}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               ))}

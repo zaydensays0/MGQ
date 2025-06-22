@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -20,6 +20,7 @@ const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
+  { href: '/flashcards', label: 'Flashcards', icon: Layers },
 ];
 
 const moreToolsLinks = [

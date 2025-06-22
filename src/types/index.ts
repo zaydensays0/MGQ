@@ -144,3 +144,40 @@ export const GenerateMockTestOutputSchema = z.object({
   questions: z.array(MockTestQuestionSchema).describe('An array of generated test questions.'),
 });
 export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;
+
+
+// Flashcards
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+}
+
+export interface FlashcardDeck {
+  id: string;
+  title: string;
+  cards: Flashcard[];
+  createdAt: number;
+  gradeLevel?: GradeLevelNCERT;
+  subject?: string;
+  chapter?: string;
+}
+
+// AI Flashcard Generation
+export const GenerateFlashcardsInputSchema = z.object({
+  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the flashcards.'),
+  subject: z.string().describe('The subject for the flashcards.'),
+  chapter: z.string().describe('The chapter to generate flashcards from.'),
+  numberOfCards: z.number().int().positive().describe('The number of flashcards to generate.'),
+});
+export type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
+
+export const FlashcardSchema = z.object({
+  front: z.string().describe("The text for the front of the flashcard (e.g., a term or a question)."),
+  back: z.string().describe("The text for the back of the flashcard (e.g., the definition or the answer)."),
+});
+
+export const GenerateFlashcardsOutputSchema = z.object({
+  flashcards: z.array(FlashcardSchema).describe('An array of generated flashcards.'),
+});
+export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;

@@ -8,6 +8,7 @@ import { JarvisSavedProvider } from '@/contexts/jarvis-saved-context';
 import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context';
 import { ThemeProvider } from "@/components/theme-provider";
 import { UserProvider } from '@/contexts/user-context';
+import { FlashcardsProvider } from '@/contexts/flashcards-context';
 
 // Determine if in development environment
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -64,11 +65,13 @@ export default function RootLayout({
           <UserProvider>
             <JarvisSavedProvider>
               <SubjectExpertSavedProvider>
-                <SavedQuestionsProvider>
-                  <NotesProvider>
-                    {children}
-                  </NotesProvider>
-                </SavedQuestionsProvider>
+                <FlashcardsProvider>
+                  <SavedQuestionsProvider>
+                    <NotesProvider>
+                      {children}
+                    </NotesProvider>
+                  </SavedQuestionsProvider>
+                </FlashcardsProvider>
               </SubjectExpertSavedProvider>
             </JarvisSavedProvider>
           </UserProvider>
