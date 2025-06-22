@@ -60,6 +60,9 @@ export interface Note {
   linkedQuestionIds: string[];
   createdAt: number;
   updatedAt: number;
+  gradeLevel?: GradeLevelNCERT;
+  subject?: string;
+  chapter?: string;
 }
 
 // Types for Grammar Helper
@@ -139,3 +142,7 @@ export interface User {
   badges: BadgeKey[];
   class?: GradeLevelNCERT;
 }
+
+// AI Notes Generator Flow Types
+export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
+export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';

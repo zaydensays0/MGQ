@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { Note } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { BookOpenText, FileText, Edit2, Trash2 } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 interface NoteCardProps {
   note: Note;
@@ -14,6 +15,8 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onDelete }: NoteCardProps) {
+  const hasContext = note.gradeLevel && note.subject && note.chapter;
+
   return (
     <Card className="flex flex-col h-full shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
@@ -29,11 +32,20 @@ export function NoteCard({ note, onDelete }: NoteCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-3">
           {note.content || 'No content yet...'}
         </p>
-        {note.linkedQuestionIds.length > 0 && (
-          <p className="text-xs text-primary mt-2">
-            {note.linkedQuestionIds.length} linked question(s)
-          </p>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+            {hasContext && (
+                <>
+                    <Badge variant="secondary">Class {note.gradeLevel}</Badge>
+                    <Badge variant="secondary">{note.subject}</Badge>
+                    <Badge variant="secondary">{note.chapter}</Badge>
+                </>
+            )}
+            {note.linkedQuestionIds.length > 0 && (
+              <Badge variant="outline">
+                {note.linkedQuestionIds.length} linked question(s)
+              </Badge>
+            )}
+        </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center p-4 bg-muted/30 rounded-b-md">
         <Button asChild variant="outline" size="sm">

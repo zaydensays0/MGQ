@@ -15,7 +15,7 @@ interface NotesContextType {
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_NOTES = 'MGQsNotes';
+const LOCAL_STORAGE_KEY_NOTES = 'MGQsNotes_v2'; // version up to include new fields
 
 export const NotesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -48,12 +48,17 @@ export const NotesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addNote = useCallback((noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Note => {
     const newNote: Note = {
-      ...noteData,
       id: uuidv4(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      title: noteData.title,
+      content: noteData.content,
+      linkedQuestionIds: noteData.linkedQuestionIds,
+      gradeLevel: noteData.gradeLevel,
+      subject: noteData.subject,
+      chapter: noteData.chapter,
     };
-    setNotes((prevNotes) => [newNote, ...prevNotes]);
+    setNotes((prevNotes) => [newNote, ...prevNotes].sort((a,b) => b.updatedAt - a.updatedAt));
     return newNote;
   }, []);
 
