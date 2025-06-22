@@ -43,15 +43,15 @@ const QuestionItem: React.FC<{ question: SharedQuestion }> = ({ question }) => {
     const { addQuestion, isSaved } = useSavedQuestions();
     const { toast } = useToast();
     
-    // Correctly create context for the isSaved check
-    const questionContext: QuestionContext = {
+    // Memoize the context object to prevent re-creation on every render, which caused an infinite loop.
+    const questionContext = useMemo((): QuestionContext => ({
         gradeLevel: question.gradeLevel,
         subject: question.subject,
         chapter: question.chapter,
         questionType: 'short_answer', // Assuming default type for community questions
-    };
+    }), [question.gradeLevel, question.subject, question.chapter]);
 
-    const [saved, setSaved] = useState(isSaved(question.text, questionContext));
+    const [saved, setSaved] = useState(() => isSaved(question.text, questionContext));
 
     useEffect(() => {
         setSaved(isSaved(question.text, questionContext));
