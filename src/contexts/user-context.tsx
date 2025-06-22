@@ -1,11 +1,11 @@
 
 'use client';
 
-import type { User, BadgeKey, GradeLevelNCERT, SuggestUsernameInput, SuggestUsernameOutput, CheckUsernameResponse } from '@/types';
+import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
-import { suggestUsername } from '@/ai/flows/suggest-username';
+
 
 const USER_DB_KEY = 'MGQsUserDatabase_v2_proto'; // Use a new key for the prototype DB
 const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v2_proto'; // Use a new key for the prototype session
@@ -62,7 +62,6 @@ interface UserContextType {
   logout: () => void;
   updateUser: (newUserData: Partial<User>) => void;
   handleCorrectAnswer: (baseXp: number) => void;
-  checkAndSuggestUsername: (username: string, fullName: string, email: string) => Promise<CheckUsernameResponse>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -186,50 +185,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }, [user, toast, updateUser]);
 
-  const checkAndSuggestUsername = useCallback(async (username: string, fullName: string, email: string): Promise<CheckUsernameResponse> => {
-    // 1. Validate username format
-    if (username.length < 3 || username.length > 20) {
-      return {
-        status: 'invalid',
-        message: 'Username must be between 3 and 20 characters.',
-      };
-    }
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      return {
-        status: 'invalid',
-        message: 'Username can only contain lowercase letters, numbers, and underscores.',
-      };
-    }
-
-    // 2. Check for uniqueness against the real user DB
-    if (users[username]) {
-      // 3. Generate alternatives if taken
-      const input: SuggestUsernameInput = {
-        username,
-        fullName,
-        email,
-        existingUsernames: Object.keys(users),
-      };
-
-      const result: SuggestUsernameOutput = await suggestUsername(input);
-
-      return {
-        status: 'taken',
-        message: `Sorry, "${username}" is already taken.`,
-        suggestions: result.suggestions,
-      };
-    }
-
-    // 4. If all checks pass, the username is available
-    return {
-      status: 'available',
-      message: `"${username}" is available!`,
-    };
-  }, [users]);
-
-
   return (
-    <UserContext.Provider value={{ user, isInitialized, logout, updateUser, handleCorrectAnswer, checkAndSuggestUsername }}>
+    <UserContext.Provider value={{ user, isInitialized, logout, updateUser, handleCorrectAnswer }}>
       {children}
     </UserContext.Provider>
   );

@@ -7,35 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, Flame, Medal, Award, AlertTriangle, GraduationCap } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
-import type { User as UserType, BadgeKey, GradeLevelNCERT, CheckUsernameResponse } from '@/types';
+import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
-
-// Debounce hook for username checking
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
-}
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
     mini_streak: { icon: Flame, label: 'Mini Streak', description: 'Achieved a 3-day streak!' },
@@ -44,14 +27,11 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, updateUser, isInitialized, checkAndSuggestUsername } = useUser();
+    const { user, updateUser, isInitialized } = useUser();
     
     // State for Profile Section
     const [fullName, setFullName] = useState('');
-    const [newUsername, setNewUsername] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
-    const [usernameResult, setUsernameResult] = useState<CheckUsernameResponse | null>(null);
-    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
     
     // State for Avatar Cropping
@@ -62,7 +42,6 @@ export default function AccountPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const { toast } = useToast();
-    const debouncedUsername = useDebounce(newUsername, 500);
 
     // Initialize form with user data once context is ready
     useEffect(() => {
@@ -71,34 +50,6 @@ export default function AccountPage() {
             setSelectedClass(user.class);
         }
     }, [isInitialized, user]);
-
-
-    // --- Username Availability Logic ---
-    const checkUsernameAvailability = useCallback(async (name: string) => {
-        if (!user || !name || name === user.username) {
-            setUsernameResult(null);
-            return;
-        }
-        setIsCheckingUsername(true);
-        setUsernameResult(null);
-        try {
-            const response = await checkAndSuggestUsername(name, user.fullName, user.email || '');
-            setUsernameResult(response);
-        } catch (error) {
-            console.error('Error checking username:', error);
-            setUsernameResult({ status: 'invalid', message: 'Could not check username.' });
-        } finally {
-            setIsCheckingUsername(false);
-        }
-    }, [user, checkAndSuggestUsername]);
-
-    useEffect(() => {
-        if (debouncedUsername) {
-            checkUsernameAvailability(debouncedUsername);
-        } else {
-            setUsernameResult(null);
-        }
-    }, [debouncedUsername, checkUsernameAvailability]);
 
 
     // --- Avatar Upload & Crop Logic ---
@@ -147,33 +98,19 @@ export default function AccountPage() {
         if (!user) return;
         const updates: Partial<UserType> = {};
         if (fullName !== user.fullName) updates.fullName = fullName;
-        if (usernameResult?.status === 'available') updates.username = newUsername;
         if (newAvatarUrl) updates.avatarUrl = newAvatarUrl;
         if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
 
         if (Object.keys(updates).length > 0) {
             updateUser(updates);
             toast({ title: 'Profile Updated!', description: 'Your public profile has been updated.' });
-            setNewUsername('');
-            setUsernameResult(null);
             setNewAvatarUrl(null);
         } else {
             toast({ title: 'No Changes', description: 'No new information was provided to update.' });
         }
     };
 
-    
-    // --- UI Helpers ---
-    const getUsernameResultColor = () => {
-        if (!usernameResult) return 'text-muted-foreground';
-        switch (usernameResult.status) {
-            case 'available': return 'text-green-600 dark:text-green-400';
-            case 'taken': return 'text-red-600 dark:text-red-400';
-            default: return 'text-yellow-600 dark:text-yellow-400';
-        }
-    };
-
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || usernameResult?.status === 'available' || !!newAvatarUrl);
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || !!newAvatarUrl);
 
     if (!isInitialized || !user) {
         return (
@@ -216,7 +153,7 @@ export default function AccountPage() {
                 <Card className="lg:col-span-2 shadow-lg">
                     <CardHeader>
                         <CardTitle>Profile</CardTitle>
-                        <CardDescription>This information is used to represent you across the app.</CardDescription>
+                        <CardDescription>This information is used to represent you across the app. Your username is permanent.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-8">
                         <div className="flex flex-col items-center gap-4 p-4">
@@ -247,24 +184,13 @@ export default function AccountPage() {
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="username">Username</Label>
-                                <div className="relative">
-                                    <Input id="username" value={newUsername} onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder={user.username} maxLength={20} className="pr-10" />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                                        {isCheckingUsername ? <Loader2 className="h-5 w-5 animate-spin" /> : usernameResult && (usernameResult.status === 'available' ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />)}
-                                    </div>
-                                </div>
-                                {usernameResult && <p className={cn('text-sm font-medium pt-1', getUsernameResultColor())}>{usernameResult.status === 'available' ? '✅' : '❌'} {usernameResult.message}</p>}
+                                <Input id="username" value={user.username} disabled className="pr-10" />
+                                <p className="text-sm text-muted-foreground pt-1">Your username cannot be changed.</p>
                             </div>
-                            {usernameResult?.status === 'taken' && usernameResult.suggestions && (
-                                <div className="space-y-2 pt-1">
-                                    <Label className="flex items-center text-sm"><Wand2 className="w-4 h-4 mr-2" /> Suggestions:</Label>
-                                    <div className="flex flex-wrap gap-2">{usernameResult.suggestions.map(s => <Button key={s} variant="outline" size="sm" onClick={() => setNewUsername(s)}>{s}</Button>)}</div>
-                                </div>
-                            )}
                         </div>
                     </CardContent>
                     <CardFooter className="border-t px-6 py-4">
-                        <Button onClick={handleUpdateProfile} disabled={isCheckingUsername || !canUpdateProfile}>Update Profile</Button>
+                        <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile}>Update Profile</Button>
                     </CardFooter>
                 </Card>
 

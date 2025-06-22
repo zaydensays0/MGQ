@@ -100,27 +100,6 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
-// Types for Username Suggestion (AI Flow)
-export const SuggestUsernameInputSchema = z.object({
-  username: z.string().describe('The username chosen by the user.'),
-  fullName: z.string().optional().describe("The user's full name, for generating better suggestions."),
-  email: z.string().optional().describe("The user's email, for generating better suggestions."),
-  existingUsernames: z.array(z.string()).describe('A list of usernames that are already taken and should not be suggested.'),
-});
-export type SuggestUsernameInput = z.infer<typeof SuggestUsernameInputSchema>;
-
-export const SuggestUsernameOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('A list of alternative username suggestions.'),
-});
-export type SuggestUsernameOutput = z.infer<typeof SuggestUsernameOutputSchema>;
-
-// Type for the response from the user context check function
-export interface CheckUsernameResponse {
-  status: 'available' | 'taken' | 'invalid';
-  message: string;
-  suggestions?: string[];
-}
-
 // Community & Group Chat Types
 export interface ChatMessage {
   id: string;
@@ -195,4 +174,4 @@ export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
 export const GenerateMockTestOutputSchema = z.object({
   questions: z.array(MockTestQuestionSchema).describe('An array of generated test questions.'),
 });
-export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;
+export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema];
