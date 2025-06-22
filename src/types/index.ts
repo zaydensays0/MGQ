@@ -100,43 +100,6 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
-// Community & Group Chat Types
-export interface ChatMessage {
-  id: string;
-  senderUsername: string; // Unique ID
-  senderFullName: string; // For display
-  senderAvatarUrl: string;
-  text: string;
-  timestamp: number;
-}
-
-export interface UserGroup {
-  id: string;
-  name: string;
-  adminUsername: string;
-  members: {
-    username: string; // Unique ID
-    fullName: string; // For display
-    avatarUrl: string;
-  }[];
-  messages: ChatMessage[];
-  createdAt: number;
-}
-
-// Type for community shared posts
-export interface SharedPost {
-  id: string;
-  author: {
-    username: string; // Unique ID
-    fullName: string; // For display
-    avatarUrl: string;
-  };
-  message: string | null;
-  questions: SavedQuestion[];
-  timestamp: number;
-}
-
-
 // Badge types for gamification
 export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 

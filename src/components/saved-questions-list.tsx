@@ -5,21 +5,16 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff, Share2 } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { ShareQuestionsDialog } from './share-questions-dialog';
 
 const SavedQuestionItem: React.FC<{ 
   question: SavedQuestion, 
   onRemove: (id: string) => void,
-  onSelect: (id: string, isSelected: boolean) => void,
-  isSelected: boolean,
-}> = ({ question, onRemove, onSelect, isSelected }) => {
+}> = ({ question, onRemove }) => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
@@ -49,24 +44,15 @@ const SavedQuestionItem: React.FC<{
   return (
     <Card className="bg-background shadow-sm">
         <CardContent className="p-4 pb-2">
-            <div className="flex items-start space-x-3">
-                <Checkbox
-                    id={`select-${question.id}`}
-                    checked={isSelected}
-                    onCheckedChange={(checked) => onSelect(question.id, !!checked)}
-                    className="mt-1"
-                    aria-label={`Select question: ${question.text}`}
-                />
-                <div className="grid w-full gap-1.5">
-                    <Label htmlFor={`select-${question.id}`} className="text-sm text-muted-foreground cursor-pointer">
-                        Type: {question.questionType.replace(/_/g, ' ')}
-                    </Label>
-                    <p className="text-foreground leading-relaxed">{question.text}</p>
-                </div>
+            <div className="grid w-full gap-1.5">
+                <p className="text-sm text-muted-foreground">
+                    Type: {question.questionType.replace(/_/g, ' ')}
+                </p>
+                <p className="text-foreground leading-relaxed">{question.text}</p>
             </div>
             
             {(isMCQ && question.options) && (
-            <div className="space-y-1.5 mt-2 pl-8">
+            <div className="space-y-1.5 mt-2">
                 {question.options.map((option, index) => {
                 const isSelectedOption = userSelection === option;
                 const isCorrectOption = question.answer === option;
@@ -95,7 +81,7 @@ const SavedQuestionItem: React.FC<{
             )}
 
             {isTrueFalse && (
-            <div className="flex space-x-2 mt-2 pl-8">
+            <div className="flex space-x-2 mt-2">
                 {['True', 'False'].map((tfOption) => {
                 const isSelectedOption = userSelection === tfOption;
                 const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
@@ -170,18 +156,6 @@ const SavedQuestionItem: React.FC<{
 
 export function SavedQuestionsList() {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-
-  const handleSelectQuestion = (id: string, isSelected: boolean) => {
-    setSelectedQuestionIds(prev => 
-      isSelected ? [...prev, id] : prev.filter(qid => qid !== id)
-    );
-  };
-  
-  const handleClearSelection = () => {
-    setSelectedQuestionIds([]);
-  };
 
   const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
 
@@ -214,29 +188,6 @@ export function SavedQuestionsList() {
 
   return (
     <div className="space-y-8">
-      <Card className="p-4 shadow-md sticky top-20 z-10 bg-background/90 backdrop-blur-sm">
-        <div className="flex justify-between items-center">
-            <div>
-                <h3 className="text-lg font-semibold">Share to Community</h3>
-                <p className="text-sm text-muted-foreground">Select one or more questions below to post to the Community Hub.</p>
-            </div>
-            <Button 
-                onClick={() => setIsShareDialogOpen(true)} 
-                disabled={selectedQuestionIds.length === 0}
-            >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share ({selectedQuestionIds.length})
-            </Button>
-        </div>
-      </Card>
-
-      <ShareQuestionsDialog 
-        isOpen={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
-        selectedQuestionIds={selectedQuestionIds}
-        onShare={handleClearSelection}
-      />
-
       {Object.entries(groupedQuestions).map(([subjectKey, chapters]) => (
         <Card key={subjectKey} className="shadow-lg">
           <CardHeader>
@@ -256,8 +207,6 @@ export function SavedQuestionsList() {
                             key={q.id} 
                             question={q} 
                             onRemove={removeQuestion}
-                            isSelected={selectedQuestionIds.includes(q.id)}
-                            onSelect={handleSelectQuestion}
                         />
                     ))}
                   </AccordionContent>

@@ -20,8 +20,6 @@ const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/groups', label: 'Groups', icon: MessageSquare },
-  { href: '/community', label: 'Community', icon: Users },
 ];
 
 const moreToolsLinks = [
