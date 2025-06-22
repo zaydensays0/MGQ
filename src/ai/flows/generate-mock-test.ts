@@ -28,7 +28,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateMockTestOutputSchema},
   prompt: `You are an expert test creator for students.
   
-  Generate a mock test with exactly {{numberOfQuestions}} questions for a Class {{gradeLevel}} student.
+  Generate a mock test with exactly {{numberOfQuestions}} questions of "{{difficulty}}" difficulty for a Class {{gradeLevel}} student.
   The test should cover the following subject: "{{subject}}" and chapter(s): "{{chapters}}".
   
   Create a random mix of the following two question types:
@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
     - The "options" field MUST contain the array ["True", "False"].
     - The "answer" field MUST be either "True" or "False".
 
-  Return the questions in a JSON array. Ensure the questions are relevant and challenging for the specified grade level.
+  Return the questions in a JSON array. Ensure the questions are relevant and challenging for the specified grade level and difficulty.
   `,
 });
 

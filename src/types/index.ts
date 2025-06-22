@@ -154,6 +154,7 @@ export const GenerateMockTestInputSchema = z.object({
   subject: z.string().describe('The subject of the test.'),
   chapters: z.string().describe('A comma-separated list of chapter names for the test.'),
   numberOfQuestions: z.number().int().positive().describe('The total number of questions to generate for the test.'),
+  difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the test questions.'),
 });
 export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
 

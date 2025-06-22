@@ -30,11 +30,15 @@ interface TestAnswer {
     earnedXp: number;
 }
 
+const difficultyLevels = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', label: 'Hard' }] as const;
+type Difficulty = typeof difficultyLevels[number]['value'];
+
 const setupSchema = z.object({
     gradeLevel: z.enum(GRADE_LEVELS),
     subject: z.string().min(1, "Please select a subject."),
     chapters: z.string().min(1, "Please enter at least one chapter."),
     numberOfQuestions: z.coerce.number().min(5, "Minimum 5 questions.").max(20, "Maximum 20 questions."),
+    difficulty: z.enum(['easy', 'medium', 'hard']),
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
@@ -56,6 +60,7 @@ export default function MockTestPage() {
         defaultValues: {
             chapters: '',
             numberOfQuestions: 10,
+            difficulty: 'medium',
         },
     });
 
@@ -178,13 +183,27 @@ export default function MockTestPage() {
                             {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                         </div>
                     )} />
-                     <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
-                        <div className="space-y-1.5">
-                            <Label htmlFor="numberOfQuestions">Number of Questions (5-20)</Label>
-                            <Input id="numberOfQuestions" type="number" min="5" max="20" {...field} />
-                            {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
-                        </div>
-                    )} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
+                            <div className="space-y-1.5">
+                                <Label htmlFor="numberOfQuestions">Number of Questions</Label>
+                                <Input id="numberOfQuestions" type="number" min="5" max="20" {...field} />
+                                {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                            </div>
+                        )} />
+                        <Controller name="difficulty" control={form.control} render={({ field, fieldState }) => (
+                            <div className="space-y-1.5">
+                                <Label htmlFor="difficulty">Difficulty</Label>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger id="difficulty"><SelectValue placeholder="Select Difficulty" /></SelectTrigger>
+                                    <SelectContent>
+                                        {difficultyLevels.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                            </div>
+                        )} />
+                    </div>
                 </CardContent>
                 <CardFooter>
                     <Button type="submit" className="w-full" disabled={isLoading}>
