@@ -28,12 +28,12 @@ const ChatMessageBubble: React.FC<{ message: ChatMessage; isCurrentUser: boolean
             {!isCurrentUser && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={message.senderAvatarUrl} />
-                    <AvatarFallback>{message.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{message.senderFullName.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
             )}
             <div className={`flex flex-col space-y-1 text-sm max-w-xs mx-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}>
                 <div className={`px-4 py-2 rounded-lg inline-block ${isCurrentUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
-                    {!isCurrentUser && <p className="text-xs font-bold mb-1">{message.senderUsername}</p>}
+                    {!isCurrentUser && <p className="text-xs font-bold mb-1">{message.senderFullName}</p>}
                     <p className="whitespace-pre-wrap">{message.text}</p>
                 </div>
                 <span className="text-xs text-muted-foreground">{format(new Date(message.timestamp), 'p')}</span>
@@ -74,6 +74,7 @@ function ChatView() {
         addMessageToGroup(group.id, {
             text: messageText,
             senderUsername: user.username,
+            senderFullName: user.fullName,
             senderAvatarUrl: user.avatarUrl,
         });
 
@@ -174,9 +175,9 @@ function ChatView() {
                                 <li key={member.username} className="flex items-center space-x-3">
                                     <Avatar>
                                         <AvatarImage src={member.avatarUrl} />
-                                        <AvatarFallback>{member.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback>{member.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <span>{member.username} {member.username === group.adminUsername && <span className="text-xs text-primary font-semibold">(Admin)</span>}</span>
+                                    <span>{member.fullName} {member.username === group.adminUsername && <span className="text-xs text-primary font-semibold">(Admin)</span>}</span>
                                 </li>
                             ))}
                         </ul>

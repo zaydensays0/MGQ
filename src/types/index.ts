@@ -103,7 +103,8 @@ export interface SavedSubjectExpertExchange {
 // Community & Group Chat Types
 export interface ChatMessage {
   id: string;
-  senderUsername: string;
+  senderUsername: string; // Unique ID
+  senderFullName: string; // For display
   senderAvatarUrl: string;
   text: string;
   timestamp: number;
@@ -113,7 +114,11 @@ export interface UserGroup {
   id: string;
   name: string;
   adminUsername: string;
-  members: { username: string; avatarUrl: string }[];
+  members: {
+    username: string; // Unique ID
+    fullName: string; // For display
+    avatarUrl: string;
+  }[];
   messages: ChatMessage[];
   createdAt: number;
 }
@@ -122,7 +127,8 @@ export interface UserGroup {
 export interface SharedPost {
   id: string;
   author: {
-    username: string;
+    username: string; // Unique ID
+    fullName: string; // For display
     avatarUrl: string;
   };
   message: string | null;
@@ -137,7 +143,7 @@ export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 // Types for User Profile & Authentication
 export interface User {
   fullName: string;
-  username: string; // This will be the unique ID for a user in our system
+  username: string; // This is a unique internal ID, not for display/editing
   email: string;
   password?: string; // Stored only in prototype. NEVER in production.
   avatarUrl: string;
@@ -174,4 +180,4 @@ export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
 export const GenerateMockTestOutputSchema = z.object({
   questions: z.array(MockTestQuestionSchema).describe('An array of generated test questions.'),
 });
-export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema];
+export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;

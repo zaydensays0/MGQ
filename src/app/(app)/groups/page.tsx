@@ -34,7 +34,7 @@ export default function GroupsPage() {
         const groupData: GroupCreationData = {
             name: newGroupName,
             adminUsername: user.username,
-            members: [{ username: user.username, avatarUrl: user.avatarUrl }]
+            members: [{ username: user.username, fullName: user.fullName, avatarUrl: user.avatarUrl }]
         };
 
         addGroup(groupData);

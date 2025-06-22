@@ -153,7 +153,7 @@ export default function AccountPage() {
                 <Card className="lg:col-span-2 shadow-lg">
                     <CardHeader>
                         <CardTitle>Profile</CardTitle>
-                        <CardDescription>This information is used to represent you across the app. Your username is permanent.</CardDescription>
+                        <CardDescription>This information is used to represent you across the app.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-8">
                         <div className="flex flex-col items-center gap-4 p-4">
@@ -181,11 +181,6 @@ export default function AccountPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="username">Username</Label>
-                                <Input id="username" value={user.username} disabled className="pr-10" />
-                                <p className="text-sm text-muted-foreground pt-1">Your username cannot be changed.</p>
                             </div>
                         </div>
                     </CardContent>

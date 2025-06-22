@@ -25,11 +25,11 @@ const SharedPostCard: React.FC<{ post: SharedPost }> = ({ post }) => {
         <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center gap-4">
                 <Avatar className="h-11 w-11">
-                    <AvatarImage src={post.author.avatarUrl} alt={post.author.username} />
-                    <AvatarFallback>{post.author.username.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={post.author.avatarUrl} alt={post.author.fullName} />
+                    <AvatarFallback>{post.author.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <p className="font-semibold">{post.author.username}</p>
+                    <p className="font-semibold">{post.author.fullName}</p>
                     <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(post.timestamp), { addSuffix: true })}</p>
                 </div>
             </CardHeader>

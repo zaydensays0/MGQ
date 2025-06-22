@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { UserGroup, ChatMessage } from '@/types';
@@ -7,12 +8,13 @@ import { v4 as uuidv4 } from 'uuid';
 export interface GroupCreationData {
   name: string;
   adminUsername: string;
-  members: { username: string; avatarUrl: string }[];
+  members: { username: string; fullName: string; avatarUrl: string }[];
 }
 
 export interface MessageCreationData {
     text: string;
     senderUsername: string;
+    senderFullName: string;
     senderAvatarUrl: string;
 }
 
@@ -26,7 +28,7 @@ interface GroupsContextType {
 
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_GROUPS = 'MGQsUserGroups_v3_chat'; // Version up for chat feature
+const LOCAL_STORAGE_KEY_GROUPS = 'MGQsUserGroups_v4_chat'; // Version up for new member structure
 
 export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [groups, setGroups] = useState<UserGroup[]>([]);

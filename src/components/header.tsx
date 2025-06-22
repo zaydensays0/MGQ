@@ -21,7 +21,7 @@ const navLinks = [
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/groups', label: 'Groups', icon: MessageSquare },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/community', label: 'Community', icon: Users },
 ];
 
 const moreToolsLinks = [
@@ -66,7 +66,7 @@ export function Header() {
 
   const getIsActive = (href: string) => {
     if (href === '/groups') {
-      return pathname.startsWith('/groups') || pathname.startsWith('/community');
+      return pathname.startsWith('/groups');
     }
     return pathname.startsWith(href);
   };
@@ -136,8 +136,8 @@ export function Header() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
-                            <AvatarImage src={user.avatarUrl} alt={user.username} />
-                            <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                            <AvatarImage src={user.avatarUrl} alt={user.fullName} />
+                            <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
@@ -176,11 +176,11 @@ export function Header() {
                         <div>
                           <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
                               <Avatar className="h-9 w-9 mr-3">
-                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                  <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                  <AvatarImage src={user.avatarUrl} alt={user.fullName} />
+                                  <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div>
-                                  <p className="font-semibold">{user.username}</p>
+                                  <p className="font-semibold">{user.fullName}</p>
                                   <p className="text-sm text-muted-foreground">View Account</p>
                               </div>
                           </Link>

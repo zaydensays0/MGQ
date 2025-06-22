@@ -7,13 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
 
 
-const USER_DB_KEY = 'MGQsUserDatabase_v2_proto'; // Use a new key for the prototype DB
-const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v2_proto'; // Use a new key for the prototype session
+const USER_KEY = 'MGQsUser_v3_single'; // Use a new key for the single user model
 
 // A default user for the prototype experience
 const DEFAULT_USER: User = {
     fullName: "Alex Doe",
-    username: "alex_d",
+    username: "alex_d", // Internal ID, not for display or editing by user
     email: "alex.doe@example.com",
     avatarUrl: "https://placehold.co/100x100.png?text=A",
     xp: 1200,
@@ -68,71 +67,48 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // --- Provider Component ---
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<Record<string, User>>({});
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
-  // Load database and session on initial mount
+  // Load user on initial mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const storedUsers = window.localStorage.getItem(USER_DB_KEY);
-        let userDb = storedUsers ? JSON.parse(storedUsers) : {};
-        
-        // Ensure the default user exists in the DB
-        if (!userDb[DEFAULT_USER.username]) {
-            userDb[DEFAULT_USER.username] = DEFAULT_USER;
-        }
-        setUsers(userDb);
-
-        const sessionUser = window.localStorage.getItem(CURRENT_USER_SESSION_KEY);
-        if (sessionUser && userDb[sessionUser]) {
-          setUser(userDb[sessionUser]);
-        } else {
-          // If no session, set the default user
-          setUser(userDb[DEFAULT_USER.username]);
-          window.localStorage.setItem(CURRENT_USER_SESSION_KEY, DEFAULT_USER.username);
-        }
+        const storedUser = window.localStorage.getItem(USER_KEY);
+        setUser(storedUser ? JSON.parse(storedUser) : DEFAULT_USER);
       } catch (error) {
         console.error("Failed to initialize user state from localStorage:", error);
+        setUser(DEFAULT_USER);
       }
       setIsInitialized(true);
     }
   }, []);
 
-  const saveUsersToDb = (updatedDb: Record<string, User>) => {
-    setUsers(updatedDb);
-    window.localStorage.setItem(USER_DB_KEY, JSON.stringify(updatedDb));
+  const saveUserToDb = (updatedUser: User) => {
+    setUser(updatedUser);
+    window.localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
   };
 
   const logout = useCallback(() => {
-    setUser(null);
-    window.localStorage.removeItem(CURRENT_USER_SESSION_KEY);
-    // In a real app, this would redirect to a login page.
-    // For this prototype, we can just reload to reset to the default user.
-    window.location.reload();
+    // In a single user prototype, logout can reset to the default state
+    window.localStorage.removeItem(USER_KEY);
+    setUser(DEFAULT_USER); 
+    window.location.reload(); // Force a refresh to reset all component states
   }, []);
 
   const updateUser = useCallback((newUserData: Partial<User>) => {
     if (!user) return;
     
-    let oldUsername = user.username;
-    const updatedUser = { ...user, ...newUserData };
-    let updatedDb = { ...users };
-    
-    // If username is being changed, we need to update the key in the DB
-    if (newUserData.username && newUserData.username !== oldUsername) {
-        delete updatedDb[oldUsername]; // Remove old entry
-        updatedDb[newUserData.username] = updatedUser; // Add new entry
-        window.localStorage.setItem(CURRENT_USER_SESSION_KEY, newUserData.username); // Update session
-    } else {
-        updatedDb[oldUsername] = updatedUser;
+    // Prevent username from being changed, as it's an internal ID
+    if (newUserData.username && newUserData.username !== user.username) {
+        delete newUserData.username;
+        console.warn("Attempted to change username. This is not allowed.");
     }
-    
-    setUser(updatedUser);
-    saveUsersToDb(updatedDb);
-  }, [user, users]);
+
+    const updatedUser = { ...user, ...newUserData };
+    saveUserToDb(updatedUser);
+  }, [user]);
 
   const handleCorrectAnswer = useCallback((baseXp: number) => {
     if (!user) return;
