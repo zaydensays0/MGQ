@@ -14,7 +14,7 @@ const DEFAULT_USER: User = {
     fullName: "Alex Doe",
     username: "alex_d", // Internal ID, not for display or editing by user
     email: "alex.doe@example.com",
-    avatarUrl: "https://placehold.co/100x100.png?text=A",
+    avatarUrl: "https://placehold.co/100x100.png",
     xp: 1200,
     level: 2,
     streak: 1,

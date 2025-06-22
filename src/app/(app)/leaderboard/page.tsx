@@ -180,11 +180,11 @@ export default function LeaderboardPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10">
-                                                <AvatarImage src={player.avatarUrl} alt={player.username} />
+                                                <AvatarImage src={player.avatarUrl} alt={player.username} data-ai-hint="student avatar" />
                                                 <AvatarFallback>{player.username.charAt(0).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-semibold">{player.username}</p>
+                                                <p className="font-semibold">{player.fullName}</p>
                                                 <p className="text-xs text-muted-foreground">Level {player.level}</p>
                                             </div>
                                         </div>

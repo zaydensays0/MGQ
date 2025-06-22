@@ -141,7 +141,7 @@ export function Header() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
-                            <AvatarImage src={user.avatarUrl} alt={user.fullName} />
+                            <AvatarImage src={user.avatarUrl} alt={user.fullName} data-ai-hint="student avatar" />
                             <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </DropdownMenuTrigger>

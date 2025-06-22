@@ -157,7 +157,7 @@ export default function AccountPage() {
                     </CardHeader>
                     <CardContent className="space-y-8">
                         <div className="flex flex-col items-center gap-4 p-4">
-                            <img src={newAvatarUrl || user.avatarUrl} alt="Avatar" data-ai-hint="profile picture" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
+                            <img src={newAvatarUrl || user.avatarUrl} alt="Avatar" data-ai-hint="student avatar" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
                             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                                 <UploadCloud className="mr-2 h-4 w-4" /> Upload New Avatar
                             </Button>
