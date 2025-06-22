@@ -69,9 +69,6 @@ export interface Note {
 // Types for Grammar Helper
 export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 
-// Types for Jarvis general Q&A
-// export type { AskJarvisInput, AskJarvisOutput } from '@/ai/flows/ask-jarvis'; // Will be re-defined by the flow itself
-
 // Represents a single question-answer pair in a conversation, used for storing
 export interface ConversationExchange {
   question: string;
@@ -140,10 +137,12 @@ export interface SharedPost {
 // Badge types for gamification
 export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 
-// Types for User Profile
+// Types for User Profile & Authentication
 export interface User {
   fullName: string;
-  username: string;
+  username: string; // This will be the unique ID for a user in our system
+  email: string;
+  password?: string; // Stored only in prototype. NEVER in production.
   avatarUrl: string;
   xp: number;
   level: number;

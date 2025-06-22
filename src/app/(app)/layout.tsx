@@ -1,9 +1,10 @@
 'use client';
 
-// Authentication checks and related hooks have been removed for simplicity.
 import { Header } from '@/components/header';
 import { useState, useEffect } from 'react';
-import { WifiOff } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/contexts/user-context';
+import { Loader2, WifiOff } from 'lucide-react';
 
 export default function AppLayout({
   children,
@@ -11,25 +12,35 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isOnline, setIsOnline] = useState(true);
+  const { user, isInitialized } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const handleStatusChange = () => {
-        setIsOnline(navigator.onLine);
-      };
-
+      const handleStatusChange = () => setIsOnline(navigator.onLine);
       window.addEventListener('online', handleStatusChange);
       window.addEventListener('offline', handleStatusChange);
-
-      // Set initial status
       handleStatusChange();
-
       return () => {
         window.removeEventListener('online', handleStatusChange);
         window.removeEventListener('offline', handleStatusChange);
       };
     }
   }, []);
+  
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, isInitialized, router]);
+  
+  if (!isInitialized || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -37,7 +48,7 @@ export default function AppLayout({
       {!isOnline && (
         <div className="bg-destructive text-destructive-foreground text-center text-sm py-1.5 font-semibold flex items-center justify-center z-50">
           <WifiOff className="w-4 h-4 mr-2" />
-          Offline Mode: Viewing Saved Questions Only
+          You are currently offline. Some features may be unavailable.
         </div>
       )}
       <main className="flex-1">{children}</main>

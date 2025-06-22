@@ -6,52 +6,29 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
 
-const USER_DATA_KEY = 'MGQsUserData';
-
-const MOCK_INITIAL_USER: User = {
-  fullName: 'Mehdi',
-  username: 'realmehdi',
-  avatarUrl: 'https://placehold.co/100x100.png',
-  xp: 0,
-  level: 1,
-  streak: 0,
-  lastCorrectAnswerDate: '', // Initialize as empty
-  badges: [],
-  class: undefined, // User needs to set their class
-};
+const USER_DB_KEY = 'MGQsUserDatabase_v1';
+const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v1';
 
 // --- Gamification Constants ---
-
-// Generate level thresholds based on the new system
-// Levels require progressively more XP: 500, 800, 1200, 1600, etc.
 const generateLevelThresholds = (maxLevel = 50) => {
-    const thresholds = [0]; // XP for level 1 is 0. Reaching level 2 requires 500 total XP.
+    const thresholds = [0];
     let currentTotalXp = 0;
     let nextLevelIncrement = 500;
     for (let level = 2; level <= maxLevel; level++) {
         currentTotalXp += nextLevelIncrement;
         thresholds.push(currentTotalXp);
-
-        if (level > 2) {
-             nextLevelIncrement += 400; // Increment increases by 400 for subsequent levels
-        } else if (level === 2) {
-            nextLevelIncrement = 800;
-        }
+        nextLevelIncrement += (level > 2) ? 400 : 300;
     }
     return thresholds;
 };
 
-
 const LEVEL_THRESHOLDS = generateLevelThresholds();
-const STREAK_BONUSES = [50, 70, 90, 110, 130, 150, 200]; // XP bonus for day 1 through 7
-
+const STREAK_BONUSES = [50, 70, 90, 110, 130, 150, 200];
 
 // --- Gamification Helper Functions ---
 const getLevelFromXp = (xp: number): number => {
     for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-        if (xp >= LEVEL_THRESHOLDS[i]) {
-            return i + 1;
-        }
+        if (xp >= LEVEL_THRESHOLDS[i]) return i + 1;
     }
     return 1;
 };
@@ -59,88 +36,145 @@ const getLevelFromXp = (xp: number): number => {
 export const getXpForLevel = (level: number): { currentLevelStart: number; nextLevelTarget: number } => {
     if (level < 1) level = 1;
     const currentLevelStart = LEVEL_THRESHOLDS[level - 1] ?? 0;
-    const nextLevelTarget = LEVEL_THRESHOLDS[level] ?? (LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 2400); // Fallback for max level
+    const nextLevelTarget = LEVEL_THRESHOLDS[level] ?? (LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 2400);
     return { currentLevelStart, nextLevelTarget };
-}
+};
 
+// --- Context Types ---
+type SignupData = Pick<User, 'fullName' | 'username' | 'avatarUrl'> & { email: string; password: string };
+type LoginResult = { success: boolean; message: string };
 
 interface UserContextType {
   user: User | null;
-  updateUser: (newUserData: Partial<User>) => void;
   isInitialized: boolean;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  signup: (data: SignupData) => Promise<LoginResult>;
+  logout: () => void;
+  updateUser: (newUserData: Partial<User>) => void;
   handleCorrectAnswer: (baseXp: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// --- Provider Component ---
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [users, setUsers] = useState<Record<string, User>>({});
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
-  
+
+  // Load database and session on initial mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const storedUser = window.localStorage.getItem(USER_DATA_KEY);
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          // Ensure badges is an array to prevent errors with old data structures
-          if (!Array.isArray(parsedUser.badges)) {
-            parsedUser.badges = [];
-          }
-          setUser(parsedUser);
-        } else {
-          setUser(MOCK_INITIAL_USER);
-          window.localStorage.setItem(USER_DATA_KEY, JSON.stringify(MOCK_INITIAL_USER));
+        const storedUsers = window.localStorage.getItem(USER_DB_KEY);
+        const userDb = storedUsers ? JSON.parse(storedUsers) : {};
+        setUsers(userDb);
+
+        const sessionUser = window.localStorage.getItem(CURRENT_USER_SESSION_KEY);
+        if (sessionUser && userDb[sessionUser]) {
+          setUser(userDb[sessionUser]);
         }
       } catch (error) {
-        console.error("Failed to load user data from localStorage:", error);
-        setUser(MOCK_INITIAL_USER);
+        console.error("Failed to initialize user state from localStorage:", error);
       }
       setIsInitialized(true);
     }
   }, []);
-  
-  const saveUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    window.localStorage.setItem(USER_DATA_KEY, JSON.stringify(updatedUser));
-  }
+
+  const saveUsersToDb = (updatedDb: Record<string, User>) => {
+    setUsers(updatedDb);
+    window.localStorage.setItem(USER_DB_KEY, JSON.stringify(updatedDb));
+  };
+
+  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const foundUser = Object.values(users).find(u => u.email === email && u.password === password); // Simple check for prototype
+    if (foundUser) {
+      setUser(foundUser);
+      window.localStorage.setItem(CURRENT_USER_SESSION_KEY, foundUser.username);
+      return { success: true, message: 'Login successful.' };
+    }
+    return { success: false, message: 'Invalid email or password.' };
+  }, [users]);
+
+  const signup = useCallback(async (data: SignupData): Promise<LoginResult> => {
+    if (users[data.username]) {
+      return { success: false, message: 'Username is already taken.' };
+    }
+    if (Object.values(users).some(u => u.email === data.email)) {
+      return { success: false, message: 'An account with this email already exists.' };
+    }
+
+    const newUser: User = {
+      fullName: data.fullName,
+      username: data.username,
+      email: data.email,
+      password: data.password, // Storing plain text for prototype ONLY. NEVER do this in production.
+      avatarUrl: data.avatarUrl,
+      xp: 0,
+      level: 1,
+      streak: 0,
+      lastCorrectAnswerDate: '',
+      badges: [],
+    };
+
+    const updatedDb = { ...users, [newUser.username]: newUser };
+    saveUsersToDb(updatedDb);
+    setUser(newUser);
+    window.localStorage.setItem(CURRENT_USER_SESSION_KEY, newUser.username);
+
+    return { success: true, message: 'Signup successful.' };
+  }, [users]);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    window.localStorage.removeItem(CURRENT_USER_SESSION_KEY);
+  }, []);
 
   const updateUser = useCallback((newUserData: Partial<User>) => {
     if (!user) return;
+    
+    // Create the updated user object
     const updatedUser = { ...user, ...newUserData };
-    saveUser(updatedUser);
-  }, [user]);
+    
+    // Update the state for the current user
+    setUser(updatedUser);
+    
+    // Update the user's data in the "database"
+    const updatedDb = { ...users, [user.username]: updatedUser };
+    saveUsersToDb(updatedDb);
+  }, [user, users]);
 
   const handleCorrectAnswer = useCallback((baseXp: number) => {
     if (!user) return;
-
     let xpGained = baseXp;
     let newStreak = user.streak;
-    let newBadges = [...(user.badges || [])];
+    const newBadges = [...(user.badges || [])];
 
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
     const lastAnswerDate = user.lastCorrectAnswerDate ? parseISO(user.lastCorrectAnswerDate) : null;
-    const isFirstAnswerToday = !lastAnswerDate || !format(lastAnswerDate, 'yyyy-MM-dd').includes(todayStr);
+    
+    let isFirstAnswerToday = true;
+    if(lastAnswerDate) {
+        const lastDateStr = format(lastAnswerDate, 'yyyy-MM-dd');
+        isFirstAnswerToday = lastDateStr !== todayStr;
+    }
 
     if (isFirstAnswerToday) {
-        if (lastAnswerDate && differenceInCalendarDays(today, lastAnswerDate) === 1) {
-            newStreak += 1; // Continue streak
-        } else {
-            newStreak = 1; // Start or reset streak
-        }
-        
-        // Add streak bonus
-        const streakIndex = newStreak - 1;
-        const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
-        xpGained += streakBonus;
+      if (lastAnswerDate && differenceInCalendarDays(today, lastAnswerDate) === 1) {
+        newStreak += 1; // Continue streak
+      } else {
+        newStreak = 1; // Start or reset streak
+      }
+      const streakIndex = newStreak - 1;
+      const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
+      xpGained += streakBonus;
 
-        // Award badge on day 7
-        if (newStreak === 7 && !newBadges.includes('streak_master')) {
-            newBadges.push('streak_master');
-            toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
-        }
+      if (newStreak === 7 && !newBadges.includes('streak_master')) {
+        newBadges.push('streak_master');
+        toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
+      }
     }
 
     const newXp = user.xp + xpGained;
@@ -148,38 +182,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const newLevel = getLevelFromXp(newXp);
 
     if (newLevel > oldLevel) {
-        toast({
-            title: '🎉 Level Up!',
-            description: `Congratulations, you've reached Level ${newLevel}!`,
-        });
+      toast({ title: '🎉 Level Up!', description: `Congratulations, you've reached Level ${newLevel}!` });
     } else {
-        const { nextLevelTarget } = getXpForLevel(newLevel);
-        const xpToGo = nextLevelTarget - newXp;
-        let description = `You're now at ${newXp.toLocaleString()} XP.`;
-        if (xpToGo > 0) {
-            description += ` Just ${xpToGo.toLocaleString()} XP to go for Level ${newLevel + 1}!`;
-        }
-        toast({
-            title: `+${xpGained.toLocaleString()} XP! Keep it up!`,
-            description: description,
-        });
+        toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
-
-    const updatedUser: User = {
-        ...user,
+    
+    updateUser({
         xp: newXp,
         level: newLevel,
         streak: newStreak,
         badges: newBadges,
         lastCorrectAnswerDate: todayStr,
-    };
-    
-    saveUser(updatedUser);
-
-  }, [user, toast]);
+    });
+  }, [user, toast, updateUser]);
 
   return (
-    <UserContext.Provider value={{ user, updateUser, isInitialized, handleCorrectAnswer }}>
+    <UserContext.Provider value={{ user, isInitialized, login, signup, logout, updateUser, handleCorrectAnswer }}>
       {children}
     </UserContext.Provider>
   );

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -14,12 +14,12 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from './ui/progress';
+import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/community', label: 'Community', icon: Users },
   { href: '/groups', label: 'Groups', icon: MessageSquare },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
@@ -53,8 +53,14 @@ const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isInitialized } = useUser();
+  const { user, isInitialized, logout } = useUser();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
 
   const getIsActive = (href: string) => {
     if (href === '/groups') {
@@ -67,7 +73,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
+        <Link href={user ? "/generate" : "/"} className="mr-6 flex items-baseline space-x-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <div className="flex flex-col">
             <span className="font-bold sm:inline-block text-lg font-headline">
@@ -82,43 +88,49 @@ export function Header() {
             </span>
           </div>
         </Link>
-        <nav className="hidden md:flex flex-1 items-center space-x-4 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "flex items-center transition-colors hover:text-foreground/80",
-                getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
-              )}
-            >
-              {link.icon && <link.icon className="mr-2 h-4 w-4" />}
-              {link.label}
-            </Link>
-          ))}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
-                        <LayoutGrid className="mr-2 h-4 w-4" />
-                        More Tools
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    {moreToolsLinks.map((link) => (
-                         <DropdownMenuItem key={link.href} asChild>
-                             <Link href={link.href} className="w-full flex">
-                                <link.icon className="mr-2 h-4 w-4" />
-                                {link.label}
-                             </Link>
-                         </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </nav>
+        
+        {user && (
+          <nav className="hidden md:flex flex-1 items-center space-x-4 text-sm font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "flex items-center transition-colors hover:text-foreground/80",
+                  getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                {link.icon && <link.icon className="mr-2 h-4 w-4" />}
+                {link.label}
+              </Link>
+            ))}
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
+                          <LayoutGrid className="mr-2 h-4 w-4" />
+                          More Tools
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                      {moreToolsLinks.map((link) => (
+                           <DropdownMenuItem key={link.href} asChild>
+                               <Link href={link.href} className="w-full flex">
+                                  <link.icon className="mr-2 h-4 w-4" />
+                                  {link.label}
+                               </Link>
+                           </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </nav>
+        )}
+
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
-              {isInitialized && user ? (
+              {!isInitialized ? (
+                 <Skeleton className="h-9 w-9 rounded-full" />
+              ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
@@ -127,15 +139,18 @@ export function Header() {
                         </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuLabel>{user.fullName}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {user && <UserProgress user={user} />}
+                        <UserProgress user={user} />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                  <Skeleton className="h-9 w-9 rounded-full" />
+                <Button asChild>
+                  <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
+                </Button>
               )}
           </div>
 
@@ -150,55 +165,64 @@ export function Header() {
               <SheetContent side="right" className="w-[260px] p-0 flex flex-col">
                  <SheetHeader className="p-6 pb-2">
                   <SheetTitle asChild>
-                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href={user ? "/generate" : "/"} className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <Sparkles className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline">MGQs</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
-                <div className="p-6 pt-0 border-b">
-                  {isInitialized && user ? (
-                      <div>
-                        <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Avatar className="h-9 w-9 mr-3">
-                                <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{user.username}</p>
-                                <p className="text-sm text-muted-foreground">View Account</p>
-                            </div>
-                        </Link>
-                        <div className="mt-2">
-                            <UserProgress user={user} />
-                        </div>
-                      </div>
-                  ) : (
-                      <div className="flex items-center p-2">
-                          <Skeleton className="h-9 w-9 rounded-full mr-3" />
-                          <div className="space-y-1">
-                              <Skeleton className="h-4 w-24" />
-                              <Skeleton className="h-3 w-20" />
+
+                {user ? (
+                  <>
+                    <div className="p-6 pt-0 border-b">
+                        <div>
+                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
+                              <Avatar className="h-9 w-9 mr-3">
+                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                  <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                  <p className="font-semibold">{user.username}</p>
+                                  <p className="text-sm text-muted-foreground">View Account</p>
+                              </div>
+                          </Link>
+                          <div className="mt-2">
+                              <UserProgress user={user} />
                           </div>
-                      </div>
-                  )}
-                </div>
-                <nav className="flex flex-col space-y-3 p-6 flex-grow overflow-y-auto">
-                  {[...navLinks, ...moreToolsLinks].map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
-                        getIsActive(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
+                        </div>
+                    </div>
+                    <nav className="flex flex-col space-y-3 p-6 flex-grow overflow-y-auto">
+                      {[...navLinks, ...moreToolsLinks].map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={cn(
+                            "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
+                            getIsActive(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
+                          )}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
+                          {link.label}
+                        </Link>
+                      ))}
+                    </nav>
+                    <div className="border-t p-4">
+                      <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
+                        <LogOut className="mr-2 h-4 w-4" /> Logout
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-6 flex flex-col gap-4">
+                    <Button asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
+                    </Button>
+                     <Button asChild variant="secondary" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/auth/signup"><User className="mr-2 h-4 w-4" />Sign Up</Link>
+                    </Button>
+                  </div>
+                )}
               </SheetContent>
             </Sheet>
           </div>
