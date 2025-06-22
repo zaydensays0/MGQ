@@ -9,6 +9,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle'; 
+import { useUser } from '@/contexts/user-context';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { Skeleton } from './ui/skeleton';
 
 const navLinks = [
   { href: '/', label: 'Generate Questions', icon: Sparkles },
@@ -20,12 +23,14 @@ const navLinks = [
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
-  { href: '/account', label: 'Account', icon: User },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isInitialized } = useUser();
+
+  const accountLink = { href: '/account', label: 'Account', icon: User };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -61,9 +66,18 @@ export function Header() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
-          <div className="hidden md:block">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
+          {isInitialized ? (
+              <Link href="/account" className="hidden md:block">
+                  <Avatar className="h-9 w-9">
+                      <AvatarImage src={user.avatarUrl} alt={user.username} />
+                      <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+              </Link>
+          ) : (
+              <Skeleton className="h-9 w-9 rounded-full hidden md:block" />
+          )}
+
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -72,7 +86,7 @@ export function Header() {
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[260px] p-6">
+              <SheetContent side="right" className="w-[260px] p-6 flex flex-col">
                  <SheetHeader className="mb-4">
                   <SheetTitle asChild>
                     <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -82,7 +96,7 @@ export function Header() {
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col space-y-3">
-                  {navLinks.map((link) => (
+                  {[...navLinks, accountLink].map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -90,15 +104,34 @@ export function Header() {
                         "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
                         pathname === link.href ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
                       )}
-                      onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                       {link.label}
                     </Link>
                   ))}
                 </nav>
-                <div className="mt-auto pt-6">
-                  <ThemeToggle />
+                <div className="mt-auto pt-6 border-t">
+                  {isInitialized ? (
+                      <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Avatar className="h-9 w-9 mr-3">
+                              <AvatarImage src={user.avatarUrl} alt={user.username} />
+                              <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <p className="font-semibold">{user.username}</p>
+                              <p className="text-sm text-muted-foreground">View Account</p>
+                          </div>
+                      </Link>
+                  ) : (
+                      <div className="flex items-center p-2">
+                          <Skeleton className="h-9 w-9 rounded-full mr-3" />
+                          <div className="space-y-1">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-3 w-20" />
+                          </div>
+                      </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

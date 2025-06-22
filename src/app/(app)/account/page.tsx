@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef, ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +13,10 @@ import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput 
 import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { useUser } from '@/contexts/user-context';
+import type { User as UserType } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-
-// A simple debounce hook
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     useEffect(() => {
@@ -29,23 +30,14 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-// Mock user data for the prototype
-const MOCK_USER = {
-  fullName: 'Mehdi Gokal',
-  email: 'mehdi.gokal@example.com',
-  currentUsername: 'mehdi_g',
-  currentAvatar: 'https://placehold.co/100x100.png',
-};
-
-
 export default function AccountPage() {
+  const { user, updateUser, isInitialized } = useUser();
+  
   const [newUsername, setNewUsername] = useState('');
   const [result, setResult] = useState<SuggestUsernameOutput | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const [finalUsername, setFinalUsername] = useState<string | null>(MOCK_USER.currentUsername);
   
-  // States for avatar upload and cropping
-  const [avatarUrl, setAvatarUrl] = useState<string>(MOCK_USER.currentAvatar);
+  const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
   const [crop, setCrop] = useState<Crop>();
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
@@ -68,8 +60,8 @@ export default function AccountPage() {
     try {
       const input: SuggestUsernameInput = {
         username: name,
-        fullName: MOCK_USER.fullName,
-        email: MOCK_USER.email,
+        fullName: user.fullName,
+        email: user.email,
       };
       const response = await suggestUsername(input);
       setResult(response);
@@ -83,7 +75,7 @@ export default function AccountPage() {
     } finally {
       setIsChecking(false);
     }
-  }, []);
+  }, [user.email, user.fullName]);
 
   useEffect(() => {
     if (debouncedUsername) {
@@ -115,12 +107,11 @@ export default function AccountPage() {
           });
           return;
       }
-      setCrop(undefined); // Clear old crop
+      setCrop(undefined);
       const reader = new FileReader();
       reader.addEventListener('load', () => setImageSrc(reader.result?.toString() || ''));
       reader.readAsDataURL(file);
       setIsCropModalOpen(true);
-      // Reset file input to allow re-uploading the same file
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -161,21 +152,35 @@ export default function AccountPage() {
 
     const croppedUrl = canvas.toDataURL('image/png');
     if (croppedUrl) {
-      setAvatarUrl(croppedUrl);
+      setNewAvatarUrl(croppedUrl);
     }
     setIsCropModalOpen(false);
   };
 
-
   const handleUpdateProfile = () => {
+    const updates: Partial<UserType> = {};
     if (result?.status === 'available') {
-        setFinalUsername(newUsername);
+        updates.username = newUsername;
     }
-    // In a real app, you'd save the avatar change (croppedUrl) and username to the server here.
-    toast({
-        title: 'Profile Updated!',
-        description: `Your profile has been successfully updated.`,
-    });
+    if (newAvatarUrl) {
+        updates.avatarUrl = newAvatarUrl;
+    }
+
+    if (Object.keys(updates).length > 0) {
+        updateUser(updates);
+        toast({
+            title: 'Profile Updated!',
+            description: 'Your profile has been successfully updated.',
+        });
+        setNewUsername('');
+        setResult(null);
+        setNewAvatarUrl(null);
+    } else {
+        toast({
+            title: 'No Changes',
+            description: 'Provide a valid new username or upload a new avatar.',
+        });
+    }
   };
 
   const handleSelectSuggestion = (suggestion: string) => {
@@ -191,6 +196,25 @@ export default function AccountPage() {
       default: return 'text-muted-foreground';
     }
   };
+
+  const canUpdate = (result?.status === 'available') || !!newAvatarUrl;
+
+  if (!isInitialized) {
+    return (
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="mb-8"><Skeleton className="h-10 w-64" /></div>
+        <Card className="w-full max-w-2xl mx-auto shadow-lg">
+          <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+          <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -214,15 +238,15 @@ export default function AccountPage() {
         <CardContent className="space-y-8">
             <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-muted/50 rounded-lg">
                 <img 
-                  src={avatarUrl} 
+                  src={newAvatarUrl || user.avatarUrl} 
                   alt="Profile Avatar"
                   data-ai-hint="profile picture"
                   className="w-24 h-24 rounded-full shadow-md object-cover bg-background" 
                 />
                 <div className="text-center sm:text-left">
-                    <h3 className="text-2xl font-bold font-headline">{MOCK_USER.fullName}</h3>
-                    <p className="text-md text-muted-foreground">{MOCK_USER.email}</p>
-                    <p className="text-lg font-mono text-primary mt-1">@{finalUsername || '...'}</p>
+                    <h3 className="text-2xl font-bold font-headline">{user.fullName}</h3>
+                    <p className="text-md text-muted-foreground">{user.email}</p>
+                    <p className="text-lg font-mono text-primary mt-1">@{user.username || '...'}</p>
                 </div>
             </div>
 
@@ -299,14 +323,13 @@ export default function AccountPage() {
           <Button 
             className="w-full"
             onClick={handleUpdateProfile}
-            disabled={isChecking || (!!newUsername && result?.status !== 'available')}
+            disabled={isChecking || !canUpdate}
           >
             Update Profile
           </Button>
         </CardFooter>
       </Card>
        
-       {/* Cropping Modal */}
       <Dialog open={isCropModalOpen} onOpenChange={setIsCropModalOpen}>
         <DialogContent>
           <DialogHeader>

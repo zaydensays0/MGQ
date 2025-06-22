@@ -123,3 +123,11 @@ export interface UserGroup {
   usernames: string[];
   createdAt: number;
 }
+
+// Types for User Profile
+export interface User {
+  fullName: string;
+  email: string;
+  username: string;
+  avatarUrl: string;
+}

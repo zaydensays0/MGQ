@@ -8,6 +8,7 @@ import { JarvisSavedProvider } from '@/contexts/jarvis-saved-context';
 import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-context';
 import { ThemeProvider } from "@/components/theme-provider";
 import { GroupsProvider } from '@/contexts/groups-context';
+import { UserProvider } from '@/contexts/user-context';
 
 // Determine if in development environment
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -61,17 +62,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <GroupsProvider>
-            <JarvisSavedProvider>
-              <SubjectExpertSavedProvider>
-                <SavedQuestionsProvider>
-                  <NotesProvider>
-                    {children}
-                  </NotesProvider>
-                </SavedQuestionsProvider>
-              </SubjectExpertSavedProvider>
-            </JarvisSavedProvider>
-          </GroupsProvider>
+          <UserProvider>
+            <GroupsProvider>
+              <JarvisSavedProvider>
+                <SubjectExpertSavedProvider>
+                  <SavedQuestionsProvider>
+                    <NotesProvider>
+                      {children}
+                    </NotesProvider>
+                  </SavedQuestionsProvider>
+                </SubjectExpertSavedProvider>
+              </JarvisSavedProvider>
+            </GroupsProvider>
+          </UserProvider>
           <Toaster />
         </ThemeProvider>
       </body>
