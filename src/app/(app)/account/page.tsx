@@ -2,8 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +18,7 @@ import type { User as UserType, BadgeKey } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 // Debounce hook for username checking
 function useDebounce<T>(value: T, delay: number): T {
@@ -37,7 +36,8 @@ function useDebounce<T>(value: T, delay: number): T {
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
     mini_streak: { icon: Flame, label: 'Mini Streak', description: 'Achieved a 3-day streak!' },
-    consistent_learner: { icon: Award, label: 'Consistent Learner', description: 'Achieved a 7-day streak!' },
+    consistent_learner: { icon: Award, label: 'Consistent Learner', description: 'Achieved a 7-day streak! (Old System)' },
+    streak_master: { icon: Medal, label: 'Streak Master', description: 'Achieved a 7-day streak! Incredible!' },
 };
 
 export default function AccountPage() {
@@ -250,7 +250,7 @@ export default function AccountPage() {
                             <div>
                                 <div className="flex justify-between items-end mb-1">
                                     <Label className="text-base">Level {user.level}</Label>
-                                    <p className="text-sm font-semibold text-primary">{user.xp} / {nextLevelTarget} XP</p>
+                                    <p className="text-sm font-semibold text-primary">{user.xp.toLocaleString()} / {nextLevelTarget.toLocaleString()} XP</p>
                                 </div>
                                 <Progress value={xpProgress} />
                             </div>
@@ -271,6 +271,7 @@ export default function AccountPage() {
                                     <div className="flex flex-wrap gap-4">
                                         {user.badges.map(badgeKey => {
                                             const badge = badgeInfo[badgeKey];
+                                            if (!badge) return null; // Handle case where badge from old system might exist
                                             return (
                                                 <Tooltip key={badgeKey}>
                                                     <TooltipTrigger asChild>

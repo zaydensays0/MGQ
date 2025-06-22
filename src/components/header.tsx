@@ -39,7 +39,7 @@ const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['
         <div className="px-2 py-1.5 text-sm">
             <div className="flex justify-between items-baseline mb-1">
                 <span className="font-semibold">Level {user.level}</span>
-                <span className="text-xs text-muted-foreground font-medium">{user.xp} / {nextLevelTarget} XP</span>
+                <span className="text-xs text-muted-foreground font-medium">{user.xp.toLocaleString()} / {nextLevelTarget.toLocaleString()} XP</span>
             </div>
             <Progress value={xpProgress} className="h-2" />
         </div>

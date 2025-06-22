@@ -125,15 +125,13 @@ export interface UserGroup {
 }
 
 // Badge types for gamification
-export type BadgeKey = 'mini_streak' | 'consistent_learner';
+export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 
 // Types for User Profile
 export interface User {
   fullName: string;
-  email: string;
   username: string;
   avatarUrl: string;
-  password?: string; // IMPORTANT: For prototype only. Do not store plain text passwords in a real app.
   xp: number;
   level: number;
   streak: number;

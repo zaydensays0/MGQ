@@ -10,9 +10,7 @@ const USER_DATA_KEY = 'MGQsUserData';
 
 const MOCK_INITIAL_USER: User = {
   fullName: 'Mehdi',
-  email: 'mehdi@example.com',
   username: 'realmehdi',
-  password: 'password123',
   avatarUrl: 'https://placehold.co/100x100.png',
   xp: 0,
   level: 1,
@@ -22,21 +20,30 @@ const MOCK_INITIAL_USER: User = {
 };
 
 // --- Gamification Constants ---
-// XP needed to *reach* the next level. Index corresponds to the level you are trying to reach.
-// e.g., to reach level 2, you need 10 total XP.
-const LEVEL_THRESHOLDS = [
-    0, // Level 1 starts at 0
-    10, // Reach Lvl 2
-    25, // Reach Lvl 3
-    45, // Reach Lvl 4
-    70, // Reach Lvl 5
-    100, // Reach Lvl 6
-    135, // ... and so on
-    175,
-    220,
-    270,
-    325,
-];
+
+// Generate level thresholds based on the new system
+// Levels require progressively more XP: 500, 800, 1200, 1600, etc.
+const generateLevelThresholds = (maxLevel = 50) => {
+  const thresholds = [0]; // XP for level 1 is 0. Reaching level 2 requires 500 total XP.
+  let currentTotalXp = 0;
+  let nextLevelIncrement = 500;
+  for (let level = 2; level <= maxLevel; level++) {
+    currentTotalXp += nextLevelIncrement;
+    thresholds.push(currentTotalXp);
+    
+    // The amount of XP needed for the *next* level increases
+    if (level === 2) {
+      nextLevelIncrement = 800; // XP needed to get from Lvl 2 to 3
+    } else {
+      nextLevelIncrement += 400; // Increment increases by 400 for subsequent levels
+    }
+  }
+  return thresholds;
+};
+
+const LEVEL_THRESHOLDS = generateLevelThresholds();
+const STREAK_BONUSES = [50, 70, 90, 110, 130, 150, 200]; // XP bonus for day 1 through 7
+
 
 // --- Gamification Helper Functions ---
 const getLevelFromXp = (xp: number): number => {
@@ -50,8 +57,8 @@ const getLevelFromXp = (xp: number): number => {
 
 export const getXpForLevel = (level: number): { currentLevelStart: number; nextLevelTarget: number } => {
     if (level < 1) level = 1;
-    const currentLevelStart = LEVEL_THRESHOLDS[level - 1] || 0;
-    const nextLevelTarget = LEVEL_THRESHOLDS[level] || (LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 50); // Fallback for max level
+    const currentLevelStart = LEVEL_THRESHOLDS[level - 1] ?? 0;
+    const nextLevelTarget = LEVEL_THRESHOLDS[level] ?? (LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 2400); // Fallback for max level
     return { currentLevelStart, nextLevelTarget };
 }
 
@@ -75,7 +82,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const storedUser = window.localStorage.getItem(USER_DATA_KEY);
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          // Ensure badges is an array to prevent errors with old data structures
+          if (!Array.isArray(parsedUser.badges)) {
+            parsedUser.badges = [];
+          }
+          setUser(parsedUser);
         } else {
           setUser(MOCK_INITIAL_USER);
           window.localStorage.setItem(USER_DATA_KEY, JSON.stringify(MOCK_INITIAL_USER));
@@ -102,10 +114,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const handleCorrectAnswer = useCallback(() => {
     if (!user) return;
 
-    let xpGained = 3; // Base XP for correct answer
+    let xpGained = 100; // Base XP for correct answer
     let newStreak = user.streak;
     let newBadges = [...(user.badges || [])];
-    let justLeveledUp = false;
 
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
@@ -113,40 +124,46 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const isFirstAnswerToday = !lastAnswerDate || !format(lastAnswerDate, 'yyyy-MM-dd').includes(todayStr);
 
     if (isFirstAnswerToday) {
-        xpGained += 1; // Daily login bonus
-
         if (lastAnswerDate && differenceInCalendarDays(today, lastAnswerDate) === 1) {
             newStreak += 1; // Continue streak
         } else {
-            newStreak = 1; // Start a new streak
+            newStreak = 1; // Start or reset streak
         }
         
-        // Streak bonuses
-        if (newStreak === 1) xpGained += 2;
-        if (newStreak === 3) {
-            xpGained += 5;
-            if (!newBadges.includes('mini_streak')) {
-                newBadges.push('mini_streak');
-                toast({ title: 'Badge Unlocked!', description: 'You earned the "Mini Streak" badge! 🔥' });
-            }
+        // Add streak bonus
+        const streakIndex = newStreak - 1;
+        if (streakIndex < STREAK_BONUSES.length) {
+            xpGained += STREAK_BONUSES[streakIndex];
+        } else { // For streaks longer than 7 days, use the 7-day bonus
+            xpGained += STREAK_BONUSES[STREAK_BONUSES.length - 1];
         }
-        if (newStreak === 7) {
-            xpGained += 10;
-            if (!newBadges.includes('consistent_learner')) {
-                newBadges.push('consistent_learner');
-                toast({ title: 'Badge Unlocked!', description: 'You earned the "Consistent Learner" badge! 🌟' });
-            }
+
+        // Award badge on day 7
+        if (newStreak === 7 && !newBadges.includes('streak_master')) {
+            newBadges.push('streak_master');
+            toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
         }
     }
 
     const newXp = user.xp + xpGained;
+    const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
 
-    if (newLevel > user.level) {
-        justLeveledUp = true;
+    if (newLevel > oldLevel) {
         toast({
             title: '🎉 Level Up!',
             description: `Congratulations, you've reached Level ${newLevel}!`,
+        });
+    } else {
+        const { nextLevelTarget } = getXpForLevel(newLevel);
+        const xpToGo = nextLevelTarget - newXp;
+        let description = `You're now at ${newXp.toLocaleString()} XP.`;
+        if (xpToGo > 0) {
+            description += ` Just ${xpToGo.toLocaleString()} XP to go for Level ${newLevel + 1}!`;
+        }
+        toast({
+            title: `+${xpGained.toLocaleString()} XP! Keep it up!`,
+            description: description,
         });
     }
 
@@ -159,21 +176,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         lastCorrectAnswerDate: todayStr,
     };
     
-    // Final toast with summary
-    if (!justLeveledUp) {
-        const { nextLevelTarget } = getXpForLevel(newLevel);
-        const xpToGo = nextLevelTarget - newXp;
-        let description = `You're now at ${newXp} XP.`;
-        if (xpToGo > 0) {
-            description += ` Only ${xpToGo} XP to go for Level ${newLevel + 1}!`;
-        }
-        toast({
-            title: `+${xpGained} XP! Keep it up!`,
-            description: description,
-        });
-    }
-
-
     saveUser(updatedUser);
 
   }, [user, toast]);
