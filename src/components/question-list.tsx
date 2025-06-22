@@ -41,7 +41,7 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
           </Button>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {questions.map((qaPair, index) => (
           <QuestionCard
             key={`${questionContext.subject}-${questionContext.chapter}-${qaPair.question}-${index}`} // Ensure key is unique
