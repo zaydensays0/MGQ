@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -91,7 +90,7 @@ export function Header() {
         </Link>
         
         {isInitialized && user && (
-          <nav className="hidden md:flex flex-1 items-center space-x-4 text-sm font-medium">
+          <nav className="hidden md:flex items-center space-x-4 text-sm font-medium">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -126,7 +125,13 @@ export function Header() {
           </nav>
         )}
 
-        <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+        <div className="flex-1 hidden md:flex justify-center">
+            <span className="font-extrabold text-lg bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-accent animate-pulse">
+                A GUY WITH MRF BAT
+            </span>
+        </div>
+
+        <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
               {!isInitialized || !user ? (
