@@ -1,18 +1,18 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SharedQuestion, GradeLevelNCERT, QuestionContext } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
+// Removed imports: useSavedQuestions, SharedQuestion, QuestionContext, useToast, Save, CheckCircle
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, GraduationCap, Search, X, Save, CheckCircle, NotebookText, BookOpenText, FlaskConical, Globe2, Calculator } from 'lucide-react';
+import { Users, GraduationCap, Search, X, NotebookText, BookOpenText, FlaskConical, Globe2, Calculator, ChevronRight } from 'lucide-react';
 import { SUBJECTS, GRADE_LEVELS } from '@/lib/constants';
+import type { SharedQuestion } from '@/types'; // Kept this for mock data type
 
 // Mock data for the community questions page prototype
 const MOCK_SHARED_QUESTIONS: SharedQuestion[] = [
@@ -39,54 +39,7 @@ const SubjectIcon: React.FC<{ subject: string }> = ({ subject }) => {
     return <Icon className="w-4 h-4 mr-2" />;
 };
 
-const QuestionItem: React.FC<{ question: SharedQuestion }> = ({ question }) => {
-    const { addQuestion, isSaved } = useSavedQuestions();
-    const { toast } = useToast();
-    
-    // Memoize the context object to prevent re-creation on every render, which caused an infinite loop.
-    const questionContext = useMemo((): QuestionContext => ({
-        gradeLevel: question.gradeLevel,
-        subject: question.subject,
-        chapter: question.chapter,
-        questionType: 'short_answer', // Assuming default type for community questions
-    }), [question.gradeLevel, question.subject, question.chapter]);
-
-    const [saved, setSaved] = useState(() => isSaved(question.text, questionContext));
-
-    useEffect(() => {
-        setSaved(isSaved(question.text, questionContext));
-    }, [isSaved, question.text, questionContext]);
-
-
-    const handleSave = () => {
-        if (!saved) {
-            addQuestion({
-                text: question.text,
-                answer: question.answer,
-                options: question.options,
-                gradeLevel: question.gradeLevel,
-                subject: question.subject,
-                chapter: question.chapter,
-                questionType: 'short_answer', // Assuming default type
-            });
-            setSaved(true);
-            toast({
-                title: "Question Saved!",
-                description: "This question has been added to your collection."
-            });
-        }
-    };
-
-    return (
-        <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-            <p className="flex-1 text-sm text-foreground">{question.text}</p>
-            <Button variant="ghost" size="sm" onClick={handleSave} disabled={saved}>
-                {saved ? <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> : <Save className="mr-2 h-4 w-4" />}
-                {saved ? 'Saved' : 'Save'}
-            </Button>
-        </div>
-    );
-};
+// QuestionItem component removed as questions are now viewed on a separate page.
 
 export default function CommunityPage() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -191,19 +144,24 @@ export default function CommunityPage() {
                                                 <AccordionTrigger className="py-2 hover:no-underline">
                                                     <h3 className="flex items-center text-md font-semibold"><GraduationCap className="w-5 h-5 mr-2 text-primary" />{grade}</h3>
                                                 </AccordionTrigger>
-                                                <AccordionContent className="pt-2 pb-0">
-                                                    <Accordion type="multiple" className="space-y-2 pl-4 border-l-2 ml-5">
-                                                        {Object.entries(subjects).map(([subject, questions]) => (
-                                                            <AccordionItem value={`${username}-${grade}-${subject}`} key={`${username}-${grade}-${subject}`} className="border-none">
-                                                                <AccordionTrigger className="py-1.5 hover:no-underline">
-                                                                    <h4 className="flex items-center text-sm font-medium"><SubjectIcon subject={SUBJECTS.find(s => s.label === subject)?.value || ''} /> {subject}</h4>
-                                                                </AccordionTrigger>
-                                                                <AccordionContent className="pt-1 pb-0 pl-6 space-y-1">
-                                                                    {questions.map(q => <QuestionItem key={q.id} question={q} />)}
-                                                                </AccordionContent>
-                                                            </AccordionItem>
-                                                        ))}
-                                                    </Accordion>
+                                                <AccordionContent className="pt-2 pb-0 pl-6 space-y-2">
+                                                    {Object.entries(subjects).map(([subject, questions]) => {
+                                                        const subjectValue = SUBJECTS.find(s => s.label === subject)?.value || '';
+                                                        const gradeValue = grade.split(' ')[1] || '';
+                                                        return (
+                                                            <Link 
+                                                                href={`/community/shared?user=${encodeURIComponent(username)}&grade=${gradeValue}&subject=${subjectValue}`} 
+                                                                key={`${username}-${grade}-${subject}`}
+                                                                className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors"
+                                                            >
+                                                                <h4 className="flex items-center text-sm font-medium">
+                                                                    <SubjectIcon subject={subjectValue} /> 
+                                                                    {subject} ({questions.length})
+                                                                </h4>
+                                                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                            </Link>
+                                                        );
+                                                    })}
                                                 </AccordionContent>
                                             </AccordionItem>
                                         ))}
