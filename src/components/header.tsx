@@ -170,7 +170,7 @@ export function Header() {
                       </div>
                   )}
                 </div>
-                <nav className="flex flex-col space-y-3 p-6 flex-grow">
+                <nav className="flex flex-col space-y-3 p-6 flex-grow overflow-y-auto">
                   {[...navLinks, ...moreToolsLinks].map((link) => (
                     <Link
                       key={link.href}
