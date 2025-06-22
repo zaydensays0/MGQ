@@ -1,11 +1,11 @@
 
 'use client';
 
-import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
+import type { User, BadgeKey, GradeLevelNCERT, SuggestUsernameInput, SuggestUsernameOutput, CheckUsernameResponse } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
-import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
+import { suggestUsername } from '@/ai/flows/suggest-username';
 
 const USER_DB_KEY = 'MGQsUserDatabase_v2_proto'; // Use a new key for the prototype DB
 const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v2_proto'; // Use a new key for the prototype session
@@ -62,7 +62,7 @@ interface UserContextType {
   logout: () => void;
   updateUser: (newUserData: Partial<User>) => void;
   handleCorrectAnswer: (baseXp: number) => void;
-  checkAndSuggestUsername: (username: string, fullName: string, email: string) => Promise<SuggestUsernameOutput>;
+  checkAndSuggestUsername: (username: string, fullName: string, email: string) => Promise<CheckUsernameResponse>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -186,7 +186,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }, [user, toast, updateUser]);
 
-  const checkAndSuggestUsername = useCallback(async (username: string, fullName: string, email: string): Promise<SuggestUsernameOutput> => {
+  const checkAndSuggestUsername = useCallback(async (username: string, fullName: string, email: string): Promise<CheckUsernameResponse> => {
     // 1. Validate username format
     if (username.length < 3 || username.length > 20) {
       return {
@@ -211,7 +211,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         existingUsernames: Object.keys(users),
       };
 
-      const result = await suggestUsername(input);
+      const result: SuggestUsernameOutput = await suggestUsername(input);
 
       return {
         status: 'taken',

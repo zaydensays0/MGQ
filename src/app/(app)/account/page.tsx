@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
-import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
+import type { User as UserType, BadgeKey, GradeLevelNCERT, CheckUsernameResponse } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,7 +21,6 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import type { SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 
 
 // Debounce hook for username checking
@@ -51,7 +50,7 @@ export default function AccountPage() {
     const [fullName, setFullName] = useState('');
     const [newUsername, setNewUsername] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
-    const [usernameResult, setUsernameResult] = useState<SuggestUsernameOutput | null>(null);
+    const [usernameResult, setUsernameResult] = useState<CheckUsernameResponse | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
     

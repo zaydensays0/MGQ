@@ -100,8 +100,26 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
-// Types for Username Suggestion
-export type { SuggestUsernameInput, SuggestUsernameOutput } from '@/ai/flows/suggest-username';
+// Types for Username Suggestion (AI Flow)
+export const SuggestUsernameInputSchema = z.object({
+  username: z.string().describe('The username chosen by the user.'),
+  fullName: z.string().optional().describe("The user's full name, for generating better suggestions."),
+  email: z.string().optional().describe("The user's email, for generating better suggestions."),
+  existingUsernames: z.array(z.string()).describe('A list of usernames that are already taken and should not be suggested.'),
+});
+export type SuggestUsernameInput = z.infer<typeof SuggestUsernameInputSchema>;
+
+export const SuggestUsernameOutputSchema = z.object({
+  suggestions: z.array(z.string()).describe('A list of alternative username suggestions.'),
+});
+export type SuggestUsernameOutput = z.infer<typeof SuggestUsernameOutputSchema>;
+
+// Type for the response from the user context check function
+export interface CheckUsernameResponse {
+  status: 'available' | 'taken' | 'invalid';
+  message: string;
+  suggestions?: string[];
+}
 
 // Community & Group Chat Types
 export interface ChatMessage {
