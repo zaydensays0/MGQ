@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -84,7 +83,7 @@ export default function CommunityPage() {
                     Community Questions
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    Browse questions shared by other members of the community.
+                    Collaborate, clarify, and conquer — your study squad starts here! 🚀
                 </p>
             </div>
 
