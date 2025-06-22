@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LogOut, LayoutGrid } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle'; 
@@ -13,7 +12,6 @@ import { useUser } from '@/contexts/user-context';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
@@ -33,16 +31,8 @@ const moreToolsLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isInitialized, logout } = useUser();
-
-  const handleLogout = () => {
-    logout();
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
-    router.push('/auth/login');
-  };
+  const { user, isInitialized } = useUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -110,7 +100,6 @@ export function Header() {
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
@@ -164,9 +153,6 @@ export function Header() {
                                 <p className="text-sm text-muted-foreground">View Account</p>
                             </div>
                         </Link>
-                        <Button variant="ghost" className="w-full justify-start mt-2" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
-                            <LogOut className="mr-2 h-4 w-4" /> Logout
-                        </Button>
                       </div>
                   ) : (
                       <div className="flex items-center p-2">

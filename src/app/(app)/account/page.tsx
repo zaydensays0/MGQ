@@ -1,10 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+// react-hook-form and zod are no longer needed as the security form is removed.
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -12,9 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Separator } from '@/components/ui/separator';
-import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, ShieldCheck, KeyRound, LogOut } from 'lucide-react';
+import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 import { cn } from '@/lib/utils';
@@ -38,50 +33,16 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-// Zod schema for security settings form
-const securitySchema = z.object({
-    email: z.string().email({ message: "Please enter a valid email address." }),
-    currentPassword: z.string().optional(),
-    newPassword: z.string().optional(),
-    confirmPassword: z.string().optional(),
-}).refine(data => {
-    // Require all password fields if one is filled
-    if (data.newPassword || data.confirmPassword || data.currentPassword) {
-        return !!data.currentPassword && !!data.newPassword && !!data.confirmPassword;
-    }
-    return true;
-}, {
-    message: "Please fill all three password fields to change your password.",
-    path: ["currentPassword"], // Show error message under the first password field
-}).refine(data => {
-    // Require new password to be at least 6 chars
-    if (data.newPassword) {
-        return data.newPassword.length >= 6;
-    }
-    return true;
-}, {
-    message: "New password must be at least 6 characters.",
-    path: ["newPassword"],
-}).refine(data => {
-    // Require passwords to match
-    return data.newPassword === data.confirmPassword;
-}, {
-    message: "New passwords do not match.",
-    path: ["confirmPassword"],
-});
-
 
 export default function AccountPage() {
-    const { user, updateUser, isInitialized, logout } = useUser();
-    const router = useRouter();
+    const { user, updateUser, isInitialized } = useUser();
     
     // State for Profile Section
-    const [fullName, setFullName] = useState(user?.fullName || '');
+    const [fullName, setFullName] = useState('');
     const [newUsername, setNewUsername] = useState('');
     const [usernameResult, setUsernameResult] = useState<SuggestUsernameOutput | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
     
     // State for Avatar Cropping
     const [imageSrc, setImageSrc] = useState<string>('');
@@ -93,24 +54,12 @@ export default function AccountPage() {
     const { toast } = useToast();
     const debouncedUsername = useDebounce(newUsername, 500);
 
-    // Security Form using React Hook Form
-    const securityForm = useForm<z.infer<typeof securitySchema>>({
-        resolver: zodResolver(securitySchema),
-        defaultValues: {
-            email: user?.email || '',
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-        },
-    });
-
     // Initialize form with user data once context is ready
     useEffect(() => {
         if (isInitialized && user) {
             setFullName(user.fullName);
-            securityForm.reset({ email: user.email });
         }
-    }, [isInitialized, user, securityForm]);
+    }, [isInitialized, user]);
 
 
     // --- Username Availability Logic ---
@@ -202,48 +151,6 @@ export default function AccountPage() {
         }
     };
 
-    const handleUpdateSecurity = (values: z.infer<typeof securitySchema>) => {
-        if (!user) return;
-
-        // Handle Email Change
-        if (values.email !== user.email) {
-            // In a real app, this would require verification.
-            // For prototype, we just update it.
-            updateUser({ email: values.email });
-            toast({ title: "Email Updated!", description: "Your login email has been changed." });
-        }
-        
-        // Handle Password Change
-        if (values.newPassword) {
-            // This is a prototype, so we'll check against the mock password
-            if (values.currentPassword !== user.password) {
-                securityForm.setError("currentPassword", { type: "manual", message: "Your current password is incorrect. Try again." });
-                toast({ title: "Incorrect Password", description: "The current password you entered is incorrect.", variant: "destructive" });
-                return;
-            }
-            
-            // On success, update the user object in our mock db
-            updateUser({ password: values.newPassword });
-
-            toast({ 
-                title: "Password Updated!", 
-                description: "Your password has been changed successfully. Keep it safe!",
-                variant: "default",
-            });
-            securityForm.reset({ 
-                email: values.email, 
-                currentPassword: "", 
-                newPassword: "", 
-                confirmPassword: ""
-            });
-        }
-    };
-
-    const handleLogout = () => {
-        logout();
-        toast({ title: "Logged Out", description: "You have been successfully logged out." });
-        router.push('/auth/login');
-    };
     
     // --- UI Helpers ---
     const getUsernameResultColor = () => {
@@ -274,31 +181,25 @@ export default function AccountPage() {
                         <User className="w-8 h-8 mr-3 text-primary" />
                         Account Settings
                     </h1>
-                    <p className="text-muted-foreground mt-1">Manage your profile, security, and preferences.</p>
+                    <p className="text-muted-foreground mt-1">Manage your profile and preferences.</p>
                 </div>
-                <Button variant="outline" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log Out
-                </Button>
             </div>
 
 
-            <Card className="w-full max-w-4xl mx-auto shadow-lg">
-                {/* --- PUBLIC PROFILE SECTION --- */}
+            <Card className="w-full max-w-2xl mx-auto shadow-lg">
                 <CardHeader>
-                    <CardTitle>Public Profile</CardTitle>
-                    <CardDescription>This information may be visible to other users.</CardDescription>
+                    <CardTitle>Profile</CardTitle>
+                    <CardDescription>This information is used to represent you across the app.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <div className="flex flex-col items-center gap-4 p-4 bg-muted/30 rounded-lg">
-                            <img src={newAvatarUrl || user.avatarUrl} alt="Avatar" data-ai-hint="profile picture" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
-                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                <UploadCloud className="mr-2 h-4 w-4" /> Upload New Avatar
-                            </Button>
-                            <input id="avatar-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" hidden />
-                        </div>
+                <CardContent className="space-y-8">
+                    <div className="flex flex-col items-center gap-4 p-4">
+                        <img src={newAvatarUrl || user.avatarUrl} alt="Avatar" data-ai-hint="profile picture" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
+                        <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                            <UploadCloud className="mr-2 h-4 w-4" /> Upload New Avatar
+                        </Button>
+                        <input id="avatar-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" hidden />
                     </div>
+
                     <div className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="fullName">Full Name</Label>
@@ -325,49 +226,6 @@ export default function AccountPage() {
                 <CardFooter className="border-t px-6 py-4">
                     <Button onClick={handleUpdateProfile} disabled={isCheckingUsername || !canUpdateProfile}>Update Profile</Button>
                 </CardFooter>
-
-                <Separator className="my-0" />
-
-                {/* --- SECURITY SETTINGS SECTION --- */}
-                <Form {...securityForm}>
-                    <form onSubmit={securityForm.handleSubmit(handleUpdateSecurity)}>
-                        <CardHeader>
-                            <CardTitle>Security Settings</CardTitle>
-                            <CardDescription>Manage your email and password. Remember your password, it cannot be recovered.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                             <FormField
-                                control={securityForm.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email Address</FormLabel>
-                                        <FormControl><Input placeholder="your.email@example.com" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <div className="space-y-4 pt-4 border-t">
-                                 <h3 className="text-md font-semibold flex items-center"><KeyRound className="w-5 h-5 mr-2" /> Change Password</h3>
-                                <FormField control={securityForm.control} name="currentPassword" render={({ field }) => (
-                                    <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                 <FormField control={securityForm.control} name="newPassword" render={({ field }) => (
-                                    <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                 <FormField control={securityForm.control} name="confirmPassword" render={({ field }) => (
-                                    <FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                             </div>
-                        </CardContent>
-                        <CardFooter className="border-t px-6 py-4">
-                            <Button type="submit" disabled={securityForm.formState.isSubmitting}>
-                                {securityForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Update Security Settings
-                            </Button>
-                        </CardFooter>
-                    </form>
-                </Form>
             </Card>
 
             {/* --- AVATAR CROP DIALOG --- */}
@@ -381,5 +239,3 @@ export default function AccountPage() {
         </div>
     );
 }
-
-    
