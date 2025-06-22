@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -19,12 +18,11 @@ export default function DonationPage() {
         <CardContent className="flex flex-col items-center text-center space-y-6">
           <div className="p-4 bg-white rounded-lg">
             <Image
-              src="https://placehold.co/300x300.png"
+              src="/donation-qr-code.png"
               alt="Donation QR Code"
               width={300}
               height={300}
               className="rounded-md"
-              data-ai-hint="qr code"
             />
           </div>
           <div className="max-w-prose space-y-4 text-left md:text-center text-muted-foreground">
