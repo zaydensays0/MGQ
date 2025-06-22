@@ -20,6 +20,7 @@ interface GroupsContextType {
   groups: UserGroup[];
   addGroup: (groupData: GroupCreationData) => UserGroup;
   getGroupById: (id: string) => UserGroup | undefined;
+  removeGroup: (id: string) => void;
   addMessageToGroup: (groupId: string, messageData: MessageCreationData) => void;
 }
 
@@ -66,6 +67,10 @@ export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const getGroupById = useCallback((id: string) => groups.find((group) => group.id === id), [groups]);
+  
+  const removeGroup = useCallback((id: string) => {
+    setGroups(prev => prev.filter(group => group.id !== id));
+  }, []);
 
   const addMessageToGroup = useCallback((groupId: string, messageData: MessageCreationData) => {
     const newMessage: ChatMessage = {
@@ -85,7 +90,7 @@ export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   return (
-    <GroupsContext.Provider value={{ groups, addGroup, getGroupById, addMessageToGroup }}>
+    <GroupsContext.Provider value={{ groups, addGroup, getGroupById, removeGroup, addMessageToGroup }}>
       {children}
     </GroupsContext.Provider>
   );

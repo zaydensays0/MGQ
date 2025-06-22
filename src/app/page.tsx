@@ -7,22 +7,14 @@ import { Loader2 } from 'lucide-react';
 
 export default function RootPage() {
   const router = useRouter();
-  const { user, isInitialized } = useUser();
+  const { isInitialized } = useUser();
 
   useEffect(() => {
-    if (!isInitialized) {
-      // Wait for the user context to initialize
-      return;
-    }
-
-    if (user) {
-      // If user is logged in, go to the main app page
+    if (isInitialized) {
+      // Once the user system is ready, go straight to the main app page.
       router.replace('/generate');
-    } else {
-      // If no user, redirect to login
-      router.replace('/auth/login');
     }
-  }, [user, isInitialized, router]);
+  }, [isInitialized, router]);
 
   return (
     <div className="flex h-screen w-full items-center justify-center">

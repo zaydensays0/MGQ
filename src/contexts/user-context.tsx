@@ -5,9 +5,24 @@ import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
+import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 
-const USER_DB_KEY = 'MGQsUserDatabase_v1';
-const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v1';
+const USER_DB_KEY = 'MGQsUserDatabase_v2_proto'; // Use a new key for the prototype DB
+const CURRENT_USER_SESSION_KEY = 'MGQsCurrentUserSession_v2_proto'; // Use a new key for the prototype session
+
+// A default user for the prototype experience
+const DEFAULT_USER: User = {
+    fullName: "Alex Doe",
+    username: "alex_d",
+    email: "alex.doe@example.com",
+    avatarUrl: "https://placehold.co/100x100.png?text=A",
+    xp: 1200,
+    level: 2,
+    streak: 1,
+    lastCorrectAnswerDate: format(new Date(), 'yyyy-MM-dd'),
+    badges: [],
+    class: '10',
+};
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -41,17 +56,13 @@ export const getXpForLevel = (level: number): { currentLevelStart: number; nextL
 };
 
 // --- Context Types ---
-type SignupData = Pick<User, 'fullName' | 'username' | 'avatarUrl'> & { email: string; password: string };
-type LoginResult = { success: boolean; message: string };
-
 interface UserContextType {
   user: User | null;
   isInitialized: boolean;
-  login: (email: string, password: string) => Promise<LoginResult>;
-  signup: (data: SignupData) => Promise<LoginResult>;
   logout: () => void;
   updateUser: (newUserData: Partial<User>) => void;
   handleCorrectAnswer: (baseXp: number) => void;
+  checkAndSuggestUsername: (username: string, fullName: string, email: string) => Promise<SuggestUsernameOutput>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -68,12 +79,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (typeof window !== 'undefined') {
       try {
         const storedUsers = window.localStorage.getItem(USER_DB_KEY);
-        const userDb = storedUsers ? JSON.parse(storedUsers) : {};
+        let userDb = storedUsers ? JSON.parse(storedUsers) : {};
+        
+        // Ensure the default user exists in the DB
+        if (!userDb[DEFAULT_USER.username]) {
+            userDb[DEFAULT_USER.username] = DEFAULT_USER;
+        }
         setUsers(userDb);
 
         const sessionUser = window.localStorage.getItem(CURRENT_USER_SESSION_KEY);
         if (sessionUser && userDb[sessionUser]) {
           setUser(userDb[sessionUser]);
+        } else {
+          // If no session, set the default user
+          setUser(userDb[DEFAULT_USER.username]);
+          window.localStorage.setItem(CURRENT_USER_SESSION_KEY, DEFAULT_USER.username);
         }
       } catch (error) {
         console.error("Failed to initialize user state from localStorage:", error);
@@ -87,61 +107,31 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.localStorage.setItem(USER_DB_KEY, JSON.stringify(updatedDb));
   };
 
-  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
-    const foundUser = Object.values(users).find(u => u.email === email && u.password === password); // Simple check for prototype
-    if (foundUser) {
-      setUser(foundUser);
-      window.localStorage.setItem(CURRENT_USER_SESSION_KEY, foundUser.username);
-      return { success: true, message: 'Login successful.' };
-    }
-    return { success: false, message: 'Invalid email or password.' };
-  }, [users]);
-
-  const signup = useCallback(async (data: SignupData): Promise<LoginResult> => {
-    if (users[data.username]) {
-      return { success: false, message: 'Username is already taken.' };
-    }
-    if (Object.values(users).some(u => u.email === data.email)) {
-      return { success: false, message: 'An account with this email already exists.' };
-    }
-
-    const newUser: User = {
-      fullName: data.fullName,
-      username: data.username,
-      email: data.email,
-      password: data.password, // Storing plain text for prototype ONLY. NEVER do this in production.
-      avatarUrl: data.avatarUrl,
-      xp: 0,
-      level: 1,
-      streak: 0,
-      lastCorrectAnswerDate: '',
-      badges: [],
-    };
-
-    const updatedDb = { ...users, [newUser.username]: newUser };
-    saveUsersToDb(updatedDb);
-    setUser(newUser);
-    window.localStorage.setItem(CURRENT_USER_SESSION_KEY, newUser.username);
-
-    return { success: true, message: 'Signup successful.' };
-  }, [users]);
-
   const logout = useCallback(() => {
     setUser(null);
     window.localStorage.removeItem(CURRENT_USER_SESSION_KEY);
+    // In a real app, this would redirect to a login page.
+    // For this prototype, we can just reload to reset to the default user.
+    window.location.reload();
   }, []);
 
   const updateUser = useCallback((newUserData: Partial<User>) => {
     if (!user) return;
     
-    // Create the updated user object
+    let oldUsername = user.username;
     const updatedUser = { ...user, ...newUserData };
+    let updatedDb = { ...users };
     
-    // Update the state for the current user
+    // If username is being changed, we need to update the key in the DB
+    if (newUserData.username && newUserData.username !== oldUsername) {
+        delete updatedDb[oldUsername]; // Remove old entry
+        updatedDb[newUserData.username] = updatedUser; // Add new entry
+        window.localStorage.setItem(CURRENT_USER_SESSION_KEY, newUserData.username); // Update session
+    } else {
+        updatedDb[oldUsername] = updatedUser;
+    }
+    
     setUser(updatedUser);
-    
-    // Update the user's data in the "database"
-    const updatedDb = { ...users, [user.username]: updatedUser };
     saveUsersToDb(updatedDb);
   }, [user, users]);
 
@@ -196,8 +186,50 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }, [user, toast, updateUser]);
 
+  const checkAndSuggestUsername = useCallback(async (username: string, fullName: string, email: string): Promise<SuggestUsernameOutput> => {
+    // 1. Validate username format
+    if (username.length < 3 || username.length > 20) {
+      return {
+        status: 'invalid',
+        message: 'Username must be between 3 and 20 characters.',
+      };
+    }
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      return {
+        status: 'invalid',
+        message: 'Username can only contain lowercase letters, numbers, and underscores.',
+      };
+    }
+
+    // 2. Check for uniqueness against the real user DB
+    if (users[username]) {
+      // 3. Generate alternatives if taken
+      const input: SuggestUsernameInput = {
+        username,
+        fullName,
+        email,
+        existingUsernames: Object.keys(users),
+      };
+
+      const result = await suggestUsername(input);
+
+      return {
+        status: 'taken',
+        message: `Sorry, "${username}" is already taken.`,
+        suggestions: result.suggestions,
+      };
+    }
+
+    // 4. If all checks pass, the username is available
+    return {
+      status: 'available',
+      message: `"${username}" is available!`,
+    };
+  }, [users]);
+
+
   return (
-    <UserContext.Provider value={{ user, isInitialized, login, signup, logout, updateUser, handleCorrectAnswer }}>
+    <UserContext.Provider value={{ user, isInitialized, logout, updateUser, handleCorrectAnswer, checkAndSuggestUsername }}>
       {children}
     </UserContext.Provider>
   );

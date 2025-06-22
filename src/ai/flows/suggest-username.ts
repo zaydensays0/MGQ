@@ -1,8 +1,11 @@
 'use server';
 /**
- * @fileOverview An AI agent to validate and suggest unique usernames for an educational app.
+ * @fileOverview An AI agent to suggest unique usernames for an educational app.
  *
- * - suggestUsername - A function that checks username availability and suggests alternatives if needed.
+ * This flow is now a pure suggestion generator. It takes a list of existing
+ * usernames to ensure its suggestions are unique.
+ *
+ * - suggestUsername - A function that suggests alternative usernames.
  * - SuggestUsernameInput - The input type for the suggestUsername function.
  * - SuggestUsernameOutput - The return type for the suggestUsername function.
  */
@@ -10,20 +13,16 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// Simulate a database of existing usernames for prototyping purposes
-const FAKE_EXISTING_USERNAMES = new Set(['admin', 'root', 'test', 'user', 'mehdi_123', 'student']);
-
-const SuggestUsernameInputSchema = z.object({
+export const SuggestUsernameInputSchema = z.object({
   username: z.string().describe('The username chosen by the user.'),
   fullName: z.string().optional().describe("The user's full name, for generating better suggestions."),
   email: z.string().optional().describe("The user's email, for generating better suggestions."),
+  existingUsernames: z.array(z.string()).describe('A list of usernames that are already taken and should not be suggested.'),
 });
 export type SuggestUsernameInput = z.infer<typeof SuggestUsernameInputSchema>;
 
-const SuggestUsernameOutputSchema = z.object({
-  status: z.enum(['available', 'taken', 'invalid']).describe('The status of the requested username.'),
-  message: z.string().describe('A friendly message to be displayed to the user.'),
-  suggestions: z.array(z.string()).optional().describe('A list of alternative usernames if the requested one is taken.'),
+export const SuggestUsernameOutputSchema = z.object({
+  suggestions: z.array(z.string()).describe('A list of alternative username suggestions.'),
 });
 export type SuggestUsernameOutput = z.infer<typeof SuggestUsernameOutputSchema>;
 
@@ -33,15 +32,8 @@ export async function suggestUsername(input: SuggestUsernameInput): Promise<Sugg
 
 const usernameSuggestionPrompt = ai.definePrompt({
   name: 'usernameSuggestionPrompt',
-  input: { schema: z.object({
-    username: z.string(),
-    fullName: z.string().optional(),
-    email: z.string().optional(),
-    existingUsernames: z.array(z.string()),
-  })},
-  output: { schema: z.object({
-    suggestions: z.array(z.string()).length(4).describe('An array of exactly 4 username suggestions.'),
-  })},
+  input: { schema: SuggestUsernameInputSchema },
+  output: { schema: SuggestUsernameOutputSchema },
   prompt: `You are an account assistant for a friendly educational app.
 A user wants the username "{{username}}", but it is already taken.
 The user's full name is "{{fullName}}" and their email is "{{email}}".
@@ -61,59 +53,24 @@ const suggestUsernameFlow = ai.defineFlow(
     inputSchema: SuggestUsernameInputSchema,
     outputSchema: SuggestUsernameOutputSchema,
   },
-  async ({ username, fullName, email }) => {
-    // 1. Validate username format
-    if (username.length < 3 || username.length > 20) {
+  async (input) => {
+    const { output } = await usernameSuggestionPrompt(input);
+
+    if (!output || !output.suggestions || output.suggestions.length === 0) {
+      // Fallback suggestions if AI fails
+      const fallbackSuggestions = [
+        `${input.username}${Math.floor(Math.random() * 90) + 10}`,
+        `real_${input.username}`,
+        `${input.username}_edu`,
+        `i_am_${input.username}`,
+      ];
       return {
-        status: 'invalid',
-        message: 'Username must be between 3 and 20 characters.',
-      };
-    }
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      return {
-        status: 'invalid',
-        message: 'Username can only contain lowercase letters, numbers, and underscores.',
-      };
-    }
-
-    // 2. Check for uniqueness (simulated)
-    if (FAKE_EXISTING_USERNAMES.has(username)) {
-      // 3. Generate alternatives if taken
-      const promptInput = {
-        username,
-        fullName,
-        email,
-        existingUsernames: Array.from(FAKE_EXISTING_USERNAMES),
-      };
-
-      const { output } = await usernameSuggestionPrompt(promptInput);
-
-      if (!output || !output.suggestions || output.suggestions.length === 0) {
-        // Fallback suggestions if AI fails
-        const fallbackSuggestions = [
-          `${username}${Math.floor(Math.random() * 90) + 10}`,
-          `real_${username}`,
-          `${username}_edu`,
-          `i_am_${username}`,
-        ];
-        return {
-          status: 'taken',
-          message: `Sorry, "${username}" is already taken.`,
-          suggestions: fallbackSuggestions,
-        };
-      }
-
-      return {
-        status: 'taken',
-        message: `Sorry, "${username}" is already taken.`,
-        suggestions: output.suggestions,
+        suggestions: fallbackSuggestions,
       };
     }
 
-    // 4. If all checks pass, the username is available
     return {
-      status: 'available',
-      message: `"${username}" is available!`,
+      suggestions: output.suggestions,
     };
   }
 );

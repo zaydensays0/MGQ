@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, Flame, Medal, Award, AlertTriangle, GraduationCap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -22,6 +21,8 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import type { SuggestUsernameOutput } from '@/ai/flows/suggest-username';
+
 
 // Debounce hook for username checking
 function useDebounce<T>(value: T, delay: number): T {
@@ -44,7 +45,7 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, updateUser, isInitialized } = useUser();
+    const { user, updateUser, isInitialized, checkAndSuggestUsername } = useUser();
     
     // State for Profile Section
     const [fullName, setFullName] = useState('');
@@ -75,15 +76,14 @@ export default function AccountPage() {
 
     // --- Username Availability Logic ---
     const checkUsernameAvailability = useCallback(async (name: string) => {
-        if (!name || name.length < 3) {
+        if (!user || !name || name === user.username) {
             setUsernameResult(null);
             return;
         }
         setIsCheckingUsername(true);
         setUsernameResult(null);
         try {
-            const input: SuggestUsernameInput = { username: name, fullName: user?.fullName };
-            const response = await suggestUsername(input);
+            const response = await checkAndSuggestUsername(name, user.fullName, user.email || '');
             setUsernameResult(response);
         } catch (error) {
             console.error('Error checking username:', error);
@@ -91,7 +91,7 @@ export default function AccountPage() {
         } finally {
             setIsCheckingUsername(false);
         }
-    }, [user?.fullName]);
+    }, [user, checkAndSuggestUsername]);
 
     useEffect(() => {
         if (debouncedUsername) {

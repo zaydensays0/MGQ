@@ -59,7 +59,9 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    router.push('/auth/login');
+    // In a real app with a login page, you'd redirect.
+    // Here we just reload to reset to the default user state.
+    window.location.reload(); 
   };
 
   const getIsActive = (href: string) => {
@@ -73,7 +75,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href={user ? "/generate" : "/"} className="mr-6 flex items-baseline space-x-2">
+        <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <div className="flex flex-col">
             <span className="font-bold sm:inline-block text-lg font-headline">
@@ -89,7 +91,7 @@ export function Header() {
           </div>
         </Link>
         
-        {user && (
+        {isInitialized && user && (
           <nav className="hidden md:flex flex-1 items-center space-x-4 text-sm font-medium">
             {navLinks.map((link) => (
               <Link
@@ -128,9 +130,9 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
-              {!isInitialized ? (
+              {!isInitialized || !user ? (
                  <Skeleton className="h-9 w-9 rounded-full" />
-              ) : user ? (
+              ) : (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
@@ -147,10 +149,6 @@ export function Header() {
                         <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-              ) : (
-                <Button asChild>
-                  <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
-                </Button>
               )}
           </div>
 
@@ -165,14 +163,14 @@ export function Header() {
               <SheetContent side="right" className="w-[260px] p-0 flex flex-col">
                  <SheetHeader className="p-6 pb-2">
                   <SheetTitle asChild>
-                    <Link href={user ? "/generate" : "/"} className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <Sparkles className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline">MGQs</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
 
-                {user ? (
+                {isInitialized && user ? (
                   <>
                     <div className="p-6 pt-0 border-b">
                         <div>
@@ -215,12 +213,7 @@ export function Header() {
                   </>
                 ) : (
                   <div className="p-6 flex flex-col gap-4">
-                    <Button asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
-                    </Button>
-                     <Button asChild variant="secondary" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Link href="/auth/signup"><User className="mr-2 h-4 w-4" />Sign Up</Link>
-                    </Button>
+                    <p className="text-sm text-muted-foreground text-center">Loading user...</p>
                   </div>
                 )}
               </SheetContent>
