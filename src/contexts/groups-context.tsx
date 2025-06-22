@@ -1,20 +1,31 @@
 'use client';
 
-import type { UserGroup } from '@/types';
+import type { UserGroup, ChatMessage } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface GroupCreationData {
+  name: string;
+  adminUsername: string;
+  members: { username: string; avatarUrl: string }[];
+}
+
+export interface MessageCreationData {
+    text: string;
+    senderUsername: string;
+    senderAvatarUrl: string;
+}
+
 interface GroupsContextType {
   groups: UserGroup[];
-  addGroup: (groupData: Omit<UserGroup, 'id' | 'createdAt'>) => UserGroup;
-  updateGroup: (id: string, groupData: Partial<Omit<UserGroup, 'id' | 'createdAt'>>) => UserGroup | undefined;
-  removeGroup: (id: string) => void;
+  addGroup: (groupData: GroupCreationData) => UserGroup;
   getGroupById: (id: string) => UserGroup | undefined;
+  addMessageToGroup: (groupId: string, messageData: MessageCreationData) => void;
 }
 
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_GROUPS = 'MGQsUserGroups';
+const LOCAL_STORAGE_KEY_GROUPS = 'MGQsUserGroups_v3_chat'; // Version up for chat feature
 
 export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [groups, setGroups] = useState<UserGroup[]>([]);
@@ -24,11 +35,7 @@ export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (typeof window !== 'undefined') {
       try {
         const items = window.localStorage.getItem(LOCAL_STORAGE_KEY_GROUPS);
-        setGroups(items ? JSON.parse(items) : [
-          // Add some mock data for prototyping
-          { id: 'group-1', name: 'Study Buddies', usernames: ['study_with_anu', 'smart_gk_123'], createdAt: Date.now() },
-          { id: 'group-2', name: 'Class 10 Science', usernames: ['realmehdi', 'study_with_anu'], createdAt: Date.now() },
-        ]);
+        setGroups(items ? JSON.parse(items) : []);
       } catch (error) {
         console.error("Failed to load groups from localStorage:", error);
         setGroups([]);
@@ -47,38 +54,38 @@ export const GroupsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [groups, isInitialized]);
 
-  const addGroup = useCallback((groupData: Omit<UserGroup, 'id' | 'createdAt'>): UserGroup => {
+  const addGroup = useCallback((groupData: GroupCreationData): UserGroup => {
     const newGroup: UserGroup = {
       ...groupData,
       id: uuidv4(),
+      messages: [],
       createdAt: Date.now(),
     };
     setGroups((prev) => [newGroup, ...prev]);
     return newGroup;
   }, []);
 
-  const updateGroup = useCallback((id: string, groupData: Partial<Omit<UserGroup, 'id' | 'createdAt'>>): UserGroup | undefined => {
-    let updatedGroup: UserGroup | undefined;
-    setGroups((prev) =>
-      prev.map((group) => {
-        if (group.id === id) {
-          updatedGroup = { ...group, ...groupData };
-          return updatedGroup;
-        }
-        return group;
-      })
-    );
-    return updatedGroup;
-  }, []);
-
-  const removeGroup = useCallback((id: string) => {
-    setGroups((prev) => prev.filter((group) => group.id !== id));
-  }, []);
-
   const getGroupById = useCallback((id: string) => groups.find((group) => group.id === id), [groups]);
 
+  const addMessageToGroup = useCallback((groupId: string, messageData: MessageCreationData) => {
+    const newMessage: ChatMessage = {
+      ...messageData,
+      id: uuidv4(),
+      timestamp: Date.now(),
+    };
+    setGroups(prev => prev.map(group => {
+        if (group.id === groupId) {
+            return {
+                ...group,
+                messages: [...group.messages, newMessage]
+            };
+        }
+        return group;
+    }));
+  }, []);
+
   return (
-    <GroupsContext.Provider value={{ groups, addGroup, updateGroup, removeGroup, getGroupById }}>
+    <GroupsContext.Provider value={{ groups, addGroup, getGroupById, addMessageToGroup }}>
       {children}
     </GroupsContext.Provider>
   );

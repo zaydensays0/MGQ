@@ -106,27 +106,24 @@ export interface SavedSubjectExpertExchange {
 // Types for Username Suggestion
 export type { SuggestUsernameInput, SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 
-// Types for Community/Shared Questions
-export interface SharedQuestion {
+// Community & Group Chat Types
+export interface ChatMessage {
   id: string;
-  username: string;
-  userAvatarUrl?: string;
-  gradeLevel: GradeLevelNCERT;
-  subject: string;
-  chapter: string;
+  senderUsername: string;
+  senderAvatarUrl: string;
   text: string;
-  answer: string;
-  options?: string[];
   timestamp: number;
 }
 
-// Types for User Groups
 export interface UserGroup {
   id: string;
   name: string;
-  usernames: string[];
+  adminUsername: string;
+  members: { username: string; avatarUrl: string }[];
+  messages: ChatMessage[];
   createdAt: number;
 }
+
 
 // Badge types for gamification
 export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -18,7 +19,7 @@ const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/community', label: 'Community', icon: Users },
+  { href: '/community', label: 'Groups', icon: Users },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
@@ -78,7 +79,7 @@ export function Header() {
               href={link.href}
               className={cn(
                 "flex items-center transition-colors hover:text-foreground/80",
-                pathname === link.href ? "text-foreground" : "text-foreground/60"
+                pathname.startsWith(link.href) ? "text-foreground" : "text-foreground/60"
               )}
             >
               {link.icon && <link.icon className="mr-2 h-4 w-4" />}
@@ -179,7 +180,7 @@ export function Header() {
                       href={link.href}
                       className={cn(
                         "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
-                        pathname === link.href ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
+                        pathname.startsWith(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
