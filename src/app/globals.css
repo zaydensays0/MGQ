@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 230 67% 94%; /* Light Blue #E8EAF6 - Fallback for light */
+    --background: 230 67% 94%; /* Light Blue #E8EAF6 */
     --foreground: 222 47% 11%; /* Dark Slate Blue for text */
     --card: 0 0% 100%; /* White */
     --card-foreground: 222 47% 11%;
@@ -29,14 +29,15 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --body-background-image: url('/light-theme-books-bg.jpg');
   }
 
   .dark {
     --background: 0 0% 0%; /* AMOLED Black */
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%; /* Keeping original card color for now */
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%; /* Keeping original popover color */
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
@@ -44,7 +45,7 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 261 37% 55%; /* Purple for accent in dark mode too */
+    --accent: 261 37% 55%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
@@ -56,6 +57,7 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --body-background-image: none;
   }
 }
 
@@ -65,15 +67,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* PT Sans will be applied via tailwind.config.ts and layout.tsx */
-  }
-
-  /* Apply background image only for light theme */
-  html:not(.dark) body {
-    background-image: url('/light-theme-books-bg.jpg'); /* Ensure this image is in /public/light-theme-books-bg.jpg */
+    /* Apply background using CSS variables for robust theme switching */
+    background-image: var(--body-background-image);
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
-    background-attachment: fixed; /* Makes the background stay in place during scroll */
+    background-attachment: fixed;
   }
 }
