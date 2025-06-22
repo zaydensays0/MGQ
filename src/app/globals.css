@@ -29,18 +29,17 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --body-background-image: url('/light-theme-books-bg.jpg');
   }
 
   .dark {
-    --background: 0 0% 0%; /* AMOLED Black */
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
+    --card: 222 47% 11.2%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 222 47% 11.2%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 231 48% 48%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
@@ -51,13 +50,12 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 27%;
     --input: 217 33% 27%;
-    --ring: 210 40% 98%;
+    --ring: 231 48% 48%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --body-background-image: none;
   }
 }
 
@@ -67,11 +65,5 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Apply background using CSS variables for robust theme switching */
-    background-image: var(--body-background-image);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
   }
 }
