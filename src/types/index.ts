@@ -101,3 +101,17 @@ export interface SavedSubjectExpertExchange {
 
 // Types for Username Suggestion
 export type { SuggestUsernameInput, SuggestUsernameOutput } from '@/ai/flows/suggest-username';
+
+// Types for Community/Shared Questions
+export interface SharedQuestion {
+  id: string;
+  username: string;
+  userAvatarUrl?: string;
+  gradeLevel: GradeLevelNCERT;
+  subject: string;
+  chapter: string;
+  text: string;
+  answer: string;
+  options?: string[];
+  timestamp: number;
+}
