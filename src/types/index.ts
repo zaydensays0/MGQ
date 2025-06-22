@@ -146,3 +146,6 @@ export interface User {
 // AI Notes Generator Flow Types
 export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';
+
+// AI Mock Test Flow Types
+export type { GenerateMockTestInput, MockTestQuestion, GenerateMockTestOutput } from '@/ai/flows/generate-mock-test';

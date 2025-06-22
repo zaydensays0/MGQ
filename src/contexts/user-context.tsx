@@ -25,22 +25,22 @@ const MOCK_INITIAL_USER: User = {
 // Generate level thresholds based on the new system
 // Levels require progressively more XP: 500, 800, 1200, 1600, etc.
 const generateLevelThresholds = (maxLevel = 50) => {
-  const thresholds = [0]; // XP for level 1 is 0. Reaching level 2 requires 500 total XP.
-  let currentTotalXp = 0;
-  let nextLevelIncrement = 500;
-  for (let level = 2; level <= maxLevel; level++) {
-    currentTotalXp += nextLevelIncrement;
-    thresholds.push(currentTotalXp);
-    
-    // The amount of XP needed for the *next* level increases
-    if (level === 2) {
-      nextLevelIncrement = 800; // XP needed to get from Lvl 2 to 3
-    } else {
-      nextLevelIncrement += 400; // Increment increases by 400 for subsequent levels
+    const thresholds = [0]; // XP for level 1 is 0. Reaching level 2 requires 500 total XP.
+    let currentTotalXp = 0;
+    let nextLevelIncrement = 500;
+    for (let level = 2; level <= maxLevel; level++) {
+        currentTotalXp += nextLevelIncrement;
+        thresholds.push(currentTotalXp);
+
+        if (level > 2) {
+             nextLevelIncrement += 400; // Increment increases by 400 for subsequent levels
+        } else if (level === 2) {
+            nextLevelIncrement = 800;
+        }
     }
-  }
-  return thresholds;
+    return thresholds;
 };
+
 
 const LEVEL_THRESHOLDS = generateLevelThresholds();
 const STREAK_BONUSES = [50, 70, 90, 110, 130, 150, 200]; // XP bonus for day 1 through 7
@@ -68,7 +68,7 @@ interface UserContextType {
   user: User | null;
   updateUser: (newUserData: Partial<User>) => void;
   isInitialized: boolean;
-  handleCorrectAnswer: () => void;
+  handleCorrectAnswer: (baseXp: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -112,10 +112,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveUser(updatedUser);
   }, [user]);
 
-  const handleCorrectAnswer = useCallback(() => {
+  const handleCorrectAnswer = useCallback((baseXp: number) => {
     if (!user) return;
 
-    let xpGained = 100; // Base XP for correct answer
+    let xpGained = baseXp;
     let newStreak = user.streak;
     let newBadges = [...(user.badges || [])];
 
@@ -133,11 +133,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Add streak bonus
         const streakIndex = newStreak - 1;
-        if (streakIndex < STREAK_BONUSES.length) {
-            xpGained += STREAK_BONUSES[streakIndex];
-        } else { // For streaks longer than 7 days, use the 7-day bonus
-            xpGained += STREAK_BONUSES[STREAK_BONUSES.length - 1];
-        }
+        const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
+        xpGained += streakBonus;
 
         // Award badge on day 7
         if (newStreak === 7 && !newBadges.includes('streak_master')) {

@@ -83,7 +83,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setShowAnswer(true); // Automatically show answer feedback area
 
     if (selected.trim().toLowerCase() === currentAnswerText.trim().toLowerCase()) {
-      handleCorrectAnswer(); // Trigger gamification logic
+      handleCorrectAnswer(100); // Trigger gamification logic with 100 base XP
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
     }
