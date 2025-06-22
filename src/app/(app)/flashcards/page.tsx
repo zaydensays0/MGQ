@@ -88,8 +88,8 @@ const AIGenerationDialog = () => {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Sparkles className="mr-2 h-4 w-4" /> Generate with AI
+                <Button size="icon" aria-label="Generate with AI">
+                    <Sparkles className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -189,8 +189,8 @@ const ManualCreationDialog = () => {
             if (!open) resetForm();
         }}>
             <DialogTrigger asChild>
-                <Button variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create Manually
+                <Button variant="outline" size="icon" aria-label="Create Manually">
+                    <PlusCircle className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
