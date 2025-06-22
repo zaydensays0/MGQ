@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -8,10 +9,11 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle'; 
-import { useUser } from '@/contexts/user-context';
+import { useUser, getXpForLevel } from '@/contexts/user-context';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Progress } from './ui/progress';
 
 const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
@@ -28,6 +30,21 @@ const moreToolsLinks = [
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
 ];
 
+
+const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['user']> }) => {
+    const { currentLevelStart, nextLevelTarget } = getXpForLevel(user.level);
+    const xpProgress = ((user.xp - currentLevelStart) / (nextLevelTarget - currentLevelStart)) * 100;
+
+    return (
+        <div className="px-2 py-1.5 text-sm">
+            <div className="flex justify-between items-baseline mb-1">
+                <span className="font-semibold">Level {user.level}</span>
+                <span className="text-xs text-muted-foreground font-medium">{user.xp} / {nextLevelTarget} XP</span>
+            </div>
+            <Progress value={xpProgress} className="h-2" />
+        </div>
+    );
+};
 
 export function Header() {
   const pathname = usePathname();
@@ -96,8 +113,10 @@ export function Header() {
                             <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {user && <UserProgress user={user} />}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
                     </DropdownMenuContent>
@@ -115,8 +134,8 @@ export function Header() {
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[260px] p-6 flex flex-col">
-                 <SheetHeader className="mb-4">
+              <SheetContent side="right" className="w-[260px] p-0 flex flex-col">
+                 <SheetHeader className="p-6 pb-2">
                   <SheetTitle asChild>
                     <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <Sparkles className="h-5 w-5 text-primary" />
@@ -124,7 +143,34 @@ export function Header() {
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
-                <nav className="flex flex-col space-y-3">
+                <div className="p-6 pt-0 border-b">
+                  {isInitialized && user ? (
+                      <div>
+                        <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Avatar className="h-9 w-9 mr-3">
+                                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold">{user.username}</p>
+                                <p className="text-sm text-muted-foreground">View Account</p>
+                            </div>
+                        </Link>
+                        <div className="mt-2">
+                            <UserProgress user={user} />
+                        </div>
+                      </div>
+                  ) : (
+                      <div className="flex items-center p-2">
+                          <Skeleton className="h-9 w-9 rounded-full mr-3" />
+                          <div className="space-y-1">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-3 w-20" />
+                          </div>
+                      </div>
+                  )}
+                </div>
+                <nav className="flex flex-col space-y-3 p-6 flex-grow">
                   {[...navLinks, ...moreToolsLinks].map((link) => (
                     <Link
                       key={link.href}
@@ -140,30 +186,6 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                <div className="mt-auto pt-6 border-t">
-                  {isInitialized && user ? (
-                      <div>
-                        <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Avatar className="h-9 w-9 mr-3">
-                                <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{user.username}</p>
-                                <p className="text-sm text-muted-foreground">View Account</p>
-                            </div>
-                        </Link>
-                      </div>
-                  ) : (
-                      <div className="flex items-center p-2">
-                          <Skeleton className="h-9 w-9 rounded-full mr-3" />
-                          <div className="space-y-1">
-                              <Skeleton className="h-4 w-24" />
-                              <Skeleton className="h-3 w-20" />
-                          </div>
-                      </div>
-                  )}
-                </div>
               </SheetContent>
             </Sheet>
           </div>

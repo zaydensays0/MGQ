@@ -8,6 +8,7 @@ import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { QuestionContext } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/user-context';
 
 interface QuestionCardProps {
   questionText: string;
@@ -28,6 +29,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [isAttempted, setIsAttempted] = useState(false);
 
   const { addQuestion, isSaved } = useSavedQuestions();
+  const { handleCorrectAnswer } = useUser();
   const { toast } = useToast();
 
   // Effect to reset state when props change (e.g., after regeneration leads to new questionText)
@@ -81,7 +83,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setShowAnswer(true); // Automatically show answer feedback area
 
     if (selected.trim().toLowerCase() === currentAnswerText.trim().toLowerCase()) {
-      toast({ title: "Correct!", description: "Well done!" });
+      handleCorrectAnswer(); // Trigger gamification logic
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
     }

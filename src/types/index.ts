@@ -124,6 +124,9 @@ export interface UserGroup {
   createdAt: number;
 }
 
+// Badge types for gamification
+export type BadgeKey = 'mini_streak' | 'consistent_learner';
+
 // Types for User Profile
 export interface User {
   fullName: string;
@@ -131,4 +134,9 @@ export interface User {
   username: string;
   avatarUrl: string;
   password?: string; // IMPORTANT: For prototype only. Do not store plain text passwords in a real app.
+  xp: number;
+  level: number;
+  streak: number;
+  lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
+  badges: BadgeKey[];
 }
