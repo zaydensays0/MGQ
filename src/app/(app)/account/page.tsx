@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, ShieldCheck, KeyRound } from 'lucide-react';
+import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, ShieldCheck, KeyRound, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 import { cn } from '@/lib/utils';
@@ -71,10 +72,11 @@ const securitySchema = z.object({
 
 
 export default function AccountPage() {
-    const { user, updateUser, isInitialized } = useUser();
+    const { user, updateUser, isInitialized, logout } = useUser();
+    const router = useRouter();
     
     // State for Profile Section
-    const [fullName, setFullName] = useState(user.fullName);
+    const [fullName, setFullName] = useState(user?.fullName || '');
     const [newUsername, setNewUsername] = useState('');
     const [usernameResult, setUsernameResult] = useState<SuggestUsernameOutput | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -95,7 +97,7 @@ export default function AccountPage() {
     const securityForm = useForm<z.infer<typeof securitySchema>>({
         resolver: zodResolver(securitySchema),
         defaultValues: {
-            email: user.email,
+            email: user?.email || '',
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
@@ -104,7 +106,7 @@ export default function AccountPage() {
 
     // Initialize form with user data once context is ready
     useEffect(() => {
-        if (isInitialized) {
+        if (isInitialized && user) {
             setFullName(user.fullName);
             securityForm.reset({ email: user.email });
         }
@@ -120,7 +122,7 @@ export default function AccountPage() {
         setIsCheckingUsername(true);
         setUsernameResult(null);
         try {
-            const input: SuggestUsernameInput = { username: name, fullName: user.fullName };
+            const input: SuggestUsernameInput = { username: name, fullName: user?.fullName };
             const response = await suggestUsername(input);
             setUsernameResult(response);
         } catch (error) {
@@ -129,7 +131,7 @@ export default function AccountPage() {
         } finally {
             setIsCheckingUsername(false);
         }
-    }, [user.fullName]);
+    }, [user?.fullName]);
 
     useEffect(() => {
         if (debouncedUsername) {
@@ -183,6 +185,7 @@ export default function AccountPage() {
 
     // --- Form Submission Logic ---
     const handleUpdateProfile = () => {
+        if (!user) return;
         const updates: Partial<UserType> = {};
         if (fullName !== user.fullName) updates.fullName = fullName;
         if (usernameResult?.status === 'available') updates.username = newUsername;
@@ -200,22 +203,28 @@ export default function AccountPage() {
     };
 
     const handleUpdateSecurity = (values: z.infer<typeof securitySchema>) => {
+        if (!user) return;
+
         // Handle Email Change
         if (values.email !== user.email) {
+            // In a real app, this would require verification.
+            // For prototype, we just update it.
             updateUser({ email: values.email });
             toast({ title: "Email Updated!", description: "Your login email has been changed." });
         }
         
         // Handle Password Change
         if (values.newPassword) {
-            // This is a prototype, so we'll check against a mock password
-            if (values.currentPassword !== 'password123') {
+            // This is a prototype, so we'll check against the mock password
+            if (values.currentPassword !== user.password) {
                 securityForm.setError("currentPassword", { type: "manual", message: "Your current password is incorrect. Try again." });
                 toast({ title: "Incorrect Password", description: "The current password you entered is incorrect.", variant: "destructive" });
                 return;
             }
             
-            // On success (in a real app, you'd call an API here)
+            // On success, update the user object in our mock db
+            updateUser({ password: values.newPassword });
+
             toast({ 
                 title: "Password Updated!", 
                 description: "Your password has been changed successfully. Keep it safe!",
@@ -229,6 +238,12 @@ export default function AccountPage() {
             });
         }
     };
+
+    const handleLogout = () => {
+        logout();
+        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+        router.push('/auth/login');
+    };
     
     // --- UI Helpers ---
     const getUsernameResultColor = () => {
@@ -240,9 +255,9 @@ export default function AccountPage() {
         }
     };
 
-    const canUpdateProfile = fullName !== user.fullName || usernameResult?.status === 'available' || !!newAvatarUrl;
+    const canUpdateProfile = user && (fullName !== user.fullName || usernameResult?.status === 'available' || !!newAvatarUrl);
 
-    if (!isInitialized) {
+    if (!isInitialized || !user) {
         return (
             <div className="container mx-auto p-4 md:p-8">
                 <div className="mb-8"><Skeleton className="h-10 w-64" /></div>
@@ -253,13 +268,20 @@ export default function AccountPage() {
     
     return (
         <div className="container mx-auto p-4 md:p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-headline font-bold flex items-center">
-                    <User className="w-8 h-8 mr-3 text-primary" />
-                    Account Settings
-                </h1>
-                <p className="text-muted-foreground mt-1">Manage your profile, security, and preferences.</p>
+            <div className="flex justify-between items-start mb-8">
+                <div>
+                    <h1 className="text-3xl font-headline font-bold flex items-center">
+                        <User className="w-8 h-8 mr-3 text-primary" />
+                        Account Settings
+                    </h1>
+                    <p className="text-muted-foreground mt-1">Manage your profile, security, and preferences.</p>
+                </div>
+                <Button variant="outline" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out
+                </Button>
             </div>
+
 
             <Card className="w-full max-w-4xl mx-auto shadow-lg">
                 {/* --- PUBLIC PROFILE SECTION --- */}

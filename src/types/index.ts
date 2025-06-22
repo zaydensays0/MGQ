@@ -130,4 +130,5 @@ export interface User {
   email: string;
   username: string;
   avatarUrl: string;
+  password?: string; // IMPORTANT: For prototype only. Do not store plain text passwords in a real app.
 }

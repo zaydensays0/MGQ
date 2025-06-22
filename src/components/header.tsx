@@ -2,22 +2,27 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LogOut, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle'; 
 import { useUser } from '@/contexts/user-context';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
-  { href: '/', label: 'Generate Questions', icon: Sparkles },
+  { href: '/generate', label: 'Generate', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/community', label: 'Community', icon: Users },
+];
+
+const moreToolsLinks = [
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/subject-expert', label: 'Subject Expert', icon: Brain },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
@@ -25,17 +30,24 @@ const navLinks = [
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
 ];
 
+
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isInitialized } = useUser();
+  const { user, isInitialized, logout } = useUser();
 
-  const accountLink = { href: '/account', label: 'Account', icon: User };
+  const handleLogout = () => {
+    logout();
+    toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    router.push('/auth/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-baseline space-x-2">
+        <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <div className="flex flex-col">
             <span className="font-bold sm:inline-block text-lg font-headline">
@@ -64,19 +76,47 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
+                        <LayoutGrid className="mr-2 h-4 w-4" />
+                        More Tools
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    {moreToolsLinks.map((link) => (
+                         <DropdownMenuItem key={link.href} asChild>
+                             <Link href={link.href} className="w-full flex">
+                                <link.icon className="mr-2 h-4 w-4" />
+                                {link.label}
+                             </Link>
+                         </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
-          {isInitialized ? (
-              <Link href="/account" className="hidden md:block">
-                  <Avatar className="h-9 w-9">
-                      <AvatarImage src={user.avatarUrl} alt={user.username} />
-                      <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-              </Link>
-          ) : (
-              <Skeleton className="h-9 w-9 rounded-full hidden md:block" />
-          )}
+           <div className="hidden md:block">
+              {isInitialized && user ? (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Avatar className="h-9 w-9 cursor-pointer">
+                            <AvatarImage src={user.avatarUrl} alt={user.username} />
+                            <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                  <Skeleton className="h-9 w-9 rounded-full" />
+              )}
+          </div>
 
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -89,14 +129,14 @@ export function Header() {
               <SheetContent side="right" className="w-[260px] p-6 flex flex-col">
                  <SheetHeader className="mb-4">
                   <SheetTitle asChild>
-                    <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <Sparkles className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline">MGQs</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col space-y-3">
-                  {[...navLinks, accountLink].map((link) => (
+                  {[...navLinks, ...moreToolsLinks].map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -112,17 +152,22 @@ export function Header() {
                   ))}
                 </nav>
                 <div className="mt-auto pt-6 border-t">
-                  {isInitialized ? (
-                      <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Avatar className="h-9 w-9 mr-3">
-                              <AvatarImage src={user.avatarUrl} alt={user.username} />
-                              <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                              <p className="font-semibold">{user.username}</p>
-                              <p className="text-sm text-muted-foreground">View Account</p>
-                          </div>
-                      </Link>
+                  {isInitialized && user ? (
+                      <div>
+                        <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Avatar className="h-9 w-9 mr-3">
+                                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold">{user.username}</p>
+                                <p className="text-sm text-muted-foreground">View Account</p>
+                            </div>
+                        </Link>
+                        <Button variant="ghost" className="w-full justify-start mt-2" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
+                            <LogOut className="mr-2 h-4 w-4" /> Logout
+                        </Button>
+                      </div>
                   ) : (
                       <div className="flex items-center p-2">
                           <Skeleton className="h-9 w-9 rounded-full mr-3" />
