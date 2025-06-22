@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
@@ -10,7 +9,7 @@ import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuesti
 import { useToast } from '@/hooks/use-toast';
 import type { QuestionContext, GeneratedQuestionAnswerPair, GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Sparkles } from "lucide-react";
+import { Terminal, Sparkles, WifiOff } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 
 const QuestionListSkeleton = () => (
@@ -31,7 +30,6 @@ const CardSkeleton = () => (
   <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
     <Skeleton className="h-4 w-full" />
     <Skeleton className="h-4 w-5/6" />
-    {/* For MCQs, options would be here */}
     <div className="space-y-2 mt-2">
       <Skeleton className="h-6 w-full" />
       <Skeleton className="h-6 w-full" />
@@ -58,9 +56,32 @@ export default function ExamPrepPage() {
   const [currentContext, setCurrentContext] = useState<QuestionContext | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleStatusChange = () => setIsOnline(navigator.onLine);
+      window.addEventListener('online', handleStatusChange);
+      window.addEventListener('offline', handleStatusChange);
+      handleStatusChange();
+      return () => {
+        window.removeEventListener('online', handleStatusChange);
+        window.removeEventListener('offline', handleStatusChange);
+      };
+    }
+  }, []);
+
   const handleFormSubmit = async (data: FormValues) => {
+    if (!isOnline) {
+      toast({
+        title: "You are offline",
+        description: "This feature requires an internet connection. You can still view your saved questions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     setGeneratedQuestions([]); 
@@ -118,12 +139,12 @@ export default function ExamPrepPage() {
     originalOptions?: string[],
     context?: QuestionContext
   ): Promise<{ question: string; answer: string; options?: string[] } | null> => {
-    if (!context) { // Ensure context is available
-        toast({
-            title: "Regeneration Error",
-            description: "Question context is missing for regeneration.",
-            variant: "destructive",
-        });
+    if (!isOnline) {
+      toast({ title: "Offline", description: "This feature requires internet.", variant: "destructive" });
+      return null;
+    }
+    if (!context) {
+        toast({ title: "Regeneration Error", description: "Question context is missing.", variant: "destructive" });
         return null;
     }
 
@@ -168,7 +189,7 @@ export default function ExamPrepPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col items-center">
-        <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
+        <ContentSelectionForm onSubmit={handleFormSubmit} isGenerating={isGenerating} isOnline={isOnline} />
 
         {error && (
           <Alert variant="destructive" className="mt-8 w-full max-w-2xl">
@@ -200,7 +221,17 @@ export default function ExamPrepPage() {
           </Alert>
         )}
 
-        {!isGenerating && !currentContext && !error && (
+        {!isOnline && (
+           <Alert variant="destructive" className="mt-8 w-full max-w-lg">
+             <WifiOff className="h-5 w-5" />
+            <AlertTitle className="font-headline text-xl">You are Offline</AlertTitle>
+            <AlertDescription className="mt-1">
+             Question generation is disabled. You can still access your saved questions.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isGenerating && !currentContext && !error && isOnline && (
            <Alert className="mt-8 w-full max-w-lg text-center border-dashed">
              <Sparkles className="h-5 w-5 mx-auto mb-2 text-primary" />
             <AlertTitle className="font-headline text-xl">Ready to Generate?</AlertTitle>
