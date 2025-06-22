@@ -99,3 +99,5 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
+// Types for Username Suggestion
+export type { SuggestUsernameInput, SuggestUsernameOutput } from '@/ai/flows/suggest-username';
