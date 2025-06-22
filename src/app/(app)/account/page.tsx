@@ -7,18 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, Flame, Medal, Award } from 'lucide-react';
+import { User, CheckCircle, XCircle, Wand2, Loader2, UploadCloud, Flame, Medal, Award, AlertTriangle, GraduationCap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestUsername, type SuggestUsernameInput, type SuggestUsernameOutput } from '@/ai/flows/suggest-username';
 import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
-import type { User as UserType, BadgeKey } from '@/types';
+import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { GRADE_LEVELS } from '@/lib/constants';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Debounce hook for username checking
 function useDebounce<T>(value: T, delay: number): T {
@@ -46,6 +49,7 @@ export default function AccountPage() {
     // State for Profile Section
     const [fullName, setFullName] = useState('');
     const [newUsername, setNewUsername] = useState('');
+    const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
     const [usernameResult, setUsernameResult] = useState<SuggestUsernameOutput | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
@@ -64,6 +68,7 @@ export default function AccountPage() {
     useEffect(() => {
         if (isInitialized && user) {
             setFullName(user.fullName);
+            setSelectedClass(user.class);
         }
     }, [isInitialized, user]);
 
@@ -145,6 +150,7 @@ export default function AccountPage() {
         if (fullName !== user.fullName) updates.fullName = fullName;
         if (usernameResult?.status === 'available') updates.username = newUsername;
         if (newAvatarUrl) updates.avatarUrl = newAvatarUrl;
+        if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
 
         if (Object.keys(updates).length > 0) {
             updateUser(updates);
@@ -168,7 +174,7 @@ export default function AccountPage() {
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || usernameResult?.status === 'available' || !!newAvatarUrl);
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || usernameResult?.status === 'available' || !!newAvatarUrl);
 
     if (!isInitialized || !user) {
         return (
@@ -196,6 +202,16 @@ export default function AccountPage() {
                     <p className="text-muted-foreground mt-1">Manage your profile, progress, and preferences.</p>
                 </div>
             </div>
+            
+            {!user.class && (
+                <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Set Your Class!</AlertTitle>
+                    <AlertDescription>
+                        Please select your class in the profile section below to personalize your experience and join the leaderboard.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <Card className="lg:col-span-2 shadow-lg">
@@ -213,9 +229,22 @@ export default function AccountPage() {
                         </div>
 
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name</Label>
-                                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName">Full Name</Label>
+                                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="class-select">Your Class</Label>
+                                    <Select value={selectedClass} onValueChange={(value) => setSelectedClass(value as GradeLevelNCERT)}>
+                                        <SelectTrigger id="class-select">
+                                            <SelectValue placeholder="-- Select Class --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="username">Username</Label>

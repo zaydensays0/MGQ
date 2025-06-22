@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, BadgeKey } from '@/types';
+import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -17,6 +17,7 @@ const MOCK_INITIAL_USER: User = {
   streak: 0,
   lastCorrectAnswerDate: '', // Initialize as empty
   badges: [],
+  class: undefined, // User needs to set their class
 };
 
 // --- Gamification Constants ---

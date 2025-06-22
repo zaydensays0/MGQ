@@ -137,4 +137,5 @@ export interface User {
   streak: number;
   lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
   badges: BadgeKey[];
+  class?: GradeLevelNCERT;
 }

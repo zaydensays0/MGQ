@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -20,6 +20,7 @@ const navLinks = [
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/community', label: 'Community', icon: Users },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
 const moreToolsLinks = [
