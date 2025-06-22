@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -31,6 +31,7 @@ const moreToolsLinks = [
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
+  { href: '/donation', label: 'Donate', icon: Heart },
 ];
 
 
