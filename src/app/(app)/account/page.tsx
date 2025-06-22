@@ -36,49 +36,62 @@ const MOCK_USER = {
 // --- Avatar SVG Components ---
 const Avatar1: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#FFDDC1"/>
-        <path d="M30 80 C 40 90, 60 90, 70 80" stroke="#6D4C41" strokeWidth="4" fill="none" strokeLinecap="round"/>
-        <circle cx="35" cy="52" r="6" fill="#6D4C41"/>
-        <circle cx="65" cy="52" r="6" fill="#6D4C41"/>
-        <path d="M25 30 Q 50 20 75 30" stroke="#6D4C41" strokeWidth="8" fill="none" strokeLinecap="round"/>
+        <circle cx="50" cy="50" r="45" fill="#FFDAB9"/>
+        <path d="M25 40 C 25 20, 75 20, 75 40 Z" fill="#A0522D" />
+        <circle cx="38" cy="55" r="5" fill="#000"/>
+        <circle cx="62" cy="55" r="5" fill="#000"/>
+        <path d="M40 75 Q 50 85 60 75" stroke="#000" strokeWidth="3" fill="none" strokeLinecap="round"/>
     </svg>
 );
 const Avatar2: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#FFC0CB"/>
-        <path d="M40 70 Q 50 80 60 70" stroke="#333" strokeWidth="3" fill="none" strokeLinecap="round" />
-        <circle cx="38" cy="55" r="5" fill="#333" />
-        <circle cx="62" cy="55" r="5" fill="#333" />
-        <path d="M 20 50 C 20 20, 80 20, 80 50" fill="#F48FB1" />
-        <path d="M 20 50 C 25 70, 25 90, 40 95 L 60 95 C 75 90, 75 70, 80 50 Z" fill="#F48FB1"/>
+        <circle cx="50" cy="50" r="45" fill="#F5DEB3"/>
+        <path d="M20 50 C 20 20, 80 20, 80 50 L 80 80 C 80 90, 20 90, 20 80 Z" fill="#2F4F4F" />
+        <circle cx="38" cy="55" r="5" fill="#000"/>
+        <circle cx="62" cy="55" r="5" fill="#000"/>
+        <path d="M40 75 Q 50 82 60 75" stroke="#000" strokeWidth="3" fill="none" strokeLinecap="round"/>
     </svg>
 );
 const Avatar3: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#B3E5FC" />
-        <path d="M10 55 L50 30 L90 55 L50 80 Z" fill="#0277BD" />
-        <rect x="5" y="55" width="90" height="10" rx="3" fill="#01579B" />
-        <rect x="75" y="38" width="8" height="20" rx="4" fill="#FFC107" />
+        <circle cx="50" cy="50" r="45" fill="#E0BBAA"/>
+        <path d="M30 35 Q 50 25 70 35 L 70 30 Q 50 20 30 30 Z" fill="#556B2F"/>
+        <circle cx="38" cy="55" r="10" stroke="#333" strokeWidth="4" fill="none"/>
+        <circle cx="62" cy="55" r="10" stroke="#333" strokeWidth="4" fill="none"/>
+        <line x1="48" y1="55" x2="52" y2="55" stroke="#333" strokeWidth="4"/>
+        <path d="M40 75 Q 50 85 60 75" stroke="#333" strokeWidth="3" fill="none" strokeLinecap="round"/>
     </svg>
 );
 const Avatar4: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#C8E6C9" />
-        <rect x="25" y="60" width="50" height="15" rx="2" fill="#388E3C" />
-        <rect x="25" y="45" width="50" height="15" rx="2" fill="#D32F2F" />
-        <rect x="25" y="30" width="50" height="15" rx="2" fill="#1976D2" />
+        <circle cx="50" cy="50" r="45" fill="#C1E1C1"/>
+        <path d="M25 80 C 15 60, 20 30, 40 30 L 60 30 C 80 30, 85 60, 75 80 Z" fill="#D2691E" />
+        <circle cx="50" cy="25" r="15" fill="#D2691E" /> 
+        <rect x="30" y="50" width="40" height="12" rx="6" fill="#FFF" stroke="#555" strokeWidth="2" />
+        <circle cx="40" cy="56" r="3" fill="#555" />
+        <circle cx="60" cy="56" r="3" fill="#555" />
+        <path d="M40 75 Q 50 80 60 75" stroke="#555" strokeWidth="3" fill="none" strokeLinecap="round"/>
     </svg>
 );
 const Avatar5: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#7E57C2"/>
-        <text x="50" y="68" fontFamily="Arial, sans-serif" fontSize="50" fill="white" textAnchor="middle" fontWeight="bold">A</text>
+        <circle cx="50" cy="50" r="45" fill="#92A8D1"/>
+        <rect x="30" y="25" width="40" height="15" rx="5" fill="#4A4A4A" />
+        <circle cx="38" cy="55" r="5" fill="#000"/>
+        <circle cx="62" cy="55" r="5" fill="#000"/>
+        <path d="M45 70 L 55 70" stroke="#000" strokeWidth="3" fill="none" strokeLinecap="round"/>
     </svg>
 );
 const Avatar6: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#FF7043"/>
-        <text x="50" y="68" fontFamily="Arial, sans-serif" fontSize="50" fill="white" textAnchor="middle" fontWeight="bold">S</text>
+        <circle cx="50" cy="50" r="45" fill="#FFC0CB"/>
+        <path d="M20 50 C 20 20, 80 20, 80 50" fill="#FFD700" />
+        <circle cx="50" cy="20" r="10" fill="#FFD700" />
+        <path d="M15 70 L 25 50" stroke="#FFD700" strokeWidth="10" strokeLinecap="round"/>
+        <path d="M85 70 L 75 50" stroke="#FFD700" strokeWidth="10" strokeLinecap="round"/>
+        <circle cx="38" cy="55" r="5" fill="#333" />
+        <circle cx="62" cy="55" r="5" fill="#333" />
+        <path d="M40 70 Q 50 80 60 70" stroke="#333" strokeWidth="3" fill="none" strokeLinecap="round" />
     </svg>
 );
 
