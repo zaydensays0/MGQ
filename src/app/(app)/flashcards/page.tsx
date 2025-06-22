@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -12,11 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Layers, PlusCircle, Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import { Layers, PlusCircle, Sparkles, Loader2, ArrowRight, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { generateFlashcards, type GenerateFlashcardsInput } from '@/ai/flows/generate-flashcards';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 import type { GradeLevelNCERT, FlashcardDeck } from '@/types';
+import { Textarea } from '@/components/ui/textarea';
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => (
     <Card className="flex flex-col h-full shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -89,7 +89,7 @@ const AIGenerationDialog = () => {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create AI Deck
+                    <Sparkles className="mr-2 h-4 w-4" /> Generate with AI
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -135,6 +135,114 @@ const AIGenerationDialog = () => {
     );
 };
 
+const ManualCreationDialog = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const { addDeck } = useFlashcards();
+    const { toast } = useToast();
+
+    // Form state
+    const [title, setTitle] = useState('');
+    const [cards, setCards] = useState([{ front: '', back: '' }]);
+
+    const handleAddCard = () => {
+        setCards([...cards, { front: '', back: '' }]);
+    };
+
+    const handleRemoveCard = (index: number) => {
+        if (cards.length > 1) {
+            const newCards = cards.filter((_, i) => i !== index);
+            setCards(newCards);
+        }
+    };
+
+    const handleCardChange = (index: number, field: 'front' | 'back', value: string) => {
+        const newCards = [...cards];
+        newCards[index][field] = value;
+        setCards(newCards);
+    };
+
+    const resetForm = () => {
+        setTitle('');
+        setCards([{ front: '', back: '' }]);
+    }
+
+    const handleCreateDeck = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title.trim()) {
+            toast({ title: 'Missing Title', description: 'Please provide a title for your deck.', variant: 'destructive' });
+            return;
+        }
+        if (cards.some(card => !card.front.trim() || !card.back.trim())) {
+            toast({ title: 'Incomplete Cards', description: 'Please make sure all flashcards have both a front and a back.', variant: 'destructive' });
+            return;
+        }
+
+        addDeck({ title }, cards);
+        toast({ title: 'Deck Created!', description: `Your manual deck "${title}" has been added.` });
+        setIsOpen(false);
+        resetForm();
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) resetForm();
+        }}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create Manually
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Create a Manual Deck</DialogTitle>
+                    <DialogDescription>Build your own flashcard deck from scratch.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateDeck}>
+                    <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="deck-title">Deck Title</Label>
+                            <Input id="deck-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., History - Chapter 5 Key Dates" required />
+                        </div>
+                        <Label>Flashcards</Label>
+                        {cards.map((card, index) => (
+                            <div key={index} className="p-4 border rounded-md space-y-3 relative bg-card">
+                                <p className="text-sm font-medium text-muted-foreground">Card {index + 1}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor={`card-front-${index}`}>Front</Label>
+                                        <Textarea id={`card-front-${index}`} value={card.front} onChange={(e) => handleCardChange(index, 'front', e.target.value)} placeholder="Term, question, or concept" required />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor={`card-back-${index}`}>Back</Label>
+                                        <Textarea id={`card-back-${index}`} value={card.back} onChange={(e) => handleCardChange(index, 'back', e.target.value)} placeholder="Definition or answer" required />
+                                    </div>
+                                </div>
+                                {cards.length > 1 && (
+                                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveCard(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
+                         <Button type="button" variant="outline" onClick={handleAddCard} className="w-full">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Another Card
+                        </Button>
+                    </div>
+
+                    <DialogFooter className="mt-4 pt-4 border-t">
+                        <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
+                        <Button type="submit">
+                            Create Deck
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 export default function FlashcardsPage() {
     const { decks } = useFlashcards();
 
@@ -145,7 +253,10 @@ export default function FlashcardsPage() {
                     <Layers className="w-8 h-8 mr-3 text-primary" />
                     Flashcard Decks
                 </h1>
-                <AIGenerationDialog />
+                <div className="flex gap-2">
+                    <ManualCreationDialog />
+                    <AIGenerationDialog />
+                </div>
             </div>
 
             {decks.length === 0 ? (
@@ -153,7 +264,7 @@ export default function FlashcardsPage() {
                     <Layers className="h-6 w-6 mx-auto mb-2 text-primary" />
                     <AlertTitle className="font-headline text-xl">No Flashcard Decks Yet</AlertTitle>
                     <AlertDescription className="mt-1">
-                        Create a deck from your saved questions or use AI to generate one.
+                        Create a deck from scratch, from your saved questions, or use AI to generate one.
                     </AlertDescription>
                 </Alert>
             ) : (
