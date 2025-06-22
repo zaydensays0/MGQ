@@ -6,9 +6,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 
 // Mock initial user data as a fallback
 const MOCK_USER: User = {
-  fullName: 'Mehdi Gokal',
-  email: 'mehdi.gokal@example.com',
-  username: 'mehdi_g',
+  fullName: 'Alex Doe',
+  email: 'alex.doe@example.com',
+  username: 'alex_d',
   avatarUrl: 'https://placehold.co/100x100.png',
 };
 
@@ -67,3 +67,5 @@ export const useUser = (): UserContextType => {
   }
   return context;
 };
+
+    
