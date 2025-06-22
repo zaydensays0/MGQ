@@ -5,13 +5,21 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff, Share2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { ShareQuestionsDialog } from './share-questions-dialog';
 
-const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: string) => void }> = ({ question, onRemove }) => {
+const SavedQuestionItem: React.FC<{ 
+  question: SavedQuestion, 
+  onRemove: (id: string) => void,
+  onSelect: (id: string, isSelected: boolean) => void,
+  isSelected: boolean,
+}> = ({ question, onRemove, onSelect, isSelected }) => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
@@ -20,19 +28,16 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
   const isMCQ = question.questionType === 'multiple_choice' && question.options && question.options.length > 0;
   const isTrueFalse = question.questionType === 'true_false';
 
-  // Reset attempt state if question prop changes (though unlikely in this list context unless list itself reorders heavily)
   useEffect(() => {
     setUserSelection(null);
     setIsAttempted(false);
   }, [question.id]);
-
 
   const handleSelectOption = (selected: string) => {
     if (isAttempted && (isMCQ || isTrueFalse)) return; 
     
     setUserSelection(selected);
     setIsAttempted(true);
-    // setShowAnswer(true); // Reveal answer section in accordion on attempt
 
     if (selected.trim().toLowerCase() === question.answer.trim().toLowerCase()) {
       toast({ title: "Correct!", description: "Well done!" });
@@ -43,110 +48,121 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
 
   return (
     <Card className="bg-background shadow-sm">
-      <CardContent className="p-4 pb-2">
-        <p className="text-sm text-muted-foreground mb-1">
-          Type: {question.questionType.replace(/_/g, ' ')}
-        </p>
-        <p className="text-foreground leading-relaxed mb-2">{question.text}</p>
-        
-        {isMCQ && question.options && (
-          <div className="space-y-1.5 mb-2">
-            {question.options.map((option, index) => {
-              const isSelectedOption = userSelection === option;
-              const isCorrectOption = question.answer === option;
-              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
-
-              if (isAttempted) {
-                if (isSelectedOption) {
-                  optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
-                } else if (isCorrectOption && showAnswer) { // Only show correct if answer is revealed
-                  optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
-                }
-              }
-              return (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
-                  onClick={() => handleSelectOption(option)}
-                  disabled={isAttempted && !showAnswer}
-                >
-                  <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
-                </Button>
-              );
-            })}
-          </div>
-        )}
-
-        {isTrueFalse && (
-           <div className="flex space-x-2 mb-2">
-            {['True', 'False'].map((tfOption) => {
-              const isSelectedOption = userSelection === tfOption;
-              const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
-              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
-
-              if (isAttempted) {
-                 if (isSelectedOption) {
-                  optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
-                } else if (isCorrectOption && showAnswer) {
-                  optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
-                }
-              }
-              return (
-                <Button
-                  key={tfOption}
-                  variant="outline"
-                  className={`flex-1 p-2 text-sm ${optionStyle}`}
-                  onClick={() => handleSelectOption(tfOption)}
-                  disabled={isAttempted && !showAnswer}
-                >
-                  {tfOption}
-                </Button>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-
-      <Accordion type="single" collapsible className="w-full" value={showAnswer ? "answer" : undefined} onValueChange={(value) => setShowAnswer(value === "answer")}>
-        <AccordionItem value="answer" className="border-none">
-          <AccordionTrigger 
-            className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0"
-          >
-            <div className="flex items-center">
-              {showAnswer ? <EyeOff className="mr-2 h-4 w-4 text-primary" /> : <Eye className="mr-2 h-4 w-4 text-primary" />}
-              {showAnswer ? 'Hide Answer' : 'Show Answer'}
+        <CardContent className="p-4 pb-2">
+            <div className="flex items-start space-x-3">
+                <Checkbox
+                    id={`select-${question.id}`}
+                    checked={isSelected}
+                    onCheckedChange={(checked) => onSelect(question.id, !!checked)}
+                    className="mt-1"
+                    aria-label={`Select question: ${question.text}`}
+                />
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor={`select-${question.id}`} className="text-sm text-muted-foreground cursor-pointer">
+                        Type: {question.questionType.replace(/_/g, ' ')}
+                    </Label>
+                    <p className="text-foreground leading-relaxed">{question.text}</p>
+                </div>
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="p-4 pt-2">
-             <div className={`p-3 rounded-md border 
-                ${isMCQ || isTrueFalse ? 
-                  (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
-                  : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
-                <p className={`text-sm font-semibold mb-1 
-                  ${isMCQ || isTrueFalse ? 
-                    (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
-                    : 'text-primary'}`}>
-                  Correct Answer:
-                </p>
-                <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{question.answer}</p>
-              </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            
+            {(isMCQ && question.options) && (
+            <div className="space-y-1.5 mt-2 pl-8">
+                {question.options.map((option, index) => {
+                const isSelectedOption = userSelection === option;
+                const isCorrectOption = question.answer === option;
+                let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
 
-      <CardFooter className="p-3 flex justify-end items-center bg-muted/50 dark:bg-muted/10 rounded-b-md border-t">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => onRemove(question.id)}
-          aria-label="Delete question"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
-      </CardFooter>
+                if (isAttempted) {
+                    if (isSelectedOption) {
+                    optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                    } else if (isCorrectOption && showAnswer) {
+                    optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
+                    }
+                }
+                return (
+                    <Button
+                    key={index}
+                    variant="outline"
+                    className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
+                    onClick={() => handleSelectOption(option)}
+                    disabled={isAttempted && !showAnswer}
+                    >
+                    <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
+                    </Button>
+                );
+                })}
+            </div>
+            )}
+
+            {isTrueFalse && (
+            <div className="flex space-x-2 mt-2 pl-8">
+                {['True', 'False'].map((tfOption) => {
+                const isSelectedOption = userSelection === tfOption;
+                const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
+                let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
+
+                if (isAttempted) {
+                    if (isSelectedOption) {
+                    optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                    } else if (isCorrectOption && showAnswer) {
+                    optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
+                    }
+                }
+                return (
+                    <Button
+                    key={tfOption}
+                    variant="outline"
+                    className={`flex-1 p-2 text-sm ${optionStyle}`}
+                    onClick={() => handleSelectOption(tfOption)}
+                    disabled={isAttempted && !showAnswer}
+                    >
+                    {tfOption}
+                    </Button>
+                );
+                })}
+            </div>
+            )}
+        </CardContent>
+
+        <Accordion type="single" collapsible className="w-full" value={showAnswer ? "answer" : undefined} onValueChange={(value) => setShowAnswer(value === "answer")}>
+            <AccordionItem value="answer" className="border-none">
+            <AccordionTrigger 
+                className="px-4 py-2 text-sm hover:no-underline bg-muted/20 hover:bg-muted/30 rounded-none data-[state=closed]:border-b-0"
+            >
+                <div className="flex items-center">
+                {showAnswer ? <EyeOff className="mr-2 h-4 w-4 text-primary" /> : <Eye className="mr-2 h-4 w-4 text-primary" />}
+                {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                </div>
+            </AccordionTrigger>
+            <AccordionContent className="p-4 pt-2">
+                <div className={`p-3 rounded-md border 
+                    ${isMCQ || isTrueFalse ? 
+                    (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
+                    : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
+                    <p className={`text-sm font-semibold mb-1 
+                    ${isMCQ || isTrueFalse ? 
+                        (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
+                        : 'text-primary'}`}>
+                    Correct Answer:
+                    </p>
+                    <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{question.answer}</p>
+                </div>
+            </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+
+        <CardFooter className="p-3 flex justify-end items-center bg-muted/50 dark:bg-muted/10 rounded-b-md border-t">
+            <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => onRemove(question.id)}
+            aria-label="Delete question"
+            >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+            </Button>
+        </CardFooter>
     </Card>
   );
 };
@@ -154,7 +170,15 @@ const SavedQuestionItem: React.FC<{ question: SavedQuestion, onRemove: (id: stri
 
 export function SavedQuestionsList() {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
+  const handleSelectQuestion = (id: string, isSelected: boolean) => {
+    setSelectedQuestionIds(prev => 
+      isSelected ? [...prev, id] : prev.filter(qid => qid !== id)
+    );
+  };
+  
   const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
 
   if (sortedSavedQuestions.length === 0) {
@@ -186,6 +210,28 @@ export function SavedQuestionsList() {
 
   return (
     <div className="space-y-8">
+      <Card className="p-4 shadow-md sticky top-20 z-10 bg-background/90 backdrop-blur-sm">
+        <div className="flex justify-between items-center">
+            <div>
+                <h3 className="text-lg font-semibold">Share Questions</h3>
+                <p className="text-sm text-muted-foreground">Select one or more questions below to share with others.</p>
+            </div>
+            <Button 
+                onClick={() => setIsShareDialogOpen(true)} 
+                disabled={selectedQuestionIds.length === 0}
+            >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share ({selectedQuestionIds.length})
+            </Button>
+        </div>
+      </Card>
+
+      <ShareQuestionsDialog 
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        selectedQuestionCount={selectedQuestionIds.length}
+      />
+
       {Object.entries(groupedQuestions).map(([subjectKey, chapters]) => (
         <Card key={subjectKey} className="shadow-lg">
           <CardHeader>
@@ -201,7 +247,13 @@ export function SavedQuestionsList() {
                   <AccordionContent className="pt-2 space-y-4 p-4 bg-muted/20 dark:bg-muted/5">
                     {questionsInChapter
                       .map((q) => ( 
-                        <SavedQuestionItem key={q.id} question={q} onRemove={removeQuestion} />
+                        <SavedQuestionItem 
+                            key={q.id} 
+                            question={q} 
+                            onRemove={removeQuestion}
+                            isSelected={selectedQuestionIds.includes(q.id)}
+                            onSelect={handleSelectQuestion}
+                        />
                     ))}
                   </AccordionContent>
                 </AccordionItem>

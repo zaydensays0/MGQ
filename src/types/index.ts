@@ -115,3 +115,11 @@ export interface SharedQuestion {
   options?: string[];
   timestamp: number;
 }
+
+// Types for User Groups
+export interface UserGroup {
+  id: string;
+  name: string;
+  usernames: string[];
+  createdAt: number;
+}
