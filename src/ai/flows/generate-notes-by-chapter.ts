@@ -21,7 +21,10 @@ export type GenerateNotesByChapterInput = z.infer<typeof GenerateNotesByChapterI
 
 const GenerateNotesByChapterOutputSchema = z.object({
   summary: z.string().describe("A concise summary of the chapter."),
-  keyTerms: z.array(z.string()).describe("A list of important key terms or vocabulary from the chapter."),
+  keyTerms: z.array(z.object({
+    term: z.string().describe("The key term or vocabulary word."),
+    definition: z.string().describe("The definition of the term.")
+  })).describe("A list of important key terms from the chapter, each with its definition."),
   mainPoints: z.array(z.string()).describe("A list of the main points or key takeaways from the chapter, in bullet point format."),
   sampleQuestions: z.array(z.object({
     question: z.string(),
@@ -41,11 +44,13 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert educator who creates high-quality study materials for students following the NCERT syllabus.
 Generate a set of study notes for a Class {{gradeLevel}} student studying the chapter "{{chapter}}" in the subject "{{subject}}".
 
-The notes should be structured and comprehensive. Please provide the following sections in your output:
+The notes should be structured and comprehensive. Please provide the following sections in your output, adhering to the specified format:
 1.  **summary**: A concise overview of the entire chapter.
-2.  **keyTerms**: A list of the most important vocabulary or terms from the chapter.
+2.  **keyTerms**: A list of important vocabulary, where each item is an object with a 'term' and its corresponding 'definition'.
 3.  **mainPoints**: A bulleted list of the key concepts and most important information.
 4.  **sampleQuestions**: 2-3 relevant questions with their answers to help the student test their knowledge.
+
+If a section is not applicable or you cannot generate content for it, provide an empty string for the summary or an empty array for the lists.
 `,
 });
 

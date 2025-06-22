@@ -61,7 +61,7 @@ export default function NotesAIPage() {
 
     try {
       const result = await generateNotesByChapter(input);
-      const markdownContent = formatChapterNotes(result, chapter);
+      const markdownContent = formatChapterNotes(result);
       setGeneratedContent(markdownContent);
       setGeneratedTitle(`Notes for: ${chapter}`);
       toast({ title: 'Notes Generated!', description: 'Your AI-powered notes are ready.' });
@@ -103,11 +103,32 @@ export default function NotesAIPage() {
     }
   };
 
-  const formatChapterNotes = (data: GenerateNotesByChapterOutput, chapterName: string): string => {
-    let md = `## Summary\n${data.summary}\n\n`;
-    md += `## Key Terms\n${data.keyTerms.map(term => `- ${term}`).join('\n')}\n\n`;
-    md += `## Main Points\n${data.mainPoints.map(point => `- ${point}`).join('\n')}\n\n`;
-    md += `## Sample Questions\n${data.sampleQuestions.map(q => `**Q: ${q.question}**\nA: ${q.answer}`).join('\n\n')}`;
+  const formatChapterNotes = (data: GenerateNotesByChapterOutput): string => {
+    let md = `**Summary**\n${data.summary || 'No content available.'}\n\n`;
+    
+    md += `**Key Terms**\n`;
+    if (data.keyTerms && data.keyTerms.length > 0) {
+      md += data.keyTerms.map(kt => `- ${kt.term}: ${kt.definition}`).join('\n');
+    } else {
+      md += 'None';
+    }
+    md += '\n\n';
+
+    md += `**Important Points**\n`;
+    if (data.mainPoints && data.mainPoints.length > 0) {
+        md += data.mainPoints.map(point => `• ${point}`).join('\n');
+    } else {
+        md += 'None';
+    }
+    md += '\n\n';
+
+    md += `**Example Questions**\n`;
+    if (data.sampleQuestions && data.sampleQuestions.length > 0) {
+        md += data.sampleQuestions.map(q => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n');
+    } else {
+        md += 'None';
+    }
+
     return md;
   };
   
