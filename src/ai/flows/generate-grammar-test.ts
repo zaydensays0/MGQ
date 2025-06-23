@@ -53,10 +53,18 @@ const generateGrammarTestFlow = ai.defineFlow(
     outputSchema: GenerateGrammarTestOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    if (!output || output.questions.length === 0) {
-      throw new Error('Failed to generate grammar test for the specified criteria.');
+    try {
+      const {output} = await prompt(input);
+      if (!output || output.questions.length === 0) {
+        throw new Error('Failed to generate grammar test for the specified criteria.');
+      }
+      return output;
+    } catch (error: any) {
+      if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+        throw new Error('The AI model is currently overloaded. Please wait a moment and try again.');
+      }
+      console.error("Error in generateGrammarTestFlow:", error);
+      throw new Error('An unexpected error occurred while generating the test.');
     }
-    return output;
   }
 );
