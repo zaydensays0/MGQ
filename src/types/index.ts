@@ -181,3 +181,29 @@ export const GenerateFlashcardsOutputSchema = z.object({
   flashcards: z.array(FlashcardSchema).describe('An array of generated flashcards.'),
 });
 export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
+
+
+// AI Grammar Test Flow Types
+export const GrammarQuestionTypeSchema = z.enum(['multiple_choice', 'true_false', 'direct_answer']);
+export type GrammarQuestionType = z.infer<typeof GrammarQuestionTypeSchema>;
+
+export const GenerateGrammarTestInputSchema = z.object({
+  topic: z.string().describe('The specific grammar topic for the test (e.g., Tenses, Articles).'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the test.'),
+  questionType: GrammarQuestionTypeSchema.describe('The type of questions to generate.'),
+  numberOfQuestions: z.number().int().positive().describe('The number of questions to generate for the test.'),
+});
+export type GenerateGrammarTestInput = z.infer<typeof GenerateGrammarTestInputSchema>;
+
+export const GrammarTestQuestionSchema = z.object({
+  text: z.string().describe('The question text itself.'),
+  options: z.array(z.string()).optional().describe('An array of 4 string options for "multiple_choice" questions. Omitted for other types.'),
+  answer: z.string().describe('The correct answer. For "multiple_choice", it must match one of the options. For "true_false", it must be "True" or "False".'),
+});
+export type GrammarTestQuestion = z.infer<typeof GrammarTestQuestionSchema>;
+
+
+export const GenerateGrammarTestOutputSchema = z.object({
+  questions: z.array(GrammarTestQuestionSchema).describe('An array of generated grammar test questions.'),
+});
+export type GenerateGrammarTestOutput = z.infer<typeof GenerateGrammarTestOutputSchema>;
