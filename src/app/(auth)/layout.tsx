@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AuthLayout({
@@ -10,7 +10,7 @@ export default function AuthLayout({
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <div className="absolute top-6 left-6">
             <Link href="/" className="flex items-baseline space-x-2">
-                <Sparkles className="h-6 w-6 text-primary" />
+                <GraduationCap className="h-6 w-6 text-primary" />
                 <div className="flex flex-col">
                     <span className="font-bold sm:inline-block text-lg font-headline">
                     MGQs

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut, Layers, SpellCheck } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut, Layers, SpellCheck, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
@@ -73,7 +73,7 @@ export function Header() {
         {/* LEFT SECTION */}
         <div className="flex items-center">
           <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <GraduationCap className="h-6 w-6 text-primary" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
                 MGQs
@@ -170,7 +170,7 @@ export function Header() {
                  <SheetHeader className="p-6 pb-2">
                   <SheetTitle asChild>
                     <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Sparkles className="h-5 w-5 text-primary" />
+                      <GraduationCap className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline">MGQs</span>
                     </Link>
                   </SheetTitle>
