@@ -1,20 +1,9 @@
-
 'use client';
 
-import type { User, BadgeKey } from '@/types';
+import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
-import { auth, db } from '@/lib/firebase';
-import {
-  onAuthStateChanged,
-  signOut as firebaseSignOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  type User as FirebaseUser,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -51,9 +40,6 @@ export const getXpForLevel = (level: number): { currentLevelStart: number; nextL
 interface UserContextType {
   user: User | null;
   isInitialized: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  signup: (userData: Omit<User, 'xp' | 'level' | 'streak' | 'lastCorrectAnswerDate' | 'badges'>) => Promise<{ success: boolean; message?: string }>;
-  logout: () => void;
   updateUser: (newUserData: Partial<User>) => void;
   handleCorrectAnswer: (baseXp: number) => void;
 }
@@ -61,84 +47,55 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // --- Provider Component ---
+const LOCAL_STORAGE_KEY_USER = 'MGQsUser';
+
+const defaultUser: User = {
+  fullName: 'Student User',
+  username: 'student',
+  email: 'student@example.com',
+  avatarUrl: `https://placehold.co/100x100.png?text=S`,
+  xp: 0,
+  level: 1,
+  streak: 0,
+  lastCorrectAnswerDate: '',
+  badges: [],
+  class: '10',
+};
+
+
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUser({ ...userDoc.data() as User });
+    if (typeof window !== 'undefined') {
+      try {
+        const storedUser = window.localStorage.getItem(LOCAL_STORAGE_KEY_USER);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         } else {
-            // This case might happen if a user is created in Auth but Firestore doc creation fails.
-            // Or if a user is deleted from Firestore but not from Auth.
-            // For now, we sign them out to force a clean slate.
-            await firebaseSignOut(auth);
-            setUser(null);
+          setUser(defaultUser);
         }
-      } else {
-        setUser(null);
+      } catch (error) {
+        console.error("Failed to access localStorage, using default user:", error);
+        setUser(defaultUser);
       }
       setIsInitialized(true);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
-  const login = async (email: string, pass: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, message: error.message };
+  useEffect(() => {
+    if (isInitialized && user) {
+      window.localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
     }
-  };
+  }, [user, isInitialized]);
 
-  const signup = async (userData: Omit<User, 'xp' | 'level' | 'streak' | 'lastCorrectAnswerDate' | 'badges'>) => {
-    if (!userData.password) {
-        return { success: false, message: 'Password is required for signup.' };
-    }
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-      const firebaseUser = userCredential.user;
-      
-      const newUser: User = {
-        fullName: userData.fullName,
-        username: userData.username,
-        email: userData.email,
-        avatarUrl: userData.avatarUrl,
-        xp: 0,
-        level: 1,
-        streak: 0,
-        lastCorrectAnswerDate: '',
-        badges: [],
-      };
-
-      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-      
-      // The onAuthStateChanged listener will automatically set the user state.
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, message: error.message };
-    }
-  };
-
-  const logout = async () => {
-    await firebaseSignOut(auth);
-    // onAuthStateChanged will handle setting user to null
-  };
-
-  const updateUser = useCallback(async (newUserData: Partial<User>) => {
-    if (!auth.currentUser) return;
-    
-    const userDocRef = doc(db, 'users', auth.currentUser.uid);
-    await updateDoc(userDocRef, newUserData);
-    setUser(prevUser => prevUser ? { ...prevUser, ...newUserData } : null);
+  const updateUser = useCallback((newUserData: Partial<User>) => {
+    setUser(prevUser => {
+      const updatedUser = prevUser ? { ...prevUser, ...newUserData } : null;
+      return updatedUser;
+    });
   }, []);
 
   const handleCorrectAnswer = useCallback((baseXp: number) => {
@@ -193,7 +150,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, toast, updateUser]);
 
   return (
-    <UserContext.Provider value={{ user, isInitialized, login, signup, logout, updateUser, handleCorrectAnswer }}>
+    <UserContext.Provider value={{ user, isInitialized, updateUser, handleCorrectAnswer }}>
       {children}
     </UserContext.Provider>
   );

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -55,12 +54,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isInitialized, logout } = useUser();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/auth/login');
-  };
+  const { user, isInitialized } = useUser();
 
   const getIsActive = (href: string) => {
     return pathname.startsWith(href);
@@ -136,9 +130,9 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
-              {!isInitialized ? (
+              {!isInitialized || !user ? (
                  <Skeleton className="h-9 w-9 rounded-full" />
-              ) : user ? (
+              ) : (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
@@ -152,13 +146,8 @@ export function Header() {
                         <UserProgress user={user} />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-              ) : (
-                <Button asChild>
-                    <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
-                </Button>
               )}
           </div>
 
@@ -215,20 +204,10 @@ export function Header() {
                         </Link>
                       ))}
                     </nav>
-                    <div className="border-t p-4">
-                      <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
-                        <LogOut className="mr-2 h-4 w-4" /> Logout
-                      </Button>
-                    </div>
                   </>
                 ) : (
                   <div className="p-6 flex flex-col gap-4">
-                    <Button asChild>
-                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
-                    </Button>
-                     <Button asChild variant="secondary">
-                      <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
-                    </Button>
+                    <p className="text-center text-muted-foreground">Loading...</p>
                   </div>
                 )}
               </SheetContent>
