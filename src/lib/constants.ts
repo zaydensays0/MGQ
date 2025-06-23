@@ -15,9 +15,9 @@ export const SUBJECTS: SubjectOption[] = [
 
 export const QUESTION_TYPES: QuestionTypeOption[] = [
   { value: 'multiple_choice', label: 'Multiple Choice' },
+  { value: 'assertion_reason', label: 'Assertion and Reason' },
   { value: 'short_answer', label: 'Short Answer' },
   { value: 'long_answer', label: 'Long Answer' },
   { value: 'fill_in_the_blanks', label: 'Fill in the Blanks' },
   { value: 'true_false', label: 'True/False' },
 ];
-

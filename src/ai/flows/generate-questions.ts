@@ -50,7 +50,16 @@ const prompt = ai.definePrompt({
   - You MUST provide an "options" field, which is an array of 4 distinct string options (e.g., ["Option A", "Option B", "Option C", "Option D"]).
   - The "answer" field MUST be the exact text of one of these 4 options.
   
-  If the questionType is NOT "multiple_choice":
+  If the questionType is "assertion_reason":
+  - The "question" field MUST contain both an assertion and a reason, formatted exactly like this: "Assertion (A): [Your assertion statement]\\nReason (R): [Your reason statement]". Use a newline character to separate them.
+  - The "options" field MUST be an array with these exact four strings:
+    - "Both A and R are true, and R is the correct explanation of A"
+    - "Both A and R are true, but R is not the correct explanation of A"
+    - "A is true, but R is false"
+    - "A is false, but R is true"
+  - The "answer" field MUST be the exact text of one of those four options.
+
+  If the questionType is NOT "multiple_choice" or "assertion_reason":
   - The "options" field should be omitted or be an empty array.
   
   Return the questions and answers as a JSON array of objects.
@@ -64,6 +73,22 @@ const prompt = ai.definePrompt({
         "question": "What is the capital of France?", 
         "options": ["London", "Berlin", "Paris", "Madrid"],
         "answer": "Paris" 
+      }
+    ]
+  }
+
+  Example for "assertion_reason":
+  {
+    "questions": [
+      {
+        "question": "Assertion (A): The sun rises in the east.\\nReason (R): The Earth rotates from west to east.",
+        "options": [
+          "Both A and R are true, and R is the correct explanation of A",
+          "Both A and R are true, but R is not the correct explanation of A",
+          "A is true, but R is false",
+          "A is false, but R is true"
+        ],
+        "answer": "Both A and R are true, and R is the correct explanation of A"
       }
     ]
   }

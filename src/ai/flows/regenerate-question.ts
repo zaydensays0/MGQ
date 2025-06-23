@@ -21,11 +21,12 @@ const RegenerateQuestionInputSchema = z.object({
   questionType: z
     .enum<QuestionTypeNCERT, [
       'multiple_choice',
+      'assertion_reason',
       'short_answer',
       'long_answer',
       'fill_in_the_blanks',
       'true_false',
-    ]>(['multiple_choice', 'short_answer', 'long_answer', 'fill_in_the_blanks', 'true_false'])
+    ]>(['multiple_choice', 'assertion_reason', 'short_answer', 'long_answer', 'fill_in_the_blanks', 'true_false'])
     .describe('The type of question to generate.'),
   originalQuestion: z.string().describe('The original question that needs to be regenerated.'),
   originalOptions: z.array(z.string()).optional().describe('The original options if the questionType was "multiple_choice".'),
@@ -65,7 +66,16 @@ If the questionType is "multiple_choice":
 - You MUST provide a "regeneratedOptions" field, which is an array of 4 distinct string options.
 - The "regeneratedAnswer" field MUST be the exact text of one of these 4 regenerated options.
 
-If the questionType is NOT "multiple_choice":
+If the questionType is "assertion_reason":
+- The "regeneratedQuestion" field MUST contain both an assertion and a reason, formatted exactly like this: "Assertion (A): [Your assertion statement]\\nReason (R): [Your reason statement]". Use a newline character to separate them.
+- The "regeneratedOptions" field MUST be an array with these exact four strings:
+    - "Both A and R are true, and R is the correct explanation of A"
+    - "Both A and R are true, but R is not the correct explanation of A"
+    - "A is true, but R is false"
+    - "A is false, but R is true"
+- The "regeneratedAnswer" field MUST be the exact text of one of those four options.
+
+If the questionType is NOT "multiple_choice" or "assertion_reason":
 - The "regeneratedOptions" field should be omitted or be an empty array.
 
 Provide a concise and accurate answer for the new question.
@@ -85,7 +95,7 @@ const regenerateQuestionFlow = ai.defineFlow(
       return { 
         regeneratedQuestion: "Failed to regenerate question. Please try again.", 
         regeneratedAnswer: "N/A",
-        regeneratedOptions: input.questionType === 'multiple_choice' ? [] : undefined,
+        regeneratedOptions: (input.questionType === 'multiple_choice' || input.questionType === 'assertion_reason') ? [] : undefined,
       };
     }
     return {

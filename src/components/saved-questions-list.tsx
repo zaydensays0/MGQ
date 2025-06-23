@@ -26,7 +26,8 @@ const SavedQuestionItem: React.FC<{
   const [isAttempted, setIsAttempted] = useState(false);
   const { toast } = useToast();
 
-  const isMCQ = question.questionType === 'multiple_choice' && question.options && question.options.length > 0;
+  const isMCQ = question.questionType === 'multiple_choice';
+  const isAssertionReason = question.questionType === 'assertion_reason';
   const isTrueFalse = question.questionType === 'true_false';
 
   useEffect(() => {
@@ -35,7 +36,7 @@ const SavedQuestionItem: React.FC<{
   }, [question.id]);
 
   const handleSelectOption = (selected: string) => {
-    if (isAttempted && (isMCQ || isTrueFalse)) return; 
+    if (isAttempted && (isMCQ || isTrueFalse || isAssertionReason)) return; 
     
     setUserSelection(selected);
     setIsAttempted(true);
@@ -47,6 +48,19 @@ const SavedQuestionItem: React.FC<{
     }
   };
 
+  const renderQuestionText = () => {
+    if (isAssertionReason && question.text.includes('\\n')) {
+      const parts = question.text.split('\\n');
+      return (
+        <div className="space-y-1">
+          <p className="text-foreground leading-relaxed">{parts[0]}</p>
+          <p className="text-foreground leading-relaxed">{parts[1]}</p>
+        </div>
+      );
+    }
+    return <p className="text-foreground leading-relaxed">{question.text}</p>;
+  };
+
   return (
     <Card className="bg-background shadow-sm">
         <CardContent className="p-4 pb-2">
@@ -54,65 +68,65 @@ const SavedQuestionItem: React.FC<{
                 <p className="text-sm text-muted-foreground">
                     Type: {question.questionType.replace(/_/g, ' ')}
                 </p>
-                <p className="text-foreground leading-relaxed">{question.text}</p>
+                {renderQuestionText()}
             </div>
             
-            {(isMCQ && question.options) && (
-            <div className="space-y-1.5 mt-2">
-                {question.options.map((option, index) => {
-                const isSelectedOption = userSelection === option;
-                const isCorrectOption = question.answer === option;
-                let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
+            {(isMCQ || isAssertionReason) && question.options && question.options.length > 0 && (
+              <div className="space-y-1.5 mt-2">
+                  {question.options.map((option, index) => {
+                  const isSelectedOption = userSelection === option;
+                  const isCorrectOption = question.answer === option;
+                  let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
 
-                if (isAttempted) {
-                    if (isSelectedOption) {
-                    optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
-                    } else if (isCorrectOption && showAnswer) {
-                    optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
-                    }
-                }
-                return (
-                    <Button
-                    key={index}
-                    variant="outline"
-                    className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
-                    onClick={() => handleSelectOption(option)}
-                    disabled={isAttempted && !showAnswer}
-                    >
-                    <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
-                    </Button>
-                );
-                })}
-            </div>
+                  if (isAttempted) {
+                      if (isSelectedOption) {
+                      optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                      } else if (isCorrectOption && showAnswer) {
+                      optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
+                      }
+                  }
+                  return (
+                      <Button
+                      key={index}
+                      variant="outline"
+                      className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
+                      onClick={() => handleSelectOption(option)}
+                      disabled={isAttempted}
+                      >
+                      <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
+                      </Button>
+                  );
+                  })}
+              </div>
             )}
 
             {isTrueFalse && (
-            <div className="flex space-x-2 mt-2">
-                {['True', 'False'].map((tfOption) => {
-                const isSelectedOption = userSelection === tfOption;
-                const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
-                let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
+              <div className="flex space-x-2 mt-2">
+                  {['True', 'False'].map((tfOption) => {
+                  const isSelectedOption = userSelection === tfOption;
+                  const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
+                  let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
 
-                if (isAttempted) {
-                    if (isSelectedOption) {
-                    optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
-                    } else if (isCorrectOption && showAnswer) {
-                    optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
-                    }
-                }
-                return (
-                    <Button
-                    key={tfOption}
-                    variant="outline"
-                    className={`flex-1 p-2 text-sm ${optionStyle}`}
-                    onClick={() => handleSelectOption(tfOption)}
-                    disabled={isAttempted && !showAnswer}
-                    >
-                    {tfOption}
-                    </Button>
-                );
-                })}
-            </div>
+                  if (isAttempted) {
+                      if (isSelectedOption) {
+                      optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
+                      } else if (isCorrectOption && showAnswer) {
+                      optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
+                      }
+                  }
+                  return (
+                      <Button
+                      key={tfOption}
+                      variant="outline"
+                      className={`flex-1 p-2 text-sm ${optionStyle}`}
+                      onClick={() => handleSelectOption(tfOption)}
+                      disabled={isAttempted}
+                      >
+                      {tfOption}
+                      </Button>
+                  );
+                  })}
+              </div>
             )}
         </CardContent>
 
@@ -128,11 +142,11 @@ const SavedQuestionItem: React.FC<{
             </AccordionTrigger>
             <AccordionContent className="p-4 pt-2">
                 <div className={`p-3 rounded-md border 
-                    ${isMCQ || isTrueFalse ? 
+                    ${isMCQ || isTrueFalse || isAssertionReason ? 
                     (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
                     : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
                     <p className={`text-sm font-semibold mb-1 
-                    ${isMCQ || isTrueFalse ? 
+                    ${isMCQ || isTrueFalse || isAssertionReason ? 
                         (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
                         : 'text-primary'}`}>
                     Correct Answer:

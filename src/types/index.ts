@@ -6,6 +6,7 @@ import { z } from 'zod';
 export type GradeLevelNCERT = '9' | '10' | '11' | '12';
 export type QuestionTypeNCERT =
   | 'multiple_choice'
+  | 'assertion_reason'
   | 'short_answer'
   | 'long_answer'
   | 'fill_in_the_blanks'
@@ -106,7 +107,6 @@ export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 // Types for User Profile & Authentication
 export interface User {
   fullName: string;
-  username: string; // This is a unique internal ID, not for display/editing
   email: string;
   password?: string; // Stored only in prototype. NEVER in production.
   avatarUrl: string;
@@ -133,10 +133,10 @@ export const GenerateMockTestInputSchema = z.object({
 export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
 
 export const MockTestQuestionSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false']).describe('The type of the question.'),
-  text: z.string().describe('The question text itself.'),
-  options: z.array(z.string()).optional().describe('An array of 4 strings for "multiple_choice" questions, or 2 strings (["True", "False"]) for "true_false".'),
-  answer: z.string().describe('The correct answer. For "multiple_choice", it must match one of the options. For "true_false", it must be "True" or "False".'),
+  type: z.enum(['multiple_choice', 'true_false', 'assertion_reason']).describe('The type of the question.'),
+  text: z.string().describe('The question text itself. For Assertion/Reason, it should contain both parts.'),
+  options: z.array(z.string()).optional().describe('An array of 4 strings for "multiple_choice", the standard 4 for "assertion_reason", or 2 strings (["True", "False"]) for "true_false".'),
+  answer: z.string().describe('The correct answer. For "multiple_choice" and "assertion_reason", it must match one of the options. For "true_false", it must be "True" or "False".'),
 });
 export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
 

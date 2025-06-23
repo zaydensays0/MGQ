@@ -89,15 +89,29 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     }
   };
   
-  const isMCQ = questionContext.questionType === 'multiple_choice' && currentOptions && currentOptions.length > 0;
+  const isMCQ = questionContext.questionType === 'multiple_choice';
+  const isAssertionReason = questionContext.questionType === 'assertion_reason';
   const isTrueFalse = questionContext.questionType === 'true_false';
+
+  const renderQuestionText = () => {
+    if (isAssertionReason && currentQuestionText.includes('\\n')) {
+      const parts = currentQuestionText.split('\\n');
+      return (
+        <div className="mb-3 space-y-1">
+          <p className="text-foreground leading-relaxed">{parts[0]}</p>
+          <p className="text-foreground leading-relaxed">{parts[1]}</p>
+        </div>
+      );
+    }
+    return <p className="text-foreground leading-relaxed mb-3">{currentQuestionText}</p>;
+  };
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <CardContent className="p-4 flex-grow">
-        <p className="text-foreground leading-relaxed mb-3">{currentQuestionText}</p>
+        {renderQuestionText()}
         
-        {isMCQ && (
+        {(isMCQ || isAssertionReason) && currentOptions && currentOptions.length > 0 && (
           <div className="space-y-2 mb-3">
             {currentOptions?.map((option, index) => {
               const isSelectedOption = userSelection === option;
@@ -119,7 +133,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
                   variant="outline"
                   className={`w-full justify-start text-left p-2 h-auto whitespace-normal text-sm ${optionStyle}`}
                   onClick={() => handleSelectOption(option)}
-                  disabled={isAttempted && !showAnswer} // Disable after attempt, re-enable if Show Answer makes it interactive again? Or just keep disabled. Let's keep disabled.
+                  disabled={isAttempted}
                 >
                   <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
                 </Button>
@@ -148,7 +162,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
                   variant="outline"
                   className={`flex-1 p-2 text-sm ${optionStyle}`}
                   onClick={() => handleSelectOption(tfOption)}
-                  disabled={isAttempted && !showAnswer}
+                  disabled={isAttempted}
                 >
                   {tfOption}
                 </Button>
@@ -159,11 +173,11 @@ export function QuestionCard({ questionText, answerText, options, questionContex
 
         {showAnswer && (
           <div className={`mt-3 p-3 rounded-md border 
-            ${isMCQ || isTrueFalse ? 
+            ${isMCQ || isTrueFalse || isAssertionReason ? 
               (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
               : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
             <p className={`text-sm font-semibold mb-1 
-              ${isMCQ || isTrueFalse ? 
+              ${isMCQ || isTrueFalse || isAssertionReason ? 
                 (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
                 : 'text-primary'}`}>
               Answer:
