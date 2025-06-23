@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenSquare, Sparkles, Loader2, Terminal, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
-import type { GradeLevelNCERT, SubjectOption } from '@/types';
+import type { GradeLevelNCERT, SubjectOption, Note } from '@/types';
 import { generateNotesByChapter, type GenerateNotesByChapterInput, type GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 import { summarizeText, type SummarizeTextInput, type SummarizeTextOutput } from '@/ai/flows/summarize-text';
 import { useNotes } from '@/contexts/notes-context';
@@ -143,21 +143,26 @@ export default function NotesAIPage() {
 
   const handleSaveNote = () => {
     if (!generatedContent || !generatedTitle) return;
+
+    const noteToSave: Omit<Note, 'id' | 'createdAt' | 'updatedAt'> = {
+      title: generatedTitle,
+      content: generatedContent,
+      linkedQuestionIds: [],
+    };
+
+    if (noteContext) {
+      noteToSave.gradeLevel = noteContext.gradeLevel as GradeLevelNCERT;
+      noteToSave.subject = noteContext.subject;
+      noteToSave.chapter = chapter;
+    }
+
     try {
-      addNote({
-        title: generatedTitle,
-        content: generatedContent,
-        linkedQuestionIds: [],
-        ...(noteContext && { // Spread context only if it exists
-            gradeLevel: noteContext.gradeLevel as GradeLevelNCERT,
-            subject: noteContext.subject,
-            chapter: chapter, // chapter state is available from the form
-        }),
-      });
+      addNote(noteToSave);
       toast({
         title: 'Note Saved!',
         description: `"${generatedTitle}" has been added to My Notes.`,
       });
+      // Reset state
       setGeneratedContent(null);
       setGeneratedTitle('');
       if (activeTab === 'chapter') {
@@ -166,7 +171,7 @@ export default function NotesAIPage() {
         setTextToSummarize('');
       }
     } catch (error) {
-       toast({ title: 'Error', description: 'Could not save the note.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not save the note.', variant: 'destructive' });
     }
   };
   
