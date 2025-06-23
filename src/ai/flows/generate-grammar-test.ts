@@ -38,9 +38,9 @@ const prompt = ai.definePrompt({
     - The "options" field must be omitted or be an empty array.
     - The "answer" field MUST be either "True" or "False".
   - For 'direct_answer' questions:
-    - The "text" field should be a question that requires the user to type an answer (e.g., filling in a blank, correcting a sentence).
+    - The "text" field should contain a sentence where the word to be corrected or filled in is enclosed in brackets. For example: "He [go] to school every day."
     - The "options" field must be omitted or be an empty array.
-    - The "answer" field must contain the single, correct word or phrase.
+    - The "answer" field must contain the single, correct word or phrase that replaces the bracketed part (e.g., "goes").
 
   Return the questions in a JSON array. Ensure the questions are relevant and appropriate for the specified grade level and topic.
   `,
