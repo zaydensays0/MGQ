@@ -1,3 +1,4 @@
+
 import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 
@@ -9,8 +10,8 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <div className="absolute top-6 left-6">
-            <Link href="/" className="flex items-baseline space-x-2">
-                <GraduationCap className="h-6 w-6 text-primary" />
+            <Link href="/" className="flex items-center space-x-2">
+                <GraduationCap className="h-8 w-8 text-primary" />
                 <div className="flex flex-col">
                     <span className="font-bold sm:inline-block text-lg font-headline">
                     MGQs

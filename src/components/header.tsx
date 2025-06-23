@@ -72,8 +72,8 @@ export function Header() {
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/generate" className="mr-6 flex items-baseline space-x-2">
-            <GraduationCap className="h-6 w-6 text-primary" />
+          <Link href="/generate" className="mr-6 flex items-center space-x-2">
+            <GraduationCap className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
                 MGQs
