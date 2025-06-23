@@ -30,6 +30,7 @@ const prompt = ai.definePrompt({
   
   Generate a mock test with exactly {{numberOfQuestions}} questions of "{{difficulty}}" difficulty for a Class {{gradeLevel}} student.
   The test should cover the following subject: "{{subject}}" and chapter(s): "{{chapters}}".
+  Ensure the questions are unique, cover a broad range of topics from the chapter(s), and are not repetitive.
   
   Create a random mix of the following three question types:
   1. 'multiple_choice' (MCQ)

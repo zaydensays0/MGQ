@@ -26,7 +26,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert English grammar teacher.
   
   Generate a grammar test with exactly {{numberOfQuestions}} questions of type "{{questionType}}" for a Class {{gradeLevel}} student.
-  The test should focus on the grammar topic: "{{topic}}".
+  The test should focus on the grammar topic: "{{topic}}". Ensure that each question generated is unique and not repetitive.
   
   For each question, you MUST adhere to the following rules:
   - For 'multiple_choice' questions:

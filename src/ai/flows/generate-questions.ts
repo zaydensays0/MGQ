@@ -44,7 +44,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a helpful AI that generates questions and their corresponding answers for students based on their syllabus.
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
-  For each question, provide a concise and accurate answer.
+  For each question, provide a concise and accurate answer. Ensure the questions are distinct, cover various aspects of the topic, and are not repetitive.
   
   If the questionType is "multiple_choice":
   - You MUST provide an "options" field, which is an array of 4 distinct string options (e.g., ["Option A", "Option B", "Option C", "Option D"]).

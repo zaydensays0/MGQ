@@ -60,7 +60,7 @@ The original options were:
 {{/each}}
 {{/if}}
 
-Ensure the new question is different from the original but still relevant to the topic.
+Ensure the new question is substantially different from the original, testing a different aspect of the same concept if possible, but still relevant to the topic.
 
 If the questionType is "multiple_choice":
 - You MUST provide a "regeneratedOptions" field, which is an array of 4 distinct string options.
