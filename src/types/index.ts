@@ -106,9 +106,10 @@ export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 
 // Types for User Profile & Authentication
 export interface User {
+  username: string;
   fullName: string;
   email: string;
-  password?: string; // Stored only in prototype. NEVER in production.
+  password?: string; // Only used during signup, not stored in Firestore
   avatarUrl: string;
   xp: number;
   level: number;
@@ -207,3 +208,44 @@ export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe('An array of generated grammar test questions.'),
 });
 export type GenerateGrammarTestOutput = z.infer<typeof GenerateGrammarTestOutputSchema>;
+
+// User Groups and Chat
+export interface ChatMessage {
+    id: string;
+    text: string;
+    senderUsername: string;
+    senderFullName: string;
+    senderAvatarUrl: string;
+    timestamp: number;
+}
+
+export interface GroupMember {
+    username: string;
+    fullName: string;
+    avatarUrl: string;
+}
+
+export interface UserGroup {
+    id: string;
+    name: string;
+    adminUsername: string;
+    members: GroupMember[];
+    messages: ChatMessage[];
+    createdAt: number;
+}
+
+
+// Community Shared Posts
+export interface SharedPostAuthor {
+  username: string;
+  fullName: string;
+  avatarUrl: string;
+}
+
+export interface SharedPost {
+  id: string;
+  author: SharedPostAuthor;
+  message: string | null;
+  questions: SavedQuestion[];
+  timestamp: number;
+}

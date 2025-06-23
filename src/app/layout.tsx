@@ -9,6 +9,8 @@ import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-cont
 import { ThemeProvider } from "@/components/theme-provider";
 import { UserProvider } from '@/contexts/user-context';
 import { FlashcardsProvider } from '@/contexts/flashcards-context';
+import { GroupsProvider } from '@/contexts/groups-context';
+import { SharedPostsProvider } from '@/contexts/shared-posts-context';
 
 // Determine if in development environment
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -68,7 +70,11 @@ export default function RootLayout({
                 <FlashcardsProvider>
                   <SavedQuestionsProvider>
                     <NotesProvider>
-                      {children}
+                      <SharedPostsProvider>
+                        <GroupsProvider>
+                          {children}
+                        </GroupsProvider>
+                      </SharedPostsProvider>
                     </NotesProvider>
                   </SavedQuestionsProvider>
                 </FlashcardsProvider>

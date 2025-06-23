@@ -59,7 +59,7 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    window.location.reload(); 
+    router.push('/auth/login');
   };
 
   const getIsActive = (href: string) => {
@@ -136,9 +136,9 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
-              {!isInitialized || !user ? (
+              {!isInitialized ? (
                  <Skeleton className="h-9 w-9 rounded-full" />
-              ) : (
+              ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
@@ -155,6 +155,10 @@ export function Header() {
                         <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+              ) : (
+                <Button asChild>
+                    <Link href="/auth/login"><LogIn className="mr-2 h-4 w-4" />Login</Link>
+                </Button>
               )}
           </div>
 
@@ -219,7 +223,12 @@ export function Header() {
                   </>
                 ) : (
                   <div className="p-6 flex flex-col gap-4">
-                    <p className="text-sm text-muted-foreground text-center">Loading user...</p>
+                    <Button asChild>
+                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+                    </Button>
+                     <Button asChild variant="secondary">
+                      <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
+                    </Button>
                   </div>
                 )}
               </SheetContent>
