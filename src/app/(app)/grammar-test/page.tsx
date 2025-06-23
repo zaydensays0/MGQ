@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -6,8 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { generateGrammarTest } from '@/ai/flows/generate-grammar-test';
 import { useUser } from '@/contexts/user-context';
+import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestInput } from '@/types';
+import type { GradeLevelNCERT, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestInput, QuestionContext, QuestionTypeNCERT } from '@/types';
 import { GRADE_LEVELS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -18,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SpellCheck, Loader2, Sparkles, Trophy } from 'lucide-react';
+import { SpellCheck, Loader2, Sparkles, Trophy, Save } from 'lucide-react';
 
 type TestState = 'setup' | 'testing' | 'results';
 
@@ -159,10 +161,11 @@ const TestingView = ({
     );
 };
 
-const ResultsView = ({ userAnswers, testQuestions, restartTest }: {
+const ResultsView = ({ userAnswers, testQuestions, restartTest, onSave }: {
     userAnswers: TestAnswer[];
     testQuestions: GrammarTestQuestion[];
     restartTest: () => void;
+    onSave: (filter: 'correct' | 'incorrect' | 'all') => void;
 }) => {
     const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
     const totalXp = userAnswers.reduce((sum, a) => sum + a.earnedXp, 0);
@@ -174,11 +177,19 @@ const ResultsView = ({ userAnswers, testQuestions, restartTest }: {
                 <CardTitle className="text-3xl font-headline mt-2">Test Complete!</CardTitle>
                 <CardDescription className="text-lg">Here are your grammar test results.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                  <Alert>
                     <AlertTitle className="text-2xl font-bold text-primary">You earned {totalXp.toLocaleString()} XP!</AlertTitle>
                     <AlertDescription>You answered {correctAnswers} out of {testQuestions.length} questions correctly.</AlertDescription>
                 </Alert>
+                <div className="space-y-2 pt-2">
+                    <Label className="text-muted-foreground">Save Questions for Revision</Label>
+                    <div className="flex flex-col sm:flex-row justify-center gap-2">
+                        <Button onClick={() => onSave('incorrect')} variant="destructive" size="sm"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button>
+                        <Button onClick={() => onSave('correct')} variant="outline" size="sm"><Save className="mr-2 h-4 w-4" /> Save Correct</Button>
+                        <Button onClick={() => onSave('all')} variant="secondary" size="sm"><Save className="mr-2 h-4 w-4" /> Save All</Button>
+                    </div>
+                </div>
             </CardContent>
             <CardFooter>
                 <Button onClick={restartTest} className="w-full">Take Another Test</Button>
@@ -199,6 +210,7 @@ export default function GrammarTestPage() {
     const [directAnswer, setDirectAnswer] = useState('');
 
     const { handleCorrectAnswer } = useUser();
+    const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
     const form = useForm<SetupFormValues>({
@@ -249,6 +261,13 @@ export default function GrammarTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
+            toast({ title: "Correct!", description: "Great job!" });
+        } else {
+            toast({
+                title: "Incorrect",
+                description: `The correct answer was: "${currentQuestion.answer}"`,
+                variant: "destructive"
+            });
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }]);
@@ -262,6 +281,42 @@ export default function GrammarTestPage() {
         } else {
             setTestState('results');
         }
+    };
+
+    const handleSaveQuestions = (filter: 'correct' | 'incorrect' | 'all') => {
+        const { gradeLevel, topic } = form.getValues();
+
+        const questionsToSave = userAnswers
+            .filter(answer => {
+                if (filter === 'all') return true;
+                return filter === 'correct' ? answer.isCorrect : !answer.isCorrect;
+            })
+            .map(answer => {
+                const { question } = answer;
+                return {
+                    question: question.text,
+                    answer: question.answer,
+                    options: question.options,
+                };
+            });
+        
+        if (questionsToSave.length === 0) {
+            toast({ title: 'Nothing to Save', description: `You have no ${filter} questions to save from this test.` });
+            return;
+        }
+
+        const questionType = form.getValues('questionType');
+        const mappedQuestionType: QuestionTypeNCERT = questionType === 'direct_answer' ? 'short_answer' : questionType;
+
+        const context: QuestionContext = {
+            gradeLevel: gradeLevel as GradeLevelNCERT,
+            subject: 'English Grammar',
+            chapter: topic,
+            questionType: mappedQuestionType,
+        };
+
+        addMultipleQuestions(questionsToSave, context);
+        toast({ title: 'Questions Saved!', description: `${questionsToSave.length} ${filter} questions have been added to your saved questions.` });
     };
 
     const restartTest = () => {
@@ -291,6 +346,7 @@ export default function GrammarTestPage() {
                     userAnswers={userAnswers}
                     testQuestions={testQuestions}
                     restartTest={restartTest}
+                    onSave={handleSaveQuestions}
                 />
             );
             case 'setup':
