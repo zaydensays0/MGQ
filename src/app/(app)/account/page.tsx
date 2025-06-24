@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { User, Flame, Medal, Award, AlertTriangle, UploadCloud } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, UploadCloud, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -19,8 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, storage } from '@/lib/firebase';
 
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
@@ -99,10 +100,12 @@ export default function AccountPage() {
 
     // --- Form Submission Logic ---
     const handleUpdateProfile = async () => {
-        if (!user || !firebaseUser) return;
+        if (!user || !firebaseUser || !db || !storage) {
+            toast({ title: 'Update Failed', description: 'Connection to the database is not available.', variant: 'destructive'});
+            return;
+        }
         
         setIsUploading(true);
-        const db = getFirestore();
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
         const updates: Partial<UserType> = {};
@@ -112,7 +115,6 @@ export default function AccountPage() {
             if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
             
             if (newAvatarUrl) {
-                const storage = getStorage();
                 const avatarRef = ref(storage, `avatars/${firebaseUser.uid}`);
                 const uploadResult = await uploadString(avatarRef, newAvatarUrl, 'data_url');
                 const downloadURL = await getDownloadURL(uploadResult.ref);
