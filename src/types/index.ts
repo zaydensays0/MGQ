@@ -211,3 +211,20 @@ export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe('An array of generated grammar test questions.'),
 });
 export type GenerateGrammarTestOutput = z.infer<typeof GenerateGrammarTestOutputSchema>;
+
+// AI Answer Recheck Flow Types
+export const RecheckAnswerInputSchema = z.object({
+  gradeLevel: z.string().describe('The grade level of the question.'),
+  subject: z.string().describe('The subject of the question.'),
+  chapter: z.string().describe('The chapter the question is based on.'),
+  question: z.string().describe('The question text.'),
+  originalAnswer: z.string().describe('The original answer provided by the AI that needs to be checked.'),
+});
+export type RecheckAnswerInput = z.infer<typeof RecheckAnswerInputSchema>;
+
+export const RecheckAnswerOutputSchema = z.object({
+  isCorrect: z.boolean().describe('Whether the original answer was correct or not.'),
+  correctAnswer: z.string().describe('The verified correct answer. If the original was correct, this will be the same. If not, this is the corrected answer.'),
+  explanation: z.string().describe('A brief explanation of why the original answer was correct or incorrect.'),
+});
+export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;

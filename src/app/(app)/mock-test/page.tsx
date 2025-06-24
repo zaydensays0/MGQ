@@ -6,10 +6,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { generateMockTest } from '@/ai/flows/generate-mock-test';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ClipboardCheck, Loader2, Sparkles, Trophy, Save } from 'lucide-react';
+import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck } from 'lucide-react';
 
 type TestState = 'setup' | 'testing' | 'results';
 
@@ -50,6 +51,8 @@ export default function MockTestPage() {
     const [userAnswers, setUserAnswers] = useState<TestAnswer[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
+
 
     const { handleCorrectAnswer } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
@@ -99,12 +102,12 @@ export default function MockTestPage() {
         const earnedXp = isCorrect ? (currentQuestion.type === 'multiple_choice' ? 300 : 200) : 0;
         
         if (isCorrect) {
-            handleCorrectAnswer(earnedXp); // Pass base XP, context will add streak bonus
+            handleCorrectAnswer(earnedXp);
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }]);
 
-        setSelectedOption(null); // Reset selection for next question
+        setSelectedOption(null);
 
         if (currentQuestionIndex < testQuestions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
@@ -134,18 +137,41 @@ export default function MockTestPage() {
             gradeLevel: form.getValues('gradeLevel'),
             subject: form.getValues('subject'),
             chapter: `[Test] ${form.getValues('chapters')}`,
-            questionType: 'multiple_choice' as QuestionTypeNCERT, // Generic context type
+            questionType: 'multiple_choice' as QuestionTypeNCERT,
         };
 
         addMultipleQuestions(questionsToSave, context);
         toast({ title: 'Questions Saved!', description: `${questionsToSave.length} ${type} questions have been added to your collection.` });
     };
 
+    const handleRecheckAnswer = async (index: number, answer: TestAnswer) => {
+        setRecheckStates(prev => ({...prev, [index]: {loading: true, result: null}}));
+        const testContext = form.getValues();
+        try {
+            const result = await recheckAnswer({
+                question: answer.question.text,
+                originalAnswer: answer.question.answer,
+                gradeLevel: testContext.gradeLevel,
+                subject: testContext.subject,
+                chapter: testContext.chapters,
+            });
+            setRecheckStates(prev => ({...prev, [index]: {loading: false, result}}));
+            toast({
+                title: "Recheck Complete",
+                description: result.isCorrect ? "The original answer was confirmed correct." : "A correction was found.",
+            });
+        } catch (error) {
+            setRecheckStates(prev => ({...prev, [index]: {loading: false, result: null}}));
+            toast({ title: "Recheck Failed", variant: "destructive" });
+        }
+    }
+
     const restartTest = () => {
         setTestState('setup');
         setTestQuestions([]);
         setUserAnswers([]);
         setCurrentQuestionIndex(0);
+        setRecheckStates({});
         form.reset();
     };
 
@@ -255,18 +281,47 @@ export default function MockTestPage() {
         const totalXp = userAnswers.reduce((sum, a) => sum + a.earnedXp, 0);
 
         return (
-            <Card className="w-full max-w-xl mx-auto shadow-lg text-center">
-                <CardHeader>
+            <Card className="w-full max-w-2xl mx-auto shadow-lg">
+                <CardHeader className="text-center">
                     <Trophy className="w-16 h-16 mx-auto text-yellow-500" />
                     <CardTitle className="text-3xl font-headline mt-2">Test Complete!</CardTitle>
                     <CardDescription className="text-lg">Great job! Here are your results.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                      <Alert>
                         <AlertTitle className="text-2xl font-bold text-primary">You earned {totalXp.toLocaleString()} XP!</AlertTitle>
                         <AlertDescription>You answered {correctAnswers} out of {testQuestions.length} questions correctly.</AlertDescription>
                     </Alert>
-                    <div className="flex justify-center gap-4">
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold text-center">Review Your Answers</h3>
+                        {userAnswers.map((answer, index) => {
+                            const recheckState = recheckStates[index] || { loading: false, result: null };
+                            return (
+                                <div key={index} className={`p-4 rounded-lg border ${answer.isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950' : 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950'}`}>
+                                    <p className="font-semibold">{index + 1}. {answer.question.text}</p>
+                                    <p className="text-sm mt-2">Your answer: <span className="font-medium">{answer.userAnswer}</span></p>
+                                    {!answer.isCorrect && <p className="text-sm">Correct answer: <span className="font-medium">{answer.question.answer}</span></p>}
+                                    <div className="flex justify-end mt-2">
+                                        <Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
+                                            {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
+                                            {recheckState.loading ? 'Verifying...' : 'Recheck AI Answer'}
+                                        </Button>
+                                    </div>
+                                    {recheckState.result && (
+                                        <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                            <ShieldCheck className="h-4 w-4" />
+                                            <AlertTitle>{recheckState.result.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                                            <AlertDescription className="space-y-1">
+                                                <p>{recheckState.result.explanation}</p>
+                                                {!recheckState.result.isCorrect && <p><b>Corrected:</b> {recheckState.result.correctAnswer}</p>}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="flex justify-center gap-4 pt-4 border-t">
                         <Button onClick={() => handleSaveQuestions('correct')} variant="outline"><Save className="mr-2 h-4 w-4" /> Save Correct</Button>
                         <Button onClick={() => handleSaveQuestions('incorrect')} variant="destructive"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button>
                     </div>

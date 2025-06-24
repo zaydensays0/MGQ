@@ -4,11 +4,14 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { QuestionContext } from '@/types';
+import type { QuestionContext, RecheckAnswerOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+
 
 interface QuestionCardProps {
   questionText: string;
@@ -28,18 +31,22 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
 
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
+
   const { addQuestion, isSaved } = useSavedQuestions();
   const { handleCorrectAnswer } = useUser();
   const { toast } = useToast();
 
-  // Effect to reset state when props change (e.g., after regeneration leads to new questionText)
   useEffect(() => {
     setCurrentQuestionText(questionText);
     setCurrentAnswerText(answerText);
     setCurrentOptions(options);
     setUserSelection(null);
     setIsAttempted(false);
-    setShowAnswer(false); // Optionally hide answer on new question
+    setShowAnswer(false);
+    setIsRechecking(false);
+    setRecheckResult(null);
   }, [questionText, answerText, options]);
 
   const isCurrentlySaved = isSaved(currentQuestionText, questionContext);
@@ -51,12 +58,37 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setIsAttempted(false);
     const result = await onRegenerate(currentQuestionText, currentOptions);
     if (result && result.question && result.answer) {
-      // State updates will be handled by the useEffect hook listening to prop changes
       toast({ title: "Question Regenerated", description: "A new version of the question and its answer has been generated." });
     } else {
       toast({ title: "Error", description: "Failed to regenerate question.", variant: "destructive" });
     }
     setIsRegenerating(false);
+  };
+  
+  const handleRecheck = async () => {
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+      const result = await recheckAnswer({
+        question: currentQuestionText,
+        originalAnswer: currentAnswerText,
+        ...questionContext,
+      });
+      setRecheckResult(result);
+      toast({
+        title: "Recheck Complete",
+        description: result.isCorrect ? "The original answer was confirmed to be correct." : "A correction has been provided.",
+      });
+    } catch (error) {
+      console.error("Recheck error:", error);
+      toast({
+        title: "Recheck Failed",
+        description: "Could not verify the answer at this time.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRechecking(false);
+    }
   };
 
   const handleSave = () => {
@@ -80,10 +112,10 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     
     setUserSelection(selected);
     setIsAttempted(true);
-    setShowAnswer(true); // Automatically show answer feedback area
+    setShowAnswer(true);
 
     if (selected.trim().toLowerCase() === currentAnswerText.trim().toLowerCase()) {
-      handleCorrectAnswer(100); // Trigger gamification logic with 100 base XP
+      handleCorrectAnswer(100);
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
     }
@@ -116,13 +148,12 @@ export function QuestionCard({ questionText, answerText, options, questionContex
             {currentOptions?.map((option, index) => {
               const isSelectedOption = userSelection === option;
               const isCorrectOption = currentAnswerText === option;
-              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20"; // Default
+              let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
 
               if (isAttempted) {
                 if (isSelectedOption) {
                   optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
                 } else if (isCorrectOption) {
-                  // Highlight correct answer if user picked wrong and answer is shown
                   optionStyle = showAnswer ? "bg-green-50 dark:bg-green-800/30 border-green-400" : optionStyle;
                 }
               }
@@ -176,14 +207,36 @@ export function QuestionCard({ questionText, answerText, options, questionContex
             ${isMCQ || isTrueFalse || isAssertionReason ? 
               (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
               : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
-            <p className={`text-sm font-semibold mb-1 
-              ${isMCQ || isTrueFalse || isAssertionReason ? 
-                (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
-                : 'text-primary'}`}>
-              Answer:
-            </p>
+            <div className="flex justify-between items-center mb-1">
+              <p className={`text-sm font-semibold 
+                ${isMCQ || isTrueFalse || isAssertionReason ? 
+                  (userSelection === null || userSelection.toLowerCase() === currentAnswerText.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
+                  : 'text-primary'}`}>
+                Answer:
+              </p>
+              <Button variant="ghost" size="sm" onClick={handleRecheck} disabled={isRechecking || !!recheckResult}>
+                  {isRechecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                  {isRechecking ? 'Verifying...' : "Recheck Answer"}
+              </Button>
+            </div>
             <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{currentAnswerText}</p>
           </div>
+        )}
+
+        {recheckResult && (
+            <Alert className="mt-3" variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                <AlertDescription className="space-y-2">
+                    <p>{recheckResult.explanation}</p>
+                    {!recheckResult.isCorrect && (
+                    <div className="p-2 border-t mt-2">
+                        <p className="font-semibold">Corrected Answer:</p>
+                        <p>{recheckResult.correctAnswer}</p>
+                    </div>
+                    )}
+                </AlertDescription>
+            </Alert>
         )}
 
       </CardContent>

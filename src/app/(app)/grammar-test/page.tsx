@@ -6,10 +6,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { generateGrammarTest } from '@/ai/flows/generate-grammar-test';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestInput, QuestionContext, QuestionTypeNCERT } from '@/types';
+import type { GradeLevelNCERT, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestInput, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput } from '@/types';
 import { GRADE_LEVELS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SpellCheck, Loader2, Sparkles, Trophy, Save } from 'lucide-react';
+import { SpellCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck } from 'lucide-react';
 
 type TestState = 'setup' | 'testing' | 'results';
 
@@ -45,9 +46,6 @@ const setupSchema = z.object({
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
-
-
-// --- View Components (moved outside main component) ---
 
 const SetupView = ({ form, handleStartTest, isLoading }: {
     form: any;
@@ -161,29 +159,61 @@ const TestingView = ({
     );
 };
 
-const ResultsView = ({ userAnswers, testQuestions, restartTest, onSave }: {
+const ResultsView = ({ userAnswers, testQuestions, restartTest, onSave, onRecheck, recheckStates, testContext }: {
     userAnswers: TestAnswer[];
     testQuestions: GrammarTestQuestion[];
     restartTest: () => void;
     onSave: (filter: 'correct' | 'incorrect' | 'all') => void;
+    onRecheck: (index: number, answer: TestAnswer) => void;
+    recheckStates: Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>;
+    testContext: SetupFormValues;
 }) => {
     const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
     const totalXp = userAnswers.reduce((sum, a) => sum + a.earnedXp, 0);
 
     return (
-        <Card className="w-full max-w-xl mx-auto shadow-lg text-center">
-            <CardHeader>
+        <Card className="w-full max-w-2xl mx-auto shadow-lg">
+            <CardHeader className="text-center">
                 <Trophy className="w-16 h-16 mx-auto text-yellow-500" />
                 <CardTitle className="text-3xl font-headline mt-2">Test Complete!</CardTitle>
                 <CardDescription className="text-lg">Here are your grammar test results.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
                  <Alert>
                     <AlertTitle className="text-2xl font-bold text-primary">You earned {totalXp.toLocaleString()} XP!</AlertTitle>
                     <AlertDescription>You answered {correctAnswers} out of {testQuestions.length} questions correctly.</AlertDescription>
                 </Alert>
-                <div className="space-y-2 pt-2">
-                    <Label className="text-muted-foreground">Save Questions for Revision</Label>
+                <div className="space-y-4">
+                    <h3 className="text-xl font-semibold text-center">Review Your Answers</h3>
+                    {userAnswers.map((answer, index) => {
+                        const recheckState = recheckStates[index] || { loading: false, result: null };
+                        return (
+                             <div key={index} className={`p-4 rounded-lg border ${answer.isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950' : 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950'}`}>
+                                <p className="font-semibold">{index + 1}. {answer.question.text}</p>
+                                <p className="text-sm mt-2">Your answer: <span className="font-medium">{answer.userAnswer}</span></p>
+                                {!answer.isCorrect && <p className="text-sm">Correct answer: <span className="font-medium">{answer.question.answer}</span></p>}
+                                <div className="flex justify-end mt-2">
+                                    <Button size="sm" variant="ghost" onClick={() => onRecheck(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
+                                        {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
+                                        {recheckState.loading ? 'Verifying...' : 'Recheck AI Answer'}
+                                    </Button>
+                                </div>
+                                {recheckState.result && (
+                                    <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                        <ShieldCheck className="h-4 w-4" />
+                                        <AlertTitle>{recheckState.result.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                                        <AlertDescription className="space-y-1">
+                                            <p>{recheckState.result.explanation}</p>
+                                            {!recheckState.result.isCorrect && <p><b>Corrected:</b> {recheckState.result.correctAnswer}</p>}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="space-y-2 pt-4 border-t">
+                    <Label className="text-muted-foreground text-center block">Save Questions for Revision</Label>
                     <div className="flex flex-col sm:flex-row justify-center gap-2">
                         <Button onClick={() => onSave('incorrect')} variant="destructive" size="sm"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button>
                         <Button onClick={() => onSave('correct')} variant="outline" size="sm"><Save className="mr-2 h-4 w-4" /> Save Correct</Button>
@@ -199,7 +229,6 @@ const ResultsView = ({ userAnswers, testQuestions, restartTest, onSave }: {
 };
 
 
-// --- Main Page Component ---
 export default function GrammarTestPage() {
     const [testState, setTestState] = useState<TestState>('setup');
     const [isLoading, setIsLoading] = useState(false);
@@ -208,6 +237,7 @@ export default function GrammarTestPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [directAnswer, setDirectAnswer] = useState('');
+    const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
 
     const { handleCorrectAnswer } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
@@ -272,7 +302,6 @@ export default function GrammarTestPage() {
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }]);
 
-        // Reset for next question
         setSelectedOption(null);
         setDirectAnswer('');
 
@@ -319,11 +348,34 @@ export default function GrammarTestPage() {
         toast({ title: 'Questions Saved!', description: `${questionsToSave.length} ${filter} questions have been added to your saved questions.` });
     };
 
+    const handleRecheckAnswer = async (index: number, answer: TestAnswer) => {
+        setRecheckStates(prev => ({...prev, [index]: {loading: true, result: null}}));
+        const testContext = form.getValues();
+        try {
+            const result = await recheckAnswer({
+                question: answer.question.text,
+                originalAnswer: answer.question.answer,
+                gradeLevel: testContext.gradeLevel,
+                subject: 'English Grammar',
+                chapter: testContext.topic,
+            });
+            setRecheckStates(prev => ({...prev, [index]: {loading: false, result}}));
+            toast({
+                title: "Recheck Complete",
+                description: result.isCorrect ? "The original answer was confirmed correct." : "A correction was found.",
+            });
+        } catch (error) {
+            setRecheckStates(prev => ({...prev, [index]: {loading: false, result: null}}));
+            toast({ title: "Recheck Failed", variant: "destructive" });
+        }
+    }
+
     const restartTest = () => {
         setTestState('setup');
         setTestQuestions([]);
         setUserAnswers([]);
         setCurrentQuestionIndex(0);
+        setRecheckStates({});
         form.reset();
     };
 
@@ -347,6 +399,9 @@ export default function GrammarTestPage() {
                     testQuestions={testQuestions}
                     restartTest={restartTest}
                     onSave={handleSaveQuestions}
+                    onRecheck={handleRecheckAnswer}
+                    recheckStates={recheckStates}
+                    testContext={form.getValues()}
                 />
             );
             case 'setup':

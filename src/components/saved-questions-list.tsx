@@ -2,10 +2,10 @@
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SavedQuestion } from '@/types';
+import type { SavedQuestion, RecheckAnswerOutput } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff, Layers } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff, Layers, ShieldCheck, Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { SUBJECTS } from '@/lib/constants';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 
 const SavedQuestionItem: React.FC<{ 
@@ -24,6 +26,8 @@ const SavedQuestionItem: React.FC<{
   const [showAnswer, setShowAnswer] = useState(false);
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
   const { toast } = useToast();
 
   const isMCQ = question.questionType === 'multiple_choice';
@@ -33,6 +37,8 @@ const SavedQuestionItem: React.FC<{
   useEffect(() => {
     setUserSelection(null);
     setIsAttempted(false);
+    setIsRechecking(false);
+    setRecheckResult(null);
   }, [question.id]);
 
   const handleSelectOption = (selected: string) => {
@@ -45,6 +51,34 @@ const SavedQuestionItem: React.FC<{
       toast({ title: "Correct!", description: "Well done!" });
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
+    }
+  };
+  
+  const handleRecheck = async () => {
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+      const result = await recheckAnswer({
+        question: question.text,
+        originalAnswer: question.answer,
+        gradeLevel: question.gradeLevel,
+        subject: question.subject,
+        chapter: question.chapter,
+      });
+      setRecheckResult(result);
+      toast({
+        title: "Recheck Complete",
+        description: result.isCorrect ? "The original answer was confirmed to be correct." : "A correction has been provided.",
+      });
+    } catch (error) {
+      console.error("Recheck error:", error);
+      toast({
+        title: "Recheck Failed",
+        description: "Could not verify the answer at this time.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRechecking(false);
     }
   };
 
@@ -128,6 +162,22 @@ const SavedQuestionItem: React.FC<{
                   })}
               </div>
             )}
+            
+            {recheckResult && (
+              <Alert className="mt-3" variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                  <AlertDescription className="space-y-2">
+                      <p>{recheckResult.explanation}</p>
+                      {!recheckResult.isCorrect && (
+                      <div className="p-2 border-t mt-2">
+                          <p className="font-semibold">Corrected Answer:</p>
+                          <p>{recheckResult.correctAnswer}</p>
+                      </div>
+                      )}
+                  </AlertDescription>
+              </Alert>
+            )}
         </CardContent>
 
         <Accordion type="single" collapsible className="w-full" value={showAnswer ? "answer" : undefined} onValueChange={(value) => setShowAnswer(value === "answer")}>
@@ -157,7 +207,11 @@ const SavedQuestionItem: React.FC<{
             </AccordionItem>
         </Accordion>
 
-        <CardFooter className="p-3 flex justify-end items-center bg-muted/50 dark:bg-muted/10 rounded-b-md border-t">
+        <CardFooter className="p-3 flex justify-between items-center bg-muted/50 dark:bg-muted/10 rounded-b-md border-t">
+             <Button variant="ghost" size="sm" onClick={handleRecheck} disabled={isRechecking || !!recheckResult}>
+                {isRechecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                {isRechecking ? 'Verifying...' : "Recheck"}
+            </Button>
             <Button
             variant="ghost"
             size="sm"
