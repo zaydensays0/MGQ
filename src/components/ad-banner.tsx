@@ -19,9 +19,19 @@ export function AdBanner() {
   // Render the ad script only on the client
   return (
     <div
-      className="flex justify-center p-2"
+      className="flex flex-col items-center gap-4 p-2"
       dangerouslySetInnerHTML={{
         __html: `
+              <script type="text/javascript">
+                atOptions = {
+                  'key' : '85a4fee3aa8d13d38d9a1cf01a95849f',
+                  'format' : 'iframe',
+                  'height' : 250,
+                  'width' : 300,
+                  'params' : {}
+                };
+              </script>
+              <script type="text/javascript" src="//www.highperformanceformat.com/85a4fee3aa8d13d38d9a1cf01a95849f/invoke.js"></script>
               <script type="text/javascript">
                 atOptions = {
                   'key' : 'c95e7e6770fd1266273791de339c0972',
