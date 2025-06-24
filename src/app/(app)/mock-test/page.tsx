@@ -37,7 +37,7 @@ const setupSchema = z.object({
     gradeLevel: z.enum(GRADE_LEVELS),
     subject: z.string().min(1, "Please select a subject."),
     chapters: z.string().min(1, "Please enter at least one chapter."),
-    numberOfQuestions: z.coerce.number().min(5, "Minimum 5 questions.").max(20, "Maximum 20 questions."),
+    numberOfQuestions: z.coerce.number().min(5, "Minimum 5 questions."),
     difficulty: z.enum(['easy', 'medium', 'hard']),
 });
 
@@ -187,7 +187,7 @@ export default function MockTestPage() {
                         <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
                             <div className="space-y-1.5">
                                 <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-                                <Input id="numberOfQuestions" type="number" min="5" max="20" {...field} />
+                                <Input id="numberOfQuestions" type="number" min="5" {...field} />
                                 {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                             </div>
                         )} />

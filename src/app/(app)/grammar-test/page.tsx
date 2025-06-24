@@ -41,7 +41,7 @@ const setupSchema = z.object({
     topic: z.string().min(3, "Please enter a valid grammar topic."),
     gradeLevel: z.enum(GRADE_LEVELS),
     questionType: z.enum(['multiple_choice', 'true_false', 'direct_answer']),
-    numberOfQuestions: z.coerce.number().min(3, "Minimum 3 questions.").max(15, "Maximum 15 questions."),
+    numberOfQuestions: z.coerce.number().min(3, "Minimum 3 questions."),
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
@@ -90,7 +90,7 @@ const SetupView = ({ form, handleStartTest, isLoading }: {
                  <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
                     <div className="space-y-1.5">
                         <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-                        <Input id="numberOfQuestions" type="number" min="3" max="15" {...field} />
+                        <Input id="numberOfQuestions" type="number" min="3" {...field} />
                         {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                     </div>
                 )} />
