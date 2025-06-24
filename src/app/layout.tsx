@@ -25,6 +25,10 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icons/icon-192x192.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,7 +47,6 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#3F51B5" />
         <meta name="msapplication-tap-highlight" content="no" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
