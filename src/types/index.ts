@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
@@ -108,7 +109,6 @@ export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 // Types for User Profile & Authentication
 export interface User {
   uid: string;
-  username: string;
   fullName: string;
   email: string;
   password?: string; // Only used during signup, not stored

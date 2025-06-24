@@ -11,6 +11,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   type User as FirebaseUser,
+  sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
@@ -56,6 +60,8 @@ interface UserContextType {
   logout: () => Promise<void>;
   handleCorrectAnswer: (baseXp: number) => void;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  changeUserPassword: (currentPass: string, newPass: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -109,7 +115,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       uid,
       fullName,
       email,
-      username: email.split('@')[0],
       avatarUrl: `https://placehold.co/100x100.png?text=${fullName.charAt(0).toUpperCase()}`,
       xp: 0,
       level: 1,
@@ -210,8 +215,43 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, firebaseUser, toast]);
 
+  const sendPasswordReset = async (email: string) => {
+    if (!auth) throw new Error("Firebase is not configured.");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({ title: 'Password Reset Email Sent', description: 'Please check your inbox to reset your password.' });
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error);
+      toast({ title: 'Error', description: error.message || 'Failed to send password reset email.', variant: 'destructive' });
+      throw error;
+    }
+  };
+
+  const changeUserPassword = async (currentPass: string, newPass: string) => {
+    if (!auth || !firebaseUser || !firebaseUser.email) {
+      throw new Error("User not properly authenticated.");
+    }
+    
+    try {
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPass);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, newPass);
+      toast({ title: 'Password Changed!', description: 'Your password has been updated successfully.' });
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      let description = "An unexpected error occurred. Please try again.";
+      if (error.code === 'auth/wrong-password') {
+        description = 'The current password you entered is incorrect.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The new password is too weak. It must be at least 6 characters long.';
+      }
+      toast({ title: 'Password Change Failed', description, variant: 'destructive' });
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer, updateUserProfile }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer, updateUserProfile, sendPasswordReset, changeUserPassword }}>
       {children}
     </UserContext.Provider>
   );

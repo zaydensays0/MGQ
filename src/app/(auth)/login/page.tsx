@@ -14,6 +14,16 @@ import { GraduationCap, Loader2, AlertCircle, Settings } from 'lucide-react';
 import { GRADE_LEVELS } from '@/lib/constants';
 import type { GradeLevelNCERT } from '@/types';
 import { isFirebaseConfigured } from '@/lib/firebase';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const FirebaseNotConfigured = () => (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
@@ -57,7 +67,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { login, signup } = useUser();
+  // State for password reset
+  const [resetEmail, setResetEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+
+  const { login, signup, sendPasswordReset } = useUser();
   const router = useRouter();
 
   if (!isFirebaseConfigured) {
@@ -86,10 +101,25 @@ export default function LoginPage() {
     }
   };
   
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      alert("Please enter your email address.");
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      await sendPasswordReset(resetEmail);
+      setIsResetDialogOpen(false); // Close dialog on success
+    } catch (err) {
+      // Error toast is handled by the context.
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   const toggleFormType = () => {
     setFormType(prev => prev === 'login' ? 'signup' : 'login');
     setError(null);
-    // Reset fields
     setEmail('');
     setPassword('');
     setFullName('');
@@ -144,9 +174,48 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : (formType === 'login' ? 'Log In' : 'Sign Up')}
             </Button>
-            <Button variant="link" type="button" onClick={toggleFormType} className="text-sm">
-              {formType === 'login' ? 'Don\'t have an account? Sign Up' : 'Already have an account? Log In'}
-            </Button>
+            <div className="flex justify-between items-center w-full text-sm">
+              <Button variant="link" type="button" onClick={toggleFormType} className="p-0 h-auto">
+                {formType === 'login' ? "Don't have an account? Sign Up" : 'Already have an account? Log In'}
+              </Button>
+              {formType === 'login' && (
+                <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                  <DialogTrigger asChild>
+                      <Button variant="link" type="button" className="p-0 h-auto text-muted-foreground">
+                          Forgot Password?
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Reset Your Password</DialogTitle>
+                          <DialogDescription>
+                              Enter your email address and we'll send you a link to reset your password.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-2">
+                          <Label htmlFor="reset-email">Email Address</Label>
+                          <Input
+                              id="reset-email"
+                              type="email"
+                              placeholder="you@example.com"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              required
+                          />
+                      </div>
+                      <DialogFooter>
+                          <DialogClose asChild>
+                              <Button type="button" variant="outline">Cancel</Button>
+                          </DialogClose>
+                          <Button onClick={handlePasswordReset} disabled={isSendingReset}>
+                              {isSendingReset && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Send Reset Link
+                          </Button>
+                      </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </CardFooter>
         </form>
       </Card>

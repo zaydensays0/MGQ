@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
 import type { User as UserType, BadgeKey, GradeLevelNCERT, Gender } from '@/types';
@@ -26,7 +26,7 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, isInitialized, updateUserProfile } = useUser();
+    const { user, isInitialized, updateUserProfile, changeUserPassword } = useUser();
     
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
@@ -34,6 +34,12 @@ export default function AccountPage() {
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
     
+    // State for password change
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+
     const { toast } = useToast();
 
     useEffect(() => {
@@ -87,8 +93,34 @@ export default function AccountPage() {
             setIsGeneratingAvatar(false);
         }
     };
+    
+    const handlePasswordChange = async () => {
+        if (newPassword !== confirmNewPassword) {
+            toast({ title: 'Passwords do not match', description: 'Please re-enter your new password correctly.', variant: 'destructive' });
+            return;
+        }
+        if (!currentPassword || !newPassword) {
+            toast({ title: 'Missing fields', description: 'Please fill out all password fields.', variant: 'destructive' });
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            await changeUserPassword(currentPassword, newPassword);
+            // On success, clear the fields
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmNewPassword('');
+        } catch (error) {
+            // Error toast is handled by the context
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
 
     const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender) && !isUpdatingProfile;
+    const canChangePassword = currentPassword && newPassword && newPassword.length >= 6 && confirmNewPassword && newPassword === confirmNewPassword && !isChangingPassword;
+
 
     if (!isInitialized || !user) {
         return (
@@ -236,6 +268,33 @@ export default function AccountPage() {
                                 <p className="text-sm text-muted-foreground">No badges unlocked yet. Keep learning!</p>
                             )}
                         </CardContent>
+                    </Card>
+                    
+                    <Card className="shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center"><KeyRound className="w-5 h-5 mr-2 text-primary" /> Change Password</CardTitle>
+                            <CardDescription>Update your login password here.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="currentPassword">Current Password</Label>
+                                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="newPassword">New Password</Label>
+                                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                                <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button onClick={handlePasswordChange} disabled={!canChangePassword}>
+                                {isChangingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                {isChangingPassword ? 'Changing...' : 'Change Password'}
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </div>
             </div>
