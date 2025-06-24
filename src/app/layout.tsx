@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
-    apple: "/icons/icon-192x192.png",
+    apple: "/favicon.ico",
   },
 };
 
@@ -44,7 +44,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#3F51B5" />
         <meta name="msapplication-tap-highlight" content="no" />
         
