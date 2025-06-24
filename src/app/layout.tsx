@@ -15,20 +15,9 @@ import { AdBanner } from '@/components/ad-banner';
 export const metadata: Metadata = {
   title: 'MGQs',
   description: 'Generate NCERT-based questions for Classes 9-12 and create notes.',
-  manifest: '/manifest.json',
-  applicationName: 'MGQs',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'MGQs',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
+  // By convention, Next.js will automatically look for a favicon.ico file
+  // in the /app directory. Explicitly defining it here is removed to allow
+  // the automatic detection to work, which is more robust.
 };
 
 export const viewport: Viewport = {
