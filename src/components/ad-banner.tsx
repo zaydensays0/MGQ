@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -52,6 +51,8 @@ export function AdBanner() {
                 };
               </script>
               <script type="text/javascript" src="//www.highperformanceformat.com/c95e7e6770fd1266273791de339c0972/invoke.js"></script>
+              <script async="async" data-cfasync="false" src="//pl26974340.profitableratecpm.com/8a30ee50cf98e47be92f1f73320b34df/invoke.js"></script>
+              <div id="container-8a30ee50cf98e47be92f1f73320b34df"></div>
             `,
       }}
     />
