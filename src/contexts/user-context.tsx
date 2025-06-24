@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, GradeLevelNCERT } from '@/types';
@@ -5,18 +6,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
 import {
-  getAuth,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
-
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -70,6 +67,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { toast } = useToast();
 
   const fetchUserData = useCallback(async (uid: string) => {
+    if (!db) return;
     const userDocRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
@@ -78,6 +76,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !auth) {
+      setIsInitialized(true);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
@@ -92,11 +94,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [fetchUserData]);
 
   const login = async (email: string, pass: string) => {
+    if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 
   const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => {
+    if (!auth || !db) throw new Error("Firebase is not configured.");
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const { uid } = userCredential.user;
 
@@ -120,6 +124,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
+    if (!auth) throw new Error("Firebase is not configured.");
     await signOut(auth);
     setUser(null);
     setFirebaseUser(null);
@@ -127,7 +132,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
-    if (!user || !firebaseUser) return;
+    if (!user || !firebaseUser || !db) return;
     
     let xpGained = baseXp;
     let newStreak = user.streak;

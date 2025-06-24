@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -9,9 +10,43 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GraduationCap, Loader2, AlertCircle } from 'lucide-react';
+import { GraduationCap, Loader2, AlertCircle, Settings } from 'lucide-react';
 import { GRADE_LEVELS } from '@/lib/constants';
 import type { GradeLevelNCERT } from '@/types';
+import { isFirebaseConfigured } from '@/lib/firebase';
+
+const FirebaseNotConfigured = () => (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="flex items-center space-x-2 mb-6">
+            <GraduationCap className="h-10 w-10 text-primary" />
+            <span className="text-3xl font-bold font-headline">MGQs</span>
+        </div>
+        <Card className="w-full max-w-md shadow-xl">
+            <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center">
+                    <Settings className="mr-3 h-6 w-6 text-destructive" />
+                    Firebase Not Configured
+                </CardTitle>
+                <CardDescription>
+                    The application cannot connect to the backend.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Action Required</AlertTitle>
+                    <AlertDescription>
+                        <p>Please add your Firebase project credentials to the <strong>.env</strong> file at the root of your project.</p>
+                        <p className="mt-2">You can find these credentials in your Firebase project settings.</p>
+                    </AlertDescription>
+                </Alert>
+            </CardContent>
+             <CardFooter>
+                <p className="text-xs text-muted-foreground">The app will automatically reload after you have updated the .env file.</p>
+            </CardFooter>
+        </Card>
+    </main>
+);
 
 export default function LoginPage() {
   const [formType, setFormType] = useState<'login' | 'signup'>('login');
@@ -24,6 +59,10 @@ export default function LoginPage() {
 
   const { login, signup } = useUser();
   const router = useRouter();
+
+  if (!isFirebaseConfigured) {
+      return <FirebaseNotConfigured />;
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
