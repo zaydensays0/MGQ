@@ -23,7 +23,9 @@ if (isFirebaseConfigured) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
-    storage = getStorage(app);
+    // storage can be initialized here if needed in the future,
+    // but it's not used right now to avoid errors for users without billing.
+    // storage = getStorage(app);
 } else {
     console.log("Firebase API Key is missing. Skipping Firebase initialization.");
 }

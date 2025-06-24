@@ -1,16 +1,13 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { User, Flame, Medal, Award, AlertTriangle, UploadCloud, Loader2 } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
 import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,9 +16,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
@@ -33,22 +29,12 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 export default function AccountPage() {
     const { user, isInitialized, firebaseUser } = useUser();
     
-    // State for Profile Section
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
-    const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
-    
-    // State for Avatar Cropping
-    const [imageSrc, setImageSrc] = useState<string>('');
-    const [crop, setCrop] = useState<Crop>();
-    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
     
     const { toast } = useToast();
 
-    // Initialize form with user data once context is ready
     useEffect(() => {
         if (isInitialized && user) {
             setFullName(user.fullName);
@@ -56,56 +42,13 @@ export default function AccountPage() {
         }
     }, [isInitialized, user]);
 
-
-    // --- Avatar Upload & Crop Logic ---
-    const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-        const { width, height } = e.currentTarget;
-        const initialCrop = centerCrop(makeAspectCrop({ unit: 'px', width: 150 }, 1, width, height), width, height);
-        setCrop(initialCrop);
-    };
-
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                toast({ title: 'Image too large', description: 'Please select an image smaller than 2MB.', variant: 'destructive' });
-                return;
-            }
-            setCrop(undefined);
-            const reader = new FileReader();
-            reader.addEventListener('load', () => setImageSrc(reader.result?.toString() || ''));
-            reader.readAsDataURL(file);
-            setIsCropModalOpen(true);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
-    
-    const handleApplyCrop = () => {
-        const image = imgRef.current;
-        if (!image || !crop?.width || !crop.height) return;
-
-        const canvas = document.createElement('canvas');
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, crop.width, crop.height);
-        setNewAvatarUrl(canvas.toDataURL('image/png'));
-        setIsCropModalOpen(false);
-    };
-
-
-    // --- Form Submission Logic ---
     const handleUpdateProfile = async () => {
-        if (!user || !firebaseUser || !db || !storage) {
+        if (!user || !firebaseUser || !db) {
             toast({ title: 'Update Failed', description: 'Connection to the database is not available.', variant: 'destructive'});
             return;
         }
         
-        setIsUploading(true);
+        setIsUpdating(true);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
         const updates: Partial<UserType> = {};
@@ -114,18 +57,9 @@ export default function AccountPage() {
             if (fullName !== user.fullName) updates.fullName = fullName;
             if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
             
-            if (newAvatarUrl) {
-                const avatarRef = ref(storage, `avatars/${firebaseUser.uid}`);
-                const uploadResult = await uploadString(avatarRef, newAvatarUrl, 'data_url');
-                const downloadURL = await getDownloadURL(uploadResult.ref);
-                updates.avatarUrl = downloadURL;
-            }
-    
             if (Object.keys(updates).length > 0) {
                 await updateDoc(userDocRef, updates);
                 toast({ title: 'Profile Updated!', description: 'Your public profile has been updated.' });
-                setNewAvatarUrl(null); // Clear preview
-                // The user object will be updated by the context's listener
             } else {
                 toast({ title: 'No Changes', description: 'No new information was provided to update.' });
             }
@@ -133,11 +67,11 @@ export default function AccountPage() {
             console.error(error);
             toast({ title: 'Update Failed', description: 'Could not update your profile.', variant: 'destructive'});
         } finally {
-            setIsUploading(false);
+            setIsUpdating(false);
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || !!newAvatarUrl) && !isUploading;
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class)) && !isUpdating;
 
     if (!isInitialized || !user) {
         return (
@@ -184,11 +118,8 @@ export default function AccountPage() {
                     </CardHeader>
                     <CardContent className="space-y-8">
                         <div className="flex flex-col items-center gap-4 p-4">
-                            <img src={newAvatarUrl || user.avatarUrl} alt="Avatar" data-ai-hint="student avatar" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
-                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                <UploadCloud className="mr-2 h-4 w-4" /> Upload New Avatar
-                            </Button>
-                            <input id="avatar-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" hidden />
+                            <img src={user.avatarUrl} alt="Avatar" data-ai-hint="student avatar" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
+                             <p className="text-sm text-muted-foreground">Avatar uploads are temporarily disabled.</p>
                         </div>
 
                         <div className="space-y-6">
@@ -213,8 +144,8 @@ export default function AccountPage() {
                     </CardContent>
                     <CardFooter className="border-t px-6 py-4">
                         <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile}>
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                            {isUploading ? 'Updating...' : 'Update Profile'}
+                            {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                            {isUpdating ? 'Updating...' : 'Update Profile'}
                         </Button>
                     </CardFooter>
                 </Card>
@@ -250,7 +181,7 @@ export default function AccountPage() {
                                     <div className="flex flex-wrap gap-4">
                                         {user.badges.map(badgeKey => {
                                             const badge = badgeInfo[badgeKey];
-                                            if (!badge) return null; // Handle case where badge from old system might exist
+                                            if (!badge) return null;
                                             return (
                                                 <Tooltip key={badgeKey}>
                                                     <TooltipTrigger asChild>
@@ -274,15 +205,6 @@ export default function AccountPage() {
                     </Card>
                 </div>
             </div>
-
-            {/* --- AVATAR CROP DIALOG --- */}
-            <Dialog open={isCropModalOpen} onOpenChange={setIsCropModalOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Adjust Your Avatar</DialogTitle><DialogDescription>Move and resize the selection to crop your image.</DialogDescription></DialogHeader>
-                    <div className="mt-4">{imageSrc && <ReactCrop crop={crop} onChange={c => setCrop(c)} aspect={1} circularCrop><img ref={imgRef} alt="Crop preview" src={imageSrc} onLoad={onImageLoad} style={{maxHeight: '70vh'}} /></ReactCrop>}</div>
-                    <DialogFooter><Button variant="outline" onClick={() => setIsCropModalOpen(false)}>Cancel</Button><Button onClick={handleApplyCrop}>Apply Crop</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
