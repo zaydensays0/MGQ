@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Script from 'next/script';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
 import { regenerateQuestion, type RegenerateQuestionInput, type RegenerateQuestionOutput } from '@/ai/flows/regenerate-question';
@@ -227,106 +226,6 @@ export default function ExamPrepPage() {
           ) : (
              <ResultsPlaceholder />
           )}
-        </div>
-      </div>
-
-      {/* All ad units are consolidated at the bottom */}
-      <div className="mt-16 w-full flex flex-col items-center space-y-8">
-        
-        {/* Banner Ad Code */}
-        <div className="w-full flex justify-center">
-          <Script id="ad-options-0762c3-top" strategy="lazyOnload">
-              {`
-                  atOptions = {
-                      'key' : '0762c37cdf81985c469d1cebece2886f',
-                      'format' : 'iframe',
-                      'height' : 300,
-                      'width' : 160,
-                      'params' : {}
-                  };
-              `}
-          </Script>
-          <Script id="ad-invoke-0762c3-top" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
-        </div>
-        
-        <div>
-          <Script id="profitableratecpm-script" data-cfasync="false" src="//pl26817799.profitableratecpm.com/557a252c055ae7b7626b87b6a2c95d51/invoke.js" strategy="lazyOnload" />
-          <div id="container-557a252c055ae7b7626b87b6a2c95d51"></div>
-        </div>
-
-        <div>
-          <Script id="ad-options-a05063" strategy="lazyOnload">
-              {`
-                  atOptions = {
-                      'key' : 'a050636a31b3077dc1bbe04ffd14a25a',
-                      'format' : 'iframe',
-                      'height' : 50,
-                      'width' : 320,
-                      'params' : {}
-                  };
-              `}
-          </Script>
-          <Script id="ad-invoke-a05063" strategy="lazyOnload" src="//www.highperformanceformat.com/a050636a31b3077dc1bbe04ffd14a25a/invoke.js" />
-        </div>
-
-        <div>
-          <Script id="ad-options-75057e" strategy="lazyOnload">
-            {`
-              atOptions = {
-                'key' : '75057e2ffb836a6d012a94807538929c',
-                'format' : 'iframe',
-                'height' : 60,
-                'width' : 468,
-                'params' : {}
-              };
-            `}
-          </Script>
-          <Script id="ad-invoke-75057e" strategy="lazyOnload" src="//www.highperformanceformat.com/75057e2ffb836a6d012a94807538929c/invoke.js" />
-        </div>
-
-        <div>
-          <Script id="ad-options-d5f36f" strategy="lazyOnload">
-            {`
-              atOptions = {
-                'key' : 'd5f36f5d6cfdd21702a20f39a221dba2',
-                'format' : 'iframe',
-                'height' : 90,
-                'width' : 728,
-                'params' : {}
-              };
-            `}
-          </Script>
-          <Script id="ad-invoke-d5f36f" strategy="lazyOnload" src="//www.highperformanceformat.com/d5f36f5d6cfdd21702a20f39a221dba2/invoke.js" />
-        </div>
-
-        <div>
-          <Script id="ad-options-0762c3-bottom" strategy="lazyOnload">
-              {`
-                  atOptions = {
-                      'key' : '0762c37cdf81985c469d1cebece2886f',
-                      'format' : 'iframe',
-                      'height' : 300,
-                      'width' : 160,
-                      'params' : {}
-                  };
-              `}
-          </Script>
-          <Script id="ad-invoke-0762c3-bottom" strategy="lazyOnload" src="//www.highperformanceformat.com/0762c37cdf81985c469d1cebece2886f/invoke.js" />
-        </div>
-
-        <div>
-          <Script id="ad-options-a8beb8" strategy="lazyOnload">
-            {`
-              atOptions = {
-                'key' : 'a8beb8f536aa61aff90243619a81f50b',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-              };
-            `}
-          </Script>
-          <Script id="ad-invoke-a8beb8" strategy="lazyOnload" src="//www.highperformanceformat.com/a8beb8f536aa61aff90243619a81f50b/invoke.js" />
         </div>
       </div>
     </div>
