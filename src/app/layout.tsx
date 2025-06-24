@@ -9,6 +9,7 @@ import { SubjectExpertSavedProvider } from '@/contexts/subject-expert-saved-cont
 import { ThemeProvider } from "@/components/theme-provider";
 import { UserProvider } from '@/contexts/user-context';
 import { FlashcardsProvider } from '@/contexts/flashcards-context';
+import { AdBanner } from '@/components/ad-banner';
 
 
 export const metadata: Metadata = {
@@ -71,23 +72,7 @@ export default function RootLayout({
           </UserProvider>
           <Toaster />
         </ThemeProvider>
-        <div
-          className="flex justify-center p-2"
-          dangerouslySetInnerHTML={{
-            __html: `
-              <script type="text/javascript">
-                atOptions = {
-                  'key' : 'c95e7e6770fd1266273791de339c0972',
-                  'format' : 'iframe',
-                  'height' : 50,
-                  'width' : 320,
-                  'params' : {}
-                };
-              </script>
-              <script type="text/javascript" src="//www.highperformanceformat.com/c95e7e6770fd1266273791de339c0972/invoke.js"></script>
-            `,
-          }}
-        />
+        <AdBanner />
       </body>
     </html>
   );
