@@ -26,7 +26,7 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, isInitialized, updateUserProfile, changeUserPassword } = useUser();
+    const { user, isInitialized, updateUserProfile, changeUserPassword, sendPasswordReset } = useUser();
     
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
@@ -39,6 +39,8 @@ export default function AccountPage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [isSendingReset, setIsSendingReset] = useState(false);
+
 
     const { toast } = useToast();
 
@@ -115,6 +117,19 @@ export default function AccountPage() {
             // Error toast is handled by the context
         } finally {
             setIsChangingPassword(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!user || !user.email) return;
+        setIsSendingReset(true);
+        try {
+            await sendPasswordReset(user.email);
+            // The context will show a success toast.
+        } catch (error) {
+            // The context will show an error toast.
+        } finally {
+            setIsSendingReset(false);
         }
     };
 
@@ -289,10 +304,14 @@ export default function AccountPage() {
                                 <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
                             </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex justify-between items-center">
                             <Button onClick={handlePasswordChange} disabled={!canChangePassword}>
                                 {isChangingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                                 {isChangingPassword ? 'Changing...' : 'Change Password'}
+                            </Button>
+                            <Button variant="link" size="sm" onClick={handleForgotPassword} disabled={isSendingReset}>
+                                {isSendingReset ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {isSendingReset ? 'Sending...' : 'Forgot password?'}
                             </Button>
                         </CardFooter>
                     </Card>
