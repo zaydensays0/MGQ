@@ -33,7 +33,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="msapplication-TileColor" content="#3F51B5" />
         <meta name="msapplication-tap-highlight" content="no" />
         
         <link rel="preconnect" href="https://fonts.googleapis.com" />
