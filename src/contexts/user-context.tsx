@@ -55,6 +55,7 @@ interface UserContextType {
   signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => Promise<void>;
   logout: () => Promise<void>;
   handleCorrectAnswer: (baseXp: number) => void;
+  updateUserProfile: (updates: Partial<User>) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -130,6 +131,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setFirebaseUser(null);
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
   };
+  
+  const updateUserProfile = useCallback(async (updates: Partial<User>) => {
+    if (!firebaseUser || !db) {
+      toast({ title: "Update Failed", description: "Not logged in or database unavailable.", variant: "destructive" });
+      throw new Error("User not authenticated");
+    }
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    try {
+      await updateDoc(userDocRef, updates);
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+    } catch (error) {
+      console.error("Error updating profile: ", error);
+      toast({ title: "Update Failed", description: "Could not save your changes.", variant: "destructive" });
+      throw error;
+    }
+  }, [firebaseUser, toast]);
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
     if (!user || !firebaseUser || !db) return;
@@ -166,9 +183,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
     
+    const updates: Partial<User> = {
+        xp: newXp,
+        level: newLevel,
+        streak: newStreak,
+        badges: newBadges,
+        lastCorrectAnswerDate: todayStr,
+    };
+    
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userDocRef, {
-        xp: increment(xpGained),
+        xp: increment(xpGained), // Use increment for atomicity
         level: newLevel,
         streak: newStreak,
         badges: newBadges,
@@ -176,7 +201,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     // Optimistically update local state
-    setUser(prev => prev ? {...prev, xp: newXp, level: newLevel, streak: newStreak, badges: newBadges, lastCorrectAnswerDate: todayStr} : null);
+    setUser(prev => prev ? {...prev, ...updates} : null);
 
     if (newLevel > oldLevel) {
       toast({ title: '🎉 Level Up!', description: `Congratulations, you've reached Level ${newLevel}!` });
@@ -186,7 +211,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, firebaseUser, toast]);
 
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer, updateUserProfile }}>
       {children}
     </UserContext.Provider>
   );

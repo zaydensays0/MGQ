@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { User, Flame, Medal, Award, AlertTriangle, Loader2 } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
 import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
@@ -16,8 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { generateAvatar } from '@/ai/flows/generate-avatar';
 
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
@@ -27,11 +26,12 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, isInitialized, firebaseUser } = useUser();
+    const { user, isInitialized, updateUserProfile } = useUser();
     
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
-    const [isUpdating, setIsUpdating] = useState(false);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
     
     const { toast } = useToast();
 
@@ -43,35 +43,46 @@ export default function AccountPage() {
     }, [isInitialized, user]);
 
     const handleUpdateProfile = async () => {
-        if (!user || !firebaseUser || !db) {
-            toast({ title: 'Update Failed', description: 'Connection to the database is not available.', variant: 'destructive'});
-            return;
-        }
+        if (!user) return;
         
-        setIsUpdating(true);
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        
+        setIsUpdatingProfile(true);
         const updates: Partial<UserType> = {};
+        if (fullName.trim() && fullName !== user.fullName) updates.fullName = fullName;
+        if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
 
-        try {
-            if (fullName !== user.fullName) updates.fullName = fullName;
-            if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
-            
-            if (Object.keys(updates).length > 0) {
-                await updateDoc(userDocRef, updates);
+        if (Object.keys(updates).length > 0) {
+            try {
+                await updateUserProfile(updates);
                 toast({ title: 'Profile Updated!', description: 'Your public profile has been updated.' });
+            } catch (error) {
+                // The context handles showing an error toast
+            }
+        } else {
+            toast({ title: 'No Changes', description: 'No new information was provided to update.' });
+        }
+        setIsUpdatingProfile(false);
+    };
+
+    const handleGenerateAvatar = async () => {
+        if (!user) return;
+        setIsGeneratingAvatar(true);
+        try {
+            const result = await generateAvatar({ fullName: user.fullName });
+            if (result && result.avatarDataUri) {
+                await updateUserProfile({ avatarUrl: result.avatarDataUri });
+                toast({ title: "Avatar Generated!", description: "Your new AI-powered avatar has been saved." });
             } else {
-                toast({ title: 'No Changes', description: 'No new information was provided to update.' });
+                throw new Error("AI did not return an avatar.");
             }
         } catch (error) {
             console.error(error);
-            toast({ title: 'Update Failed', description: 'Could not update your profile.', variant: 'destructive'});
+            toast({ title: 'Avatar Generation Failed', description: 'Could not generate a new avatar. Please try again.', variant: 'destructive' });
         } finally {
-            setIsUpdating(false);
+            setIsGeneratingAvatar(false);
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class)) && !isUpdating;
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class)) && !isUpdatingProfile;
 
     if (!isInitialized || !user) {
         return (
@@ -119,7 +130,10 @@ export default function AccountPage() {
                     <CardContent className="space-y-8">
                         <div className="flex flex-col items-center gap-4 p-4">
                             <img src={user.avatarUrl} alt="Avatar" data-ai-hint="student avatar" className="w-24 h-24 rounded-full shadow-md object-cover bg-background" />
-                             <p className="text-sm text-muted-foreground">Avatar uploads are temporarily disabled.</p>
+                             <Button onClick={handleGenerateAvatar} disabled={isGeneratingAvatar}>
+                                {isGeneratingAvatar ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                                {isGeneratingAvatar ? 'Generating...' : 'Generate AI Avatar'}
+                            </Button>
                         </div>
 
                         <div className="space-y-6">
@@ -143,9 +157,9 @@ export default function AccountPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="border-t px-6 py-4">
-                        <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile}>
-                            {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                            {isUpdating ? 'Updating...' : 'Update Profile'}
+                        <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile || isUpdatingProfile}>
+                            {isUpdatingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                            {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
                         </Button>
                     </CardFooter>
                 </Card>
