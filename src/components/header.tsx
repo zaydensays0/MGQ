@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, LayoutGrid, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, LayoutGrid, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname, useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ const navLinks = [
 
 const moreToolsLinks = [
   { href: '/mock-test', label: 'Mock Test', icon: ClipboardCheck },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
