@@ -14,6 +14,7 @@ import Jimp from 'jimp';
 
 const GenerateAvatarInputSchema = z.object({
   fullName: z.string().describe('The full name of the user for whom to generate an avatar.'),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).optional().describe('The gender of the user, if specified.'),
 });
 export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
@@ -35,7 +36,7 @@ const generateAvatarFlow = ai.defineFlow(
   async (input) => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a square, abstract, minimalist, and colorful avatar representing a student named "${input.fullName}". The style should be modern, clean, and suitable for a profile picture. Avoid using any text.`,
+      prompt: `Generate a square, abstract, minimalist, and colorful avatar representing a student named "${input.fullName}". ${input.gender && input.gender !== 'prefer_not_to_say' ? `The student identifies as ${input.gender}.` : ''} The style should be modern, clean, and suitable for a profile picture. Avoid using any text.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

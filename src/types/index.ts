@@ -1,4 +1,3 @@
-
 import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
@@ -104,6 +103,8 @@ export interface SavedSubjectExpertExchange {
 // Badge types for gamification
 export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 
+export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+
 // Types for User Profile & Authentication
 export interface User {
   uid: string;
@@ -118,6 +119,7 @@ export interface User {
   lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
   badges: BadgeKey[];
   class: GradeLevelNCERT;
+  gender?: Gender;
 }
 
 // AI Notes Generator Flow Types

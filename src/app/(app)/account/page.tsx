@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
-import type { User as UserType, BadgeKey, GradeLevelNCERT } from '@/types';
+import type { User as UserType, BadgeKey, GradeLevelNCERT, Gender } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,6 +30,7 @@ export default function AccountPage() {
     
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
+    const [selectedGender, setSelectedGender] = useState<Gender | undefined>(undefined);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
     
@@ -39,6 +40,7 @@ export default function AccountPage() {
         if (isInitialized && user) {
             setFullName(user.fullName);
             setSelectedClass(user.class);
+            setSelectedGender(user.gender);
         }
     }, [isInitialized, user]);
 
@@ -49,6 +51,7 @@ export default function AccountPage() {
         const updates: Partial<UserType> = {};
         if (fullName.trim() && fullName !== user.fullName) updates.fullName = fullName;
         if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
+        if (selectedGender !== user.gender) updates.gender = selectedGender;
 
         if (Object.keys(updates).length > 0) {
             try {
@@ -67,7 +70,10 @@ export default function AccountPage() {
         if (!user) return;
         setIsGeneratingAvatar(true);
         try {
-            const result = await generateAvatar({ fullName: user.fullName });
+            const result = await generateAvatar({ 
+                fullName: fullName,
+                gender: selectedGender 
+            });
             if (result && result.avatarDataUri) {
                 await updateUserProfile({ avatarUrl: result.avatarDataUri });
                 toast({ title: "Avatar Generated!", description: "Your new AI-powered avatar has been saved." });
@@ -82,7 +88,7 @@ export default function AccountPage() {
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class)) && !isUpdatingProfile;
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender) && !isUpdatingProfile;
 
     if (!isInitialized || !user) {
         return (
@@ -153,6 +159,20 @@ export default function AccountPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="gender-select">Gender</Label>
+                                <Select value={selectedGender} onValueChange={(value) => setSelectedGender(value as Gender)}>
+                                    <SelectTrigger id="gender-select">
+                                        <SelectValue placeholder="-- Select Gender --" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="male">Male</SelectItem>
+                                        <SelectItem value="female">Female</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                        <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </CardContent>
