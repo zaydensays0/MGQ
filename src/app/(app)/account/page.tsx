@@ -19,6 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+
 
 const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
     mini_streak: { icon: Flame, label: 'Mini Streak', description: 'Achieved a 3-day streak!' },
@@ -27,12 +30,13 @@ const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, desc
 };
 
 export default function AccountPage() {
-    const { user, updateUser, isInitialized } = useUser();
+    const { user, isInitialized, firebaseUser } = useUser();
     
     // State for Profile Section
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
     const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     
     // State for Avatar Cropping
     const [imageSrc, setImageSrc] = useState<string>('');
@@ -94,23 +98,44 @@ export default function AccountPage() {
 
 
     // --- Form Submission Logic ---
-    const handleUpdateProfile = () => {
-        if (!user) return;
+    const handleUpdateProfile = async () => {
+        if (!user || !firebaseUser) return;
+        
+        setIsUploading(true);
+        const db = getFirestore();
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        
         const updates: Partial<UserType> = {};
-        if (fullName !== user.fullName) updates.fullName = fullName;
-        if (newAvatarUrl) updates.avatarUrl = newAvatarUrl;
-        if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
 
-        if (Object.keys(updates).length > 0) {
-            updateUser(updates);
-            toast({ title: 'Profile Updated!', description: 'Your public profile has been updated.' });
-            setNewAvatarUrl(null);
-        } else {
-            toast({ title: 'No Changes', description: 'No new information was provided to update.' });
+        try {
+            if (fullName !== user.fullName) updates.fullName = fullName;
+            if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
+            
+            if (newAvatarUrl) {
+                const storage = getStorage();
+                const avatarRef = ref(storage, `avatars/${firebaseUser.uid}`);
+                const uploadResult = await uploadString(avatarRef, newAvatarUrl, 'data_url');
+                const downloadURL = await getDownloadURL(uploadResult.ref);
+                updates.avatarUrl = downloadURL;
+            }
+    
+            if (Object.keys(updates).length > 0) {
+                await updateDoc(userDocRef, updates);
+                toast({ title: 'Profile Updated!', description: 'Your public profile has been updated.' });
+                setNewAvatarUrl(null); // Clear preview
+                // The user object will be updated by the context's listener
+            } else {
+                toast({ title: 'No Changes', description: 'No new information was provided to update.' });
+            }
+        } catch (error) {
+            console.error(error);
+            toast({ title: 'Update Failed', description: 'Could not update your profile.', variant: 'destructive'});
+        } finally {
+            setIsUploading(false);
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || !!newAvatarUrl);
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || !!newAvatarUrl) && !isUploading;
 
     if (!isInitialized || !user) {
         return (
@@ -185,7 +210,10 @@ export default function AccountPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="border-t px-6 py-4">
-                        <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile}>Update Profile</Button>
+                        <Button onClick={handleUpdateProfile} disabled={!canUpdateProfile}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                            {isUploading ? 'Updating...' : 'Update Profile'}
+                        </Button>
                     </CardFooter>
                 </Card>
 

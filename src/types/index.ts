@@ -106,17 +106,18 @@ export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
 
 // Types for User Profile & Authentication
 export interface User {
+  uid: string;
   username: string;
   fullName: string;
   email: string;
-  password?: string; // Only used during signup, not stored in Firestore
+  password?: string; // Only used during signup, not stored
   avatarUrl: string;
   xp: number;
   level: number;
   streak: number;
   lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
   badges: BadgeKey[];
-  class?: GradeLevelNCERT;
+  class: GradeLevelNCERT;
 }
 
 // AI Notes Generator Flow Types

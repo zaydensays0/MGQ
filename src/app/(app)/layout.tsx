@@ -4,6 +4,7 @@ import { Header } from '@/components/header';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
 import { Loader2, WifiOff } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function AppLayout({
   children,
@@ -11,7 +12,9 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isOnline, setIsOnline] = useState(true);
-  const { isInitialized } = useUser();
+  const { user, isInitialized } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -26,7 +29,13 @@ export default function AppLayout({
     }
   }, []);
   
-  if (!isInitialized) {
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.replace('/login');
+    }
+  }, [user, isInitialized, router, pathname]);
+
+  if (!isInitialized || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

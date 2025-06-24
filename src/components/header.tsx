@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, Users, LayoutGrid, Trophy, PenSquare, ClipboardCheck, Heart, MessageSquare, LogIn, LogOut, Layers, SpellCheck, GraduationCap } from 'lucide-react';
+import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, LayoutGrid, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle'; 
@@ -13,7 +13,6 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from './ui/progress';
-import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/generate', label: 'Generate', icon: Sparkles },
@@ -54,11 +53,16 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isInitialized } = useUser();
+  const { user, isInitialized, logout } = useUser();
 
   const getIsActive = (href: string) => {
     return pathname.startsWith(href);
   };
+  
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -130,9 +134,9 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
            <div className="hidden md:block">
-              {!isInitialized || !user ? (
+              {!isInitialized ? (
                  <Skeleton className="h-9 w-9 rounded-full" />
-              ) : (
+              ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Avatar className="h-9 w-9 cursor-pointer">
@@ -146,8 +150,13 @@ export function Header() {
                         <UserProgress user={user} />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+              ) : (
+                <Button asChild variant="outline">
+                    <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login</Link>
+                </Button>
               )}
           </div>
 
@@ -204,10 +213,17 @@ export function Header() {
                         </Link>
                       ))}
                     </nav>
+                    <div className="p-6 border-t">
+                        <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                            <LogOut className="mr-3 h-5 w-5"/> Logout
+                        </Button>
+                    </div>
                   </>
                 ) : (
                   <div className="p-6 flex flex-col gap-4">
-                    <p className="text-center text-muted-foreground">Loading...</p>
+                     <Button asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login / Sign Up</Link>
+                    </Button>
                   </div>
                 )}
               </SheetContent>

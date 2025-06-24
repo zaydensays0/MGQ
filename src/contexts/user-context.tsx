@@ -1,9 +1,22 @@
 'use client';
 
-import type { User, BadgeKey, GradeLevelNCERT } from '@/types';
+import type { User, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
+import {
+  getAuth,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -39,86 +52,100 @@ export const getXpForLevel = (level: number): { currentLevelStart: number; nextL
 // --- Context Types ---
 interface UserContextType {
   user: User | null;
+  firebaseUser: FirebaseUser | null;
   isInitialized: boolean;
-  updateUser: (newUserData: Partial<User>) => void;
+  login: (email: string, pass: string) => Promise<void>;
+  signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => Promise<void>;
+  logout: () => Promise<void>;
   handleCorrectAnswer: (baseXp: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // --- Provider Component ---
-const LOCAL_STORAGE_KEY_USER = 'MGQsUser';
-
-const defaultUser: User = {
-  fullName: 'Student User',
-  username: 'student',
-  email: 'student@example.com',
-  avatarUrl: `https://placehold.co/100x100.png?text=S`,
-  xp: 0,
-  level: 1,
-  streak: 0,
-  lastCorrectAnswerDate: '',
-  badges: [],
-  class: '10',
-};
-
-
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
+  const fetchUserData = useCallback(async (uid: string) => {
+    const userDocRef = doc(db, 'users', uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      setUser(userDoc.data() as User);
+    }
+  }, []);
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedUser = window.localStorage.getItem(LOCAL_STORAGE_KEY_USER);
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          setUser(defaultUser);
-        }
-      } catch (error) {
-        console.error("Failed to access localStorage, using default user:", error);
-        setUser(defaultUser);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser) {
+        await fetchUserData(fbUser.uid);
+      } else {
+        setUser(null);
       }
       setIsInitialized(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isInitialized && user) {
-      window.localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
-    }
-  }, [user, isInitialized]);
-
-  const updateUser = useCallback((newUserData: Partial<User>) => {
-    setUser(prevUser => {
-      const updatedUser = prevUser ? { ...prevUser, ...newUserData } : null;
-      return updatedUser;
     });
-  }, []);
 
-  const handleCorrectAnswer = useCallback((baseXp: number) => {
-    if (!user) return;
+    return () => unsubscribe();
+  }, [fetchUserData]);
+
+  const login = async (email: string, pass: string) => {
+    await signInWithEmailAndPassword(auth, email, pass);
+    toast({ title: 'Logged In Successfully', description: "Welcome back!" });
+  };
+
+  const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const { uid } = userCredential.user;
+
+    const newUser: User = {
+      uid,
+      fullName,
+      email,
+      username: email.split('@')[0],
+      avatarUrl: `https://placehold.co/100x100.png?text=${fullName.charAt(0).toUpperCase()}`,
+      xp: 0,
+      level: 1,
+      streak: 0,
+      lastCorrectAnswerDate: '',
+      badges: [],
+      class: userClass,
+    };
+    
+    await setDoc(doc(db, 'users', uid), newUser);
+    setUser(newUser);
+    toast({ title: 'Account Created!', description: 'Welcome! You have been logged in.' });
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+    setFirebaseUser(null);
+    toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+  };
+
+  const handleCorrectAnswer = useCallback(async (baseXp: number) => {
+    if (!user || !firebaseUser) return;
+    
     let xpGained = baseXp;
     let newStreak = user.streak;
     const newBadges = [...(user.badges || [])];
-
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
     const lastAnswerDate = user.lastCorrectAnswerDate ? parseISO(user.lastCorrectAnswerDate) : null;
     
     let isFirstAnswerToday = true;
-    if(lastAnswerDate) {
-        const lastDateStr = format(lastAnswerDate, 'yyyy-MM-dd');
-        isFirstAnswerToday = lastDateStr !== todayStr;
+    if (lastAnswerDate) {
+        isFirstAnswerToday = format(lastAnswerDate, 'yyyy-MM-dd') !== todayStr;
     }
 
     if (isFirstAnswerToday) {
       if (lastAnswerDate && differenceInCalendarDays(today, lastAnswerDate) === 1) {
-        newStreak += 1; // Continue streak
+        newStreak += 1;
       } else {
-        newStreak = 1; // Start or reset streak
+        newStreak = 1;
       }
       const streakIndex = newStreak - 1;
       const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
@@ -133,24 +160,28 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const newXp = user.xp + xpGained;
     const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
-
-    if (newLevel > oldLevel) {
-      toast({ title: '🎉 Level Up!', description: `Congratulations, you've reached Level ${newLevel}!` });
-    } else {
-        toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
-    }
     
-    updateUser({
-        xp: newXp,
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    await updateDoc(userDocRef, {
+        xp: increment(xpGained),
         level: newLevel,
         streak: newStreak,
         badges: newBadges,
         lastCorrectAnswerDate: todayStr,
     });
-  }, [user, toast, updateUser]);
+    
+    // Optimistically update local state
+    setUser(prev => prev ? {...prev, xp: newXp, level: newLevel, streak: newStreak, badges: newBadges, lastCorrectAnswerDate: todayStr} : null);
+
+    if (newLevel > oldLevel) {
+      toast({ title: '🎉 Level Up!', description: `Congratulations, you've reached Level ${newLevel}!` });
+    } else {
+      toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
+    }
+  }, [user, firebaseUser, toast]);
 
   return (
-    <UserContext.Provider value={{ user, isInitialized, updateUser, handleCorrectAnswer }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer }}>
       {children}
     </UserContext.Provider>
   );
