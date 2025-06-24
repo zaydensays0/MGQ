@@ -3,82 +3,75 @@
 
 import type { Note } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useUser } from './user-context';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface NotesContextType {
   notes: Note[];
-  addNote: (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => Note;
-  updateNote: (id: string, noteData: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>) => Note | undefined;
+  addNote: (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Note | undefined>;
+  updateNote: (id: string, noteData: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<Note | undefined>;
   removeNote: (id: string) => void;
   getNoteById: (id: string) => Note | undefined;
 }
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_NOTES = 'MGQsNotes_v2'; // version up to include new fields
-
 export const NotesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { user } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const items = window.localStorage.getItem(LOCAL_STORAGE_KEY_NOTES);
-        if (items) {
-          setNotes(JSON.parse(items));
-        }
-      } catch (error) {
-        console.error("Failed to load notes from localStorage:", error);
-        setNotes([]);
-      }
-      setIsInitialized(true);
+    if (user && db) {
+      const q = query(collection(db, 'users', user.uid, 'notes'), orderBy('updatedAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const notesData: Note[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        } as Note));
+        setNotes(notesData);
+      }, (error) => {
+        console.error("Error fetching notes:", error);
+        toast({ title: "Error", description: "Could not fetch your notes.", variant: "destructive" });
+      });
+      return () => unsubscribe();
+    } else {
+      setNotes([]);
     }
-  }, []);
-
-  useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY_NOTES, JSON.stringify(notes));
-      } catch (error) {
-        console.error("Failed to save notes to localStorage:", error);
-      }
+  }, [user, toast]);
+  
+  const addNote = useCallback(async (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Promise<Note | undefined> => {
+    if (!user || !db) {
+      toast({ title: "Not Logged In", description: "You must be logged in to create notes.", variant: "destructive" });
+      return;
     }
-  }, [notes, isInitialized]);
-
-  const addNote = useCallback((noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Note => {
-    const newNote: Note = {
-      id: uuidv4(),
+    const notesCol = collection(db, 'users', user.uid, 'notes');
+    const newNoteData = {
+      ...noteData,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      title: noteData.title,
-      content: noteData.content,
-      linkedQuestionIds: noteData.linkedQuestionIds,
-      gradeLevel: noteData.gradeLevel,
-      subject: noteData.subject,
-      chapter: noteData.chapter,
     };
-    setNotes((prevNotes) => [newNote, ...prevNotes].sort((a,b) => b.updatedAt - a.updatedAt));
-    return newNote;
-  }, []);
+    const docRef = await addDoc(notesCol, newNoteData);
+    return { id: docRef.id, ...newNoteData };
+  }, [user, toast]);
 
-  const updateNote = useCallback((id: string, noteData: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>): Note | undefined => {
-    let updatedNote: Note | undefined;
-    setNotes((prevNotes) =>
-      prevNotes.map((note) => {
-        if (note.id === id) {
-          updatedNote = { ...note, ...noteData, updatedAt: Date.now() };
-          return updatedNote;
-        }
-        return note;
-      })
-    );
-    return updatedNote;
-  }, []);
+  const updateNote = useCallback(async (id: string, noteData: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Note | undefined> => {
+    if (!user || !db) return;
+    const noteDocRef = doc(db, 'users', user.uid, 'notes', id);
+    await updateDoc(noteDocRef, {
+      ...noteData,
+      updatedAt: Date.now(),
+    });
+    const updatedDoc = await getDoc(noteDocRef);
+    return { id: updatedDoc.id, ...updatedDoc.data() } as Note;
+  }, [user]);
 
-  const removeNote = useCallback((id: string) => {
-    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-  }, []);
+  const removeNote = useCallback(async (id: string) => {
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'notes', id));
+  }, [user]);
 
   const getNoteById = useCallback(
     (id: string) => {

@@ -3,7 +3,11 @@
 
 import type { SavedSubjectExpertExchange, ConversationExchange, GradeLevelNCERT } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useUser } from './user-context';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface SubjectExpertSavedContextType {
   savedExchanges: SavedSubjectExpertExchange[];
@@ -19,49 +23,47 @@ interface SubjectExpertSavedContextType {
 
 const SubjectExpertSavedContext = createContext<SubjectExpertSavedContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_SUBJECT_EXPERT = 'MGQsSavedSubjectExpertExchanges';
-
 export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedExchanges, setSavedExchanges] = useState<SavedSubjectExpertExchange[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { user } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const items = window.localStorage.getItem(LOCAL_STORAGE_KEY_SUBJECT_EXPERT);
-        if (items) {
-          setSavedExchanges(JSON.parse(items));
-        }
-      } catch (error) {
-        console.error("Failed to load saved subject expert exchanges from localStorage:", error);
-        setSavedExchanges([]);
-      }
-      setIsInitialized(true);
+    if (user && db) {
+      const q = query(collection(db, 'users', user.uid, 'subjectExpertConversations'), orderBy('timestamp', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const exchangesData: SavedSubjectExpertExchange[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        } as SavedSubjectExpertExchange));
+        setSavedExchanges(exchangesData);
+      }, (error) => {
+        console.error("Error fetching subject expert conversations:", error);
+        toast({ title: "Error", description: "Could not fetch your expert chats.", variant: "destructive" });
+      });
+      return () => unsubscribe();
+    } else {
+      setSavedExchanges([]);
     }
-  }, []);
+  }, [user, toast]);
 
-  useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY_SUBJECT_EXPERT, JSON.stringify(savedExchanges));
-      } catch (error) {
-        console.error("Failed to save subject expert exchanges to localStorage:", error);
-      }
+  const addExchange = useCallback(async (data: Omit<SavedSubjectExpertExchange, 'id' | 'timestamp'>) => {
+    if (!user || !db) {
+      toast({ title: "Not Logged In", description: "You must be logged in to save conversations.", variant: "destructive" });
+      return;
     }
-  }, [savedExchanges, isInitialized]);
-
-  const addExchange = useCallback((data: Omit<SavedSubjectExpertExchange, 'id' | 'timestamp'>) => {
-    const newExchange: SavedSubjectExpertExchange = {
-      id: uuidv4(),
+    const newExchangeData = {
+      ...data,
       timestamp: Date.now(),
-      ...data, // Ensures exchanges array is part of the new object if provided in data
     };
-    setSavedExchanges((prevExchanges) => [newExchange, ...prevExchanges].sort((a,b) => b.timestamp - a.timestamp));
-  }, []);
+    const conversationsCol = collection(db, 'users', user.uid, 'subjectExpertConversations');
+    await addDoc(conversationsCol, newExchangeData);
+  }, [user, toast]);
 
-  const removeExchange = useCallback((id: string) => {
-    setSavedExchanges((prevExchanges) => prevExchanges.filter((ex) => ex.id !== id));
-  }, []);
+  const removeExchange = useCallback(async (id: string) => {
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'subjectExpertConversations', id));
+  }, [user]);
 
   const isSaved = useCallback((
     gradeLevel: GradeLevelNCERT,
@@ -74,12 +76,10 @@ export const SubjectExpertSavedProvider: React.FC<{ children: ReactNode }> = ({ 
         savedEx.gradeLevel === gradeLevel &&
         savedEx.subject === subject &&
         savedEx.chapter === chapter &&
-        // Check if savedEx.exchanges is an array before trying to access its properties
         Array.isArray(savedEx.exchanges) && 
         savedEx.exchanges.length === exchangesToCompare.length &&
         savedEx.exchanges.every((ex, index) => {
           const compareEx = exchangesToCompare[index];
-          // Ensure compareEx is defined (it should be if lengths match)
           return compareEx && ex.question === compareEx.question && ex.answer === compareEx.answer;
         })
     );
@@ -99,4 +99,3 @@ export const useSubjectExpertSaved = (): SubjectExpertSavedContextType => {
   }
   return context;
 };
-

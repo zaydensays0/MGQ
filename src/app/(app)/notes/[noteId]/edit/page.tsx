@@ -65,10 +65,10 @@ export default function EditNotePage() {
     }
   }, [noteId, getNoteById]);
 
-  const handleSubmit = (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
     setIsSaving(true);
     try {
-      updateNote(noteId, data);
+      await updateNote(noteId, data);
       toast({
         title: 'Note Updated!',
         description: 'Your note has been updated successfully.',

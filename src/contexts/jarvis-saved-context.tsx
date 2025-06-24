@@ -3,7 +3,10 @@
 
 import type { SavedJarvisExchange, ConversationExchange } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useUser } from './user-context';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface JarvisSavedContextType {
   savedExchanges: SavedJarvisExchange[];
@@ -14,49 +17,47 @@ interface JarvisSavedContextType {
 
 const JarvisSavedContext = createContext<JarvisSavedContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_JARVIS = 'MGQsSavedJarvisExchanges_v2'; // New key for new structure
-
 export const JarvisSavedProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedExchanges, setSavedExchanges] = useState<SavedJarvisExchange[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { user } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const items = window.localStorage.getItem(LOCAL_STORAGE_KEY_JARVIS);
-        if (items) {
-          setSavedExchanges(JSON.parse(items));
-        }
-      } catch (error) {
-        console.error("Failed to load saved Jarvis exchanges from localStorage:", error);
-        setSavedExchanges([]);
-      }
-      setIsInitialized(true);
+    if (user && db) {
+      const q = query(collection(db, 'users', user.uid, 'jarvisConversations'), orderBy('timestamp', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const exchangesData: SavedJarvisExchange[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        } as SavedJarvisExchange));
+        setSavedExchanges(exchangesData);
+      }, (error) => {
+        console.error("Error fetching Jarvis conversations:", error);
+        toast({ title: "Error", description: "Could not fetch your Jarvis chats.", variant: "destructive" });
+      });
+      return () => unsubscribe();
+    } else {
+      setSavedExchanges([]);
     }
-  }, []);
+  }, [user, toast]);
 
-  useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY_JARVIS, JSON.stringify(savedExchanges));
-      } catch (error) {
-        console.error("Failed to save Jarvis exchanges to localStorage:", error);
-      }
+  const addExchange = useCallback(async (data: Omit<SavedJarvisExchange, 'id' | 'timestamp'>) => {
+    if (!user || !db) {
+      toast({ title: "Not Logged In", description: "You must be logged in to save conversations.", variant: "destructive" });
+      return;
     }
-  }, [savedExchanges, isInitialized]);
-
-  const addExchange = useCallback((data: Omit<SavedJarvisExchange, 'id' | 'timestamp'>) => {
-    const newExchange: SavedJarvisExchange = {
-      id: uuidv4(),
+    const newExchangeData = {
+      ...data,
       timestamp: Date.now(),
-      ...data, // Contains title and exchanges array
     };
-    setSavedExchanges((prevExchanges) => [newExchange, ...prevExchanges].sort((a,b) => b.timestamp - a.timestamp));
-  }, []);
+    const conversationsCol = collection(db, 'users', user.uid, 'jarvisConversations');
+    await addDoc(conversationsCol, newExchangeData);
+  }, [user, toast]);
 
-  const removeExchange = useCallback((id: string) => {
-    setSavedExchanges((prevExchanges) => prevExchanges.filter((ex) => ex.id !== id));
-  }, []);
+  const removeExchange = useCallback(async (id: string) => {
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'jarvisConversations', id));
+  }, [user]);
 
   const isSaved = useCallback((
     title: string,

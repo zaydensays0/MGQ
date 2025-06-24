@@ -3,7 +3,10 @@
 
 import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+import { useUser } from './user-context';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface SavedQuestionsContextType {
   savedQuestions: SavedQuestion[];
@@ -16,74 +19,82 @@ interface SavedQuestionsContextType {
 
 const SavedQuestionsContext = createContext<SavedQuestionsContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'MGQsSavedQuestions';
-
 export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [savedQuestions, setSavedQuestions] = useState<SavedQuestion[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { user } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const items = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (items) {
-          setSavedQuestions(JSON.parse(items));
-        }
-      } catch (error) {
-        console.error("Failed to load saved questions from localStorage:", error);
-        setSavedQuestions([]);
-      }
-      setIsInitialized(true);
+    if (user && db) {
+      const q = query(collection(db, 'users', user.uid, 'savedQuestions'), orderBy('timestamp', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const questions: SavedQuestion[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        } as SavedQuestion));
+        setSavedQuestions(questions);
+      }, (error) => {
+        console.error("Error fetching saved questions:", error);
+        toast({ title: "Error", description: "Could not fetch saved questions.", variant: "destructive" });
+      });
+      return () => unsubscribe();
+    } else {
+      setSavedQuestions([]);
     }
-  }, []);
+  }, [user, toast]);
 
-  useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedQuestions));
-      } catch (error) {
-        console.error("Failed to save questions to localStorage:", error);
-      }
+  const addQuestion = useCallback(async (questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => {
+    if (!user || !db) {
+      toast({ title: "Not Logged In", description: "You must be logged in to save questions.", variant: "destructive" });
+      return;
     }
-  }, [savedQuestions, isInitialized]);
-
-  const addQuestion = useCallback((questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => {
-    const newQuestion: SavedQuestion = {
-      id: uuidv4(),
+    const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
+    await addDoc(questionsCol, {
+      ...questionData,
       timestamp: Date.now(),
-      answer: questionData.answer || '', // Ensure answer exists
-      options: questionData.options, // Persist options
-      ...questionData, 
-    };
-    setSavedQuestions((prevQuestions) => [newQuestion, ...prevQuestions].sort((a,b) => b.timestamp - a.timestamp));
-  }, []);
-
-  const addMultipleQuestions = useCallback((questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
-    const newQuestions: SavedQuestion[] = questions.map(qaPair => ({
-      id: uuidv4(),
-      text: qaPair.question,
-      answer: qaPair.answer,
-      options: qaPair.options, // Persist options
-      ...context,
-      timestamp: Date.now(),
-    }));
-    setSavedQuestions((prevQuestions) => {
-      const uniqueNewQuestions = newQuestions.filter(nq =>
-        !prevQuestions.some(pq =>
-          pq.text === nq.text &&
-          pq.subject === nq.subject &&
-          pq.chapter === nq.chapter &&
-          pq.gradeLevel === nq.gradeLevel &&
-          pq.questionType === nq.questionType
-        )
-      );
-      return [...prevQuestions, ...uniqueNewQuestions].sort((a,b) => b.timestamp - a.timestamp);
     });
-  }, []);
+  }, [user, toast]);
 
-  const removeQuestion = useCallback((id: string) => {
-    setSavedQuestions((prevQuestions) => prevQuestions.filter((q) => q.id !== id));
-  }, []);
+  const addMultipleQuestions = useCallback(async (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
+    if (!user || !db) {
+      toast({ title: "Not Logged In", description: "You must be logged in to save questions.", variant: "destructive" });
+      return;
+    }
+    const batch = writeBatch(db);
+    const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
+    
+    const uniqueNewQuestions = questions.filter(nq =>
+      !savedQuestions.some(pq =>
+        pq.text === nq.question &&
+        pq.subject === context.subject &&
+        pq.chapter === context.chapter &&
+        pq.gradeLevel === context.gradeLevel &&
+        pq.questionType === context.questionType
+      )
+    );
+
+    if (uniqueNewQuestions.length === 0) {
+      toast({ title: "Already Saved", description: "All displayed questions are already in your saved list."});
+      return;
+    }
+
+    uniqueNewQuestions.forEach(qaPair => {
+      const newDocRef = doc(questionsCol);
+      batch.set(newDocRef, {
+        text: qaPair.question,
+        answer: qaPair.answer,
+        options: qaPair.options,
+        ...context,
+        timestamp: Date.now(),
+      });
+    });
+    await batch.commit();
+  }, [user, savedQuestions, toast]);
+
+  const removeQuestion = useCallback(async (id: string) => {
+    if (!user || !db) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'savedQuestions', id));
+  }, [user]);
 
   const isSaved = useCallback((questionText: string, context: QuestionContext): boolean => {
     return savedQuestions.some(
@@ -99,7 +110,6 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
   const getQuestionsBySubjectAndChapter = useCallback((subject: string, chapter: string): SavedQuestion[] => {
     return savedQuestions.filter(q => q.subject === subject && q.chapter === chapter);
   }, [savedQuestions]);
-
 
   return (
     <SavedQuestionsContext.Provider value={{ savedQuestions, addQuestion, addMultipleQuestions, removeQuestion, isSaved, getQuestionsBySubjectAndChapter }}>

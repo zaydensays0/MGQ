@@ -51,10 +51,10 @@ export default function NewNotePage() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
     setIsSaving(true);
     try {
-      addNote(data);
+      await addNote(data);
       toast({
         title: 'Note Created!',
         description: 'Your new note has been saved successfully.',
