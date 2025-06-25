@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,7 @@ export default function NotesAIPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [generatedTitle, setGeneratedTitle] = useState<string>('');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // State for Chapter Notes
   const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
@@ -44,6 +45,20 @@ export default function NotesAIPage() {
   const { toast } = useToast();
   const { addNote } = useNotes();
   const selectedSubjectDetails = SUBJECTS.find(s => s.value === subject);
+
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      if (isLoading) {
+        audioElement.play().catch(error => {
+          console.error("Audio play failed.", error);
+        });
+      } else {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+    }
+  }, [isLoading]);
 
   const handleGenerateByChapter = async (e: FormEvent) => {
     e.preventDefault();
@@ -183,6 +198,7 @@ export default function NotesAIPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
+      <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
           <PenSquare className="w-8 h-8 mr-3 text-primary" />

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -238,6 +238,7 @@ export default function GrammarTestPage() {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [directAnswer, setDirectAnswer] = useState('');
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const { handleCorrectAnswer } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
@@ -251,6 +252,20 @@ export default function GrammarTestPage() {
             questionType: 'multiple_choice',
         },
     });
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        if (audioElement) {
+            if (isLoading && testState === 'setup') {
+                audioElement.play().catch(error => {
+                    console.error("Audio play failed.", error);
+                });
+            } else {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+            }
+        }
+    }, [isLoading, testState]);
 
     const handleStartTest = async (data: SetupFormValues) => {
         setIsLoading(true);
@@ -420,6 +435,7 @@ export default function GrammarTestPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8">
+            <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
             {renderContent()}
         </div>
     );

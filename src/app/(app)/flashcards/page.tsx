@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useFlashcards } from '@/contexts/flashcards-context';
 import { useToast } from '@/hooks/use-toast';
@@ -45,16 +46,32 @@ const AIGenerationDialog = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { addDeck } = useFlashcards();
     const { toast } = useToast();
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Form state
     const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
     const [subject, setSubject] = useState('');
     const [chapter, setChapter] = useState('');
-    const [numberOfCards, setNumberOfCards] = useState(10);
+    const [numberOfCards, setNumberOfCards] = useState('10');
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        if (audioElement) {
+          if (isLoading) {
+            audioElement.play().catch(error => {
+              console.error("Audio play failed.", error);
+            });
+          } else {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+          }
+        }
+    }, [isLoading]);
+
 
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!gradeLevel || !subject || !chapter) {
+        if (!gradeLevel || !subject || !chapter || !numberOfCards) {
             toast({ title: 'Missing fields', description: 'Please fill out all fields.', variant: 'destructive' });
             return;
         }
@@ -64,7 +81,7 @@ const AIGenerationDialog = () => {
             gradeLevel: gradeLevel as GradeLevelNCERT,
             subject,
             chapter,
-            numberOfCards,
+            numberOfCards: parseInt(numberOfCards, 10),
         };
 
         try {
@@ -87,6 +104,7 @@ const AIGenerationDialog = () => {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
             <DialogTrigger asChild>
                 <Button size="icon" aria-label="Generate with AI">
                     <Sparkles className="h-4 w-4" />
@@ -120,7 +138,7 @@ const AIGenerationDialog = () => {
                     </div>
                      <div>
                         <Label htmlFor="numberOfCards">Number of Cards (5-20)</Label>
-                        <Input id="numberOfCards" type="number" value={numberOfCards} onChange={(e) => setNumberOfCards(parseInt(e.target.value))} min="5" max="20" required />
+                        <Input id="numberOfCards" type="number" value={numberOfCards} onChange={(e) => setNumberOfCards(e.target.value)} min="5" max="20" required />
                     </div>
                     <DialogFooter>
                         <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
