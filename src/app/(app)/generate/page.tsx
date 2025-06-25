@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ContentSelectionForm, type FormValues } from '@/components/content-selection-form';
 import { generateQuestions, type GenerateQuestionsInput } from '@/ai/flows/generate-questions';
@@ -71,6 +71,7 @@ export default function ExamPrepPage() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const { toast } = useToast();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -84,6 +85,20 @@ export default function ExamPrepPage() {
       };
     }
   }, []);
+  
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      if (isGenerating) {
+        audioElement.play().catch(error => {
+          console.error("Audio play failed. User interaction may be required to enable autoplay.", error);
+        });
+      } else {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+    }
+  }, [isGenerating]);
 
   const handleFormSubmit = async (data: FormValues) => {
     if (!isOnline) {
@@ -201,6 +216,7 @@ export default function ExamPrepPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
+      <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         {/* Form Column */}
         <div className="lg:col-span-2 lg:sticky lg:top-20">
