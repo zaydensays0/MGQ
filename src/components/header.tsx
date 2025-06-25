@@ -56,11 +56,20 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isInitialized, logout } = useUser();
 
+  const playClickSound = () => {
+    try {
+      new Audio('/sounds/click.mp3').play().catch(e => console.error("Error playing sound:", e));
+    } catch (e) {
+      console.error("Could not play click sound.", e);
+    }
+  };
+
   const getIsActive = (href: string) => {
     return pathname.startsWith(href);
   };
   
   const handleLogout = async () => {
+    playClickSound();
     await logout();
     router.replace('/login');
   }
@@ -71,7 +80,7 @@ export function Header() {
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/generate" className="mr-6 flex items-center space-x-2">
+          <Link href="/generate" className="mr-6 flex items-center space-x-2" onClick={playClickSound}>
             <GraduationCap className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
@@ -93,6 +102,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={playClickSound}
                   className={cn(
                     "flex items-center transition-colors hover:text-foreground/80",
                     getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
@@ -104,7 +114,7 @@ export function Header() {
               ))}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
+                        <Button variant="ghost" onClick={playClickSound} className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
                             <LayoutGrid className="mr-2 h-4 w-4" />
                             More Tools
                         </Button>
@@ -112,7 +122,7 @@ export function Header() {
                     <DropdownMenuContent align="start">
                         {moreToolsLinks.map((link) => (
                              <DropdownMenuItem key={link.href} asChild>
-                                 <Link href={link.href} className="w-full flex">
+                                 <Link href={link.href} className="w-full flex" onClick={playClickSound}>
                                     <link.icon className="mr-2 h-4 w-4" />
                                     {link.label}
                                  </Link>
@@ -140,7 +150,7 @@ export function Header() {
               ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Avatar className="h-9 w-9 cursor-pointer">
+                        <Avatar className="h-9 w-9 cursor-pointer" onClick={playClickSound}>
                             <AvatarImage src={user.avatarUrl} alt={user.fullName} data-ai-hint="student avatar" />
                             <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -150,12 +160,16 @@ export function Header() {
                         <DropdownMenuSeparator />
                         <UserProgress user={user} />
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href="/account" className="w-full flex"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account" className="w-full flex" onClick={playClickSound}>
+                            <User className="mr-2 h-4 w-4" />Profile
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" onClick={playClickSound}>
                     <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login</Link>
                 </Button>
               )}
@@ -164,7 +178,7 @@ export function Header() {
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => { playClickSound(); setIsMobileMenuOpen(true); }}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
@@ -172,7 +186,7 @@ export function Header() {
               <SheetContent side="right" className="w-[260px] p-0 flex flex-col">
                  <SheetHeader className="p-6 pb-2">
                   <SheetTitle asChild>
-                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
                       <GraduationCap className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline">MGQs</span>
                     </Link>
@@ -183,7 +197,7 @@ export function Header() {
                   <>
                     <div className="p-6 pt-0 border-b">
                         <div>
-                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
                               <Avatar className="h-9 w-9 mr-3">
                                   <AvatarImage src={user.avatarUrl} alt={user.fullName} />
                                   <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
@@ -207,7 +221,7 @@ export function Header() {
                             "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
                             getIsActive(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
                           )}
-                          onClick={() => setIsMobileMenuOpen(false)}
+                          onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}
                         >
                           {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                           {link.label}
@@ -222,7 +236,7 @@ export function Header() {
                   </>
                 ) : (
                   <div className="p-6 flex flex-col gap-4">
-                     <Button asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                     <Button asChild className="w-full" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
                         <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login / Sign Up</Link>
                     </Button>
                   </div>
