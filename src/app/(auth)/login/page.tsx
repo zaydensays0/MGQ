@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -181,7 +180,7 @@ export default function LoginPage() {
               {formType === 'login' && (
                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                   <DialogTrigger asChild>
-                      <Button variant="link" type="button" className="p-0 h-auto text-muted-foreground">
+                      <Button variant="link" type="button" className="p-0 h-auto">
                           Forgot Password?
                       </Button>
                   </DialogTrigger>
