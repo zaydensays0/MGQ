@@ -173,7 +173,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : (formType === 'login' ? 'Log In' : 'Sign Up')}
             </Button>
-            <div className="flex justify-between items-center w-full text-sm">
+            <div className="flex flex-col items-center w-full text-sm gap-2">
               <Button variant="link" type="button" onClick={toggleFormType} className="p-0 h-auto">
                 {formType === 'login' ? "Don't have an account? Sign Up" : 'Already have an account? Log In'}
               </Button>
