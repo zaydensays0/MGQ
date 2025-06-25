@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles, KeyRound } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
 import type { User as UserType, BadgeKey, GradeLevelNCERT, Gender } from '@/types';
@@ -40,6 +40,9 @@ export default function AccountPage() {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [isSendingReset, setIsSendingReset] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
     const { toast } = useToast();
@@ -293,15 +296,69 @@ export default function AccountPage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="currentPassword">Current Password</Label>
-                                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                                <div className="relative">
+                                    <Input
+                                        id="currentPassword"
+                                        type={showCurrentPassword ? 'text' : 'password'}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        className="pr-10"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                                      onClick={() => setShowCurrentPassword(prev => !prev)}
+                                      aria-label="Toggle current password visibility"
+                                    >
+                                      {showCurrentPassword ? <EyeOff /> : <Eye />}
+                                    </Button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="newPassword">New Password</Label>
-                                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                <div className="relative">
+                                    <Input
+                                        id="newPassword"
+                                        type={showNewPassword ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="pr-10"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                                      onClick={() => setShowNewPassword(prev => !prev)}
+                                      aria-label="Toggle new password visibility"
+                                    >
+                                      {showNewPassword ? <EyeOff /> : <Eye />}
+                                    </Button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                                <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
+                                <div className="relative">
+                                    <Input
+                                        id="confirmNewPassword"
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        value={confirmNewPassword}
+                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                        className="pr-10"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                                      onClick={() => setShowConfirmPassword(prev => !prev)}
+                                      aria-label="Toggle confirm new password visibility"
+                                    >
+                                      {showConfirmPassword ? <EyeOff /> : <Eye />}
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between items-center">

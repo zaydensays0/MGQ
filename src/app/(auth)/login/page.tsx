@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GraduationCap, Loader2, AlertCircle, Settings } from 'lucide-react';
+import { GraduationCap, Loader2, AlertCircle, Settings, Eye, EyeOff } from 'lucide-react';
 import { GRADE_LEVELS } from '@/lib/constants';
 import type { GradeLevelNCERT } from '@/types';
 import { isFirebaseConfigured } from '@/lib/firebase';
@@ -65,6 +65,7 @@ export default function LoginPage() {
   const [userClass, setUserClass] = useState<GradeLevelNCERT | ''>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // State for password reset
   const [resetEmail, setResetEmail] = useState('');
@@ -163,7 +164,26 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
             </div>
             {error && (
               <Alert variant="destructive">
