@@ -94,7 +94,11 @@ export default function LoginPage() {
       }
       router.replace('/generate');
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      if (err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else {
+        setError(err.message || 'An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
