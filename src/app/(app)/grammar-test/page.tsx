@@ -292,12 +292,14 @@ export default function GrammarTestPage() {
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
             toast({ title: "Correct!", description: "Great job!" });
+            new Audio('/sounds/correct.mp3').play();
         } else {
             toast({
                 title: "Incorrect",
                 description: `The correct answer was: "${currentQuestion.answer}"`,
                 variant: "destructive"
             });
+            new Audio('/sounds/incorrect.mp3').play();
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }]);

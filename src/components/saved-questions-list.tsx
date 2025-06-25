@@ -49,8 +49,10 @@ const SavedQuestionItem: React.FC<{
 
     if (selected.trim().toLowerCase() === question.answer.trim().toLowerCase()) {
       toast({ title: "Correct!", description: "Well done!" });
+      new Audio('/sounds/correct.mp3').play();
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
+      new Audio('/sounds/incorrect.mp3').play();
     }
   };
   

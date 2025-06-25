@@ -103,6 +103,14 @@ export default function MockTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
+            new Audio('/sounds/correct.mp3').play();
+        } else {
+            toast({
+                title: "Incorrect",
+                description: `The correct answer was: "${currentQuestion.answer}"`,
+                variant: "destructive"
+            });
+            new Audio('/sounds/incorrect.mp3').play();
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }]);
