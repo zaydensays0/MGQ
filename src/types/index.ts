@@ -219,6 +219,7 @@ export const RecheckAnswerInputSchema = z.object({
   chapter: z.string().describe('The chapter the question is based on.'),
   question: z.string().describe('The question text.'),
   originalAnswer: z.string().describe('The original answer provided by the AI that needs to be checked.'),
+  options: z.array(z.string()).optional().describe('The options for a multiple choice question, if applicable.'),
 });
 export type RecheckAnswerInput = z.infer<typeof RecheckAnswerInputSchema>;
 

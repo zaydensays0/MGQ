@@ -41,11 +41,13 @@ const prompt = ai.definePrompt({
   name: 'generateQuestionsPrompt',
   input: {schema: GenerateQuestionsInputSchema},
   output: {schema: GenerateQuestionsOutputSchema},
-  prompt: `You are a helpful AI that generates questions and their corresponding answers for students based on their syllabus.
+  prompt: `You are a helpful AI that generates high-quality questions and their corresponding answers for students based on their syllabus.
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
   For each question, provide a concise and accurate answer. Ensure the questions are distinct, cover various aspects of the topic, and are not repetitive.
   
+  **Crucially, for multiple-choice questions, there must be only ONE unambiguously correct answer.** If a question could have multiple technically correct options, rephrase the question or options to ensure there is a single best answer. For example, for a question like "Which is a real number?", options like "A rational number" and "An irrational number" are both correct, making the question flawed. A better question would be "Which of the following statements best describes real numbers?", with the correct answer being "They include both rational and irrational numbers".
+
   If the questionType is "multiple_choice":
   - You MUST provide an "options" field, which is an array of 4 distinct string options (e.g., ["Option A", "Option B", "Option C", "Option D"]).
   - The "answer" field MUST be the exact text of one of these 4 options.

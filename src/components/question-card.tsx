@@ -72,6 +72,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
       const result = await recheckAnswer({
         question: currentQuestionText,
         originalAnswer: currentAnswerText,
+        options: currentOptions,
         ...questionContext,
       });
       setRecheckResult(result);

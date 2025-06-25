@@ -66,6 +66,7 @@ const SavedQuestionItem: React.FC<{
         gradeLevel: question.gradeLevel,
         subject: question.subject,
         chapter: question.chapter,
+        options: question.options,
       });
       setRecheckResult(result);
       toast({
