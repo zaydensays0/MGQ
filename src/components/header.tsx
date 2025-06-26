@@ -22,7 +22,6 @@ const mainFeatures = [
   { href: '/grammar', label: 'Grammar', icon: MessageSquareQuote },
   { href: '/subject-expert', label: 'Ask an Expert', icon: Brain },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { href: '/challenge', label: 'Challenge', icon: BarChart2 },
 ];
 
 const allToolsLinks = [

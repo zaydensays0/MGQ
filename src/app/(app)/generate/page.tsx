@@ -1,96 +1,163 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Check, FileText, MessageCircle, BarChart2, ChevronRight, GraduationCap } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import {
+  ContentSelectionForm,
+  type FormValues,
+} from '@/components/content-selection-form';
+import { QuestionList } from '@/components/question-list';
+import { generateQuestions } from '@/ai/flows/generate-questions';
+import { regenerateQuestion } from '@/ai/flows/regenerate-question';
+import type {
+  GeneratedQuestionAnswerPair,
+  QuestionContext,
+  GradeLevelNCERT,
+  QuestionTypeNCERT,
+} from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
-const FeatureCard = ({ icon, title, description, href }: { icon: React.ReactNode; title: string; description: string; href: string }) => {
-  const router = useRouter();
+export default function GeneratePage() {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestionAnswerPair[]>([]);
+  const [questionContext, setQuestionContext] = useState<QuestionContext | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.navigator !== 'undefined') {
+      setIsOnline(window.navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
+  const handleGenerate = async (data: FormValues) => {
+    if (!isOnline) {
+      toast({
+        title: 'You are offline',
+        description: 'Please check your internet connection and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsGenerating(true);
+    setError(null);
+    setGeneratedQuestions([]);
+    
+    const context: QuestionContext = {
+      gradeLevel: data.gradeLevel as GradeLevelNCERT,
+      subject: data.subject,
+      chapter: data.chapter,
+      questionType: data.questionType as QuestionTypeNCERT,
+    };
+    setQuestionContext(context);
+    
+    try {
+      const result = await generateQuestions({
+        ...context,
+        numberOfQuestions: parseInt(data.numberOfQuestions, 10),
+      });
+
+      if (result && result.questions.length > 0) {
+        setGeneratedQuestions(result.questions);
+        toast({
+          title: 'Questions Generated!',
+          description: `Successfully generated ${result.questions.length} questions.`,
+        });
+      } else {
+        setError('The AI could not generate questions for the given topic. Please try a different chapter or subject.');
+      }
+    } catch (err) {
+      console.error('Generation Error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Failed to generate questions. ${errorMessage}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = async (originalQuestion: string, originalOptions?: string[]) => {
+    if (!questionContext) {
+      toast({
+        title: 'Error',
+        description: 'Question context is missing. Cannot regenerate.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    try {
+      const result = await regenerateQuestion({
+        ...questionContext,
+        originalQuestion,
+        originalOptions,
+      });
+
+      if (result) {
+        const newQuestionPair: GeneratedQuestionAnswerPair = {
+          question: result.regeneratedQuestion,
+          answer: result.regeneratedAnswer,
+          options: result.regeneratedOptions,
+        };
+
+        setGeneratedQuestions((prev) =>
+          prev.map((q) =>
+            q.question === originalQuestion ? newQuestionPair : q
+          )
+        );
+
+        return {
+          question: result.regeneratedQuestion,
+          answer: result.regeneratedAnswer,
+          options: result.regeneratedOptions,
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error('Regeneration Error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      toast({
+        title: 'Regeneration Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   return (
-    <Link href={href} className="block hover:scale-[1.02] transition-transform duration-200">
-      <Card className="h-full">
-        <CardContent className="p-6 flex flex-col items-center text-center">
-          <div className="bg-primary/20 dark:bg-primary/10 text-primary rounded-lg p-3 mb-4">
-            {icon}
-          </div>
-          <h3 className="font-bold text-lg text-card-foreground">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        </CardContent>
-      </Card>
-    </Link>
+    <div className="container mx-auto p-4 md:p-8">
+      <div className="space-y-8">
+        <ContentSelectionForm
+          onSubmit={handleGenerate}
+          isGenerating={isGenerating}
+          isOnline={isOnline}
+        />
+        {error && (
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Generation Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {generatedQuestions.length > 0 && questionContext && (
+          <QuestionList
+            questions={generatedQuestions}
+            questionContext={questionContext}
+            onRegenerateQuestion={handleRegenerate}
+          />
+        )}
+      </div>
+    </div>
   );
-};
-
-const ChallengeBanner = () => (
-    <Link href="/mock-test" className="block hover:scale-[1.01] transition-transform duration-200">
-        <Card className="p-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent-foreground p-3 rounded-lg mr-4">
-                        <BarChart2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-lg text-card-foreground">Challenge</h3>
-                        <p className="text-sm text-muted-foreground">Challenge your friends</p>
-                    </div>
-                </div>
-                <ChevronRight className="w-6 h-6 text-muted-foreground" />
-            </div>
-        </Card>
-    </Link>
-);
-
-export default function DashboardPage() {
-    const router = useRouter();
-
-    return (
-        <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-           <div className="text-center my-8 md:my-12">
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                    The smartest way to prepare for Classes 9 to 12
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Instantly generate questions, get expert help, and challenge your friends with AI-powered mock tests.
-                </p>
-                <Button size="lg" variant="accent" className="mt-8" onClick={() => router.push('/mock-test')}>
-                    Start Test
-                </Button>
-           </div>
-           
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-10">
-                <FeatureCard 
-                    icon={<Check className="w-8 h-8"/>}
-                    title="Mock Tests"
-                    description="AI-generated practice tests"
-                    href="/mock-test"
-                />
-                 <FeatureCard 
-                    icon={<FileText className="w-8 h-8"/>}
-                    title="Notes"
-                    description="Study material for all subjects"
-                    href="/notes"
-                />
-                 <FeatureCard 
-                    icon={
-                        <span className="font-extrabold text-3xl h-8 w-8 flex items-center justify-center">G</span>
-                    }
-                    title="Grammar"
-                    description="Grammar checking tool"
-                    href="/grammar"
-                />
-                 <FeatureCard 
-                    icon={<MessageCircle className="w-8 h-8"/>}
-                    title="Ask an Expert"
-                    description="Chat with subject experts"
-                    href="/subject-expert"
-                />
-           </div>
-
-           <div className="my-10">
-                <ChallengeBanner />
-           </div>
-        </div>
-    );
 }
