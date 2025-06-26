@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, BarChart2
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -17,18 +17,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Progress } from './ui/progress';
 
 const mainFeatures = [
+  { href: '/home', label: 'Dashboard', icon: LayoutGrid },
+  { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/grammar', label: 'Grammar', icon: MessageSquareQuote },
   { href: '/subject-expert', label: 'Ask an Expert', icon: Brain },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
 const allToolsLinks = [
-  { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
+  { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
@@ -62,22 +63,30 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-accent/20 dark:border-accent/10 bg-accent text-accent-foreground shadow-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container relative flex h-16 max-w-screen-2xl items-center justify-between">
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/generate" className="mr-6 flex items-center space-x-2">
-            <GraduationCap className="h-8 w-8" />
+          <Link href="/home" className="mr-6 flex items-center space-x-2">
+            <GraduationCap className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
                 MGQs
               </span>
-              <span className="text-xs -mt-1 inline-block opacity-80">
-                Mehdi Gave Questions
-              </span>
             </div>
           </Link>
+          <nav className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
+            {mainFeatures.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                    {link.label}
+                </Link>
+            ))}
+          </nav>
         </div>
         
         {/* RIGHT SECTION */}
@@ -89,7 +98,7 @@ export function Header() {
               ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-accent ring-white dark:ring-primary">
+                        <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-background ring-primary">
                             <AvatarImage src={user.avatarUrl} alt={user.fullName} data-ai-hint="student avatar" />
                             <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -117,7 +126,7 @@ export function Header() {
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="hover:bg-accent/80 focus-visible:ring-primary" onClick={() => setIsMobileMenuOpen(true)}>
+                <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-primary" onClick={() => setIsMobileMenuOpen(true)}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
@@ -125,8 +134,8 @@ export function Header() {
               <SheetContent side="right" className="w-[260px] p-0 flex flex-col bg-card">
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
-                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                      <GraduationCap className="h-5 w-5 text-accent" />
+                    <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <GraduationCap className="h-5 w-5 text-primary" />
                       <span className="font-bold text-md font-headline text-foreground">MGQs</span>
                     </Link>
                   </SheetTitle>
@@ -158,7 +167,7 @@ export function Header() {
                           key={link.href}
                           href={link.href}
                           className={cn(
-                            "flex items-center text-base font-medium transition-colors hover:text-accent py-2 px-2 rounded-md text-foreground/80 hover:bg-accent/10"
+                            "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md text-foreground/80 hover:bg-muted"
                           )}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -172,7 +181,7 @@ export function Header() {
                           key={link.href}
                           href={link.href}
                           className={cn(
-                            "flex items-center text-base font-medium transition-colors hover:text-accent py-2 px-2 rounded-md text-foreground/80 hover:bg-accent/10"
+                            "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md text-foreground/80 hover:bg-muted"
                           )}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >

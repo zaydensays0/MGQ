@@ -78,7 +78,7 @@ export default function LoginPage() {
   // Redirect if user is already logged in and context is initialized
   useEffect(() => {
     if (isInitialized && user) {
-      router.replace('/generate');
+      router.replace('/home');
     }
   }, [user, isInitialized, router]);
 

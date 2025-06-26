@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 export default function HomePage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/generate');
+    router.replace('/home');
   }, [router]);
   
   return (
