@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, LayoutGrid, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy } from 'lucide-react';
+import {
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, BarChart2
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,26 +16,26 @@ import { Skeleton } from './ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from './ui/progress';
 
-const navLinks = [
-  { href: '/generate', label: 'Generate', icon: Sparkles },
-  { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
+const mainFeatures = [
+  { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/flashcards', label: 'Flashcards', icon: Layers },
+  { href: '/grammar', label: 'Grammar', icon: MessageSquareQuote },
+  { href: '/subject-expert', label: 'Ask an Expert', icon: Brain },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/challenge', label: 'Challenge', icon: BarChart2 },
 ];
 
-const moreToolsLinks = [
-  { href: '/mock-test', label: 'Mock Test', icon: ClipboardCheck },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+const allToolsLinks = [
+  { href: '/generate', label: 'Generate Questions', icon: Sparkles },
+  { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
+  { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
-  { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
-  { href: '/subject-expert', label: 'Subject Expert', icon: Brain },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
   { href: '/donation', label: 'Donate', icon: Heart },
 ];
-
 
 const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['user']> }) => {
     const { currentLevelStart, nextLevelTarget } = getXpForLevel(user.level);
@@ -51,106 +53,44 @@ const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['
 };
 
 export function Header() {
-  const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isInitialized, logout } = useUser();
 
-  const playClickSound = () => {
-    try {
-      new Audio('/sounds/click.mp3').play().catch(e => console.error("Error playing sound:", e));
-    } catch (e) {
-      console.error("Could not play click sound.", e);
-    }
-  };
-
-  const getIsActive = (href: string) => {
-    return pathname.startsWith(href);
-  };
-  
   const handleLogout = async () => {
-    playClickSound();
     await logout();
     router.replace('/login');
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-accent/20 dark:border-accent/10 bg-accent text-accent-foreground shadow-md">
       <div className="container relative flex h-16 max-w-screen-2xl items-center justify-between">
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/generate" className="mr-6 flex items-center space-x-2" onClick={playClickSound}>
-            <GraduationCap className="h-8 w-8 text-primary" />
+          <Link href="/generate" className="mr-6 flex items-center space-x-2">
+            <GraduationCap className="h-8 w-8" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
                 MGQs
               </span>
-              <span className="text-xs -mt-1 inline-block">
-                <span className="font-bold text-red-600 dark:text-red-500">MEHDI</span>{' '}
-                <span className="text-muted-foreground">
-                  <span className="font-bold text-primary">G</span>ave{' '}
-                  <span className="font-bold text-primary">Q</span>uestions
-                </span>
+              <span className="text-xs -mt-1 inline-block opacity-80">
+                Mehdi Gave Questions
               </span>
             </div>
           </Link>
-          
-          {isInitialized && user && (
-            <nav className="hidden md:flex items-center space-x-4 text-sm font-medium">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={playClickSound}
-                  className={cn(
-                    "flex items-center transition-colors hover:text-foreground/80",
-                    getIsActive(link.href) ? "text-foreground" : "text-foreground/60"
-                  )}
-                >
-                  {link.icon && <link.icon className="mr-2 h-4 w-4" />}
-                  {link.label}
-                </Link>
-              ))}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" onClick={playClickSound} className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60 p-0 h-auto px-2 py-1">
-                            <LayoutGrid className="mr-2 h-4 w-4" />
-                            More Tools
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        {moreToolsLinks.map((link) => (
-                             <DropdownMenuItem key={link.href} asChild>
-                                 <Link href={link.href} className="w-full flex" onClick={playClickSound}>
-                                    <link.icon className="mr-2 h-4 w-4" />
-                                    {link.label}
-                                 </Link>
-                             </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </nav>
-          )}
         </div>
         
-        {/* CENTER SECTION - ABSOLUTELY POSITIONED */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-            <span className="font-extrabold text-lg bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-accent animate-pulse">
-                A GUY WITH MRF BAT
-            </span>
-        </div>
-
         {/* RIGHT SECTION */}
         <div className="flex items-center justify-end space-x-2 md:space-x-4">
           <ThemeToggle />
-           <div className="hidden md:block">
+           <div>
               {!isInitialized ? (
-                 <Skeleton className="h-9 w-9 rounded-full" />
+                 <Skeleton className="h-10 w-24 rounded-md" />
               ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Avatar className="h-9 w-9 cursor-pointer" onClick={playClickSound}>
+                        <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-accent ring-white dark:ring-primary">
                             <AvatarImage src={user.avatarUrl} alt={user.fullName} data-ai-hint="student avatar" />
                             <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -161,7 +101,7 @@ export function Header() {
                         <UserProgress user={user} />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link href="/account" className="w-full flex" onClick={playClickSound}>
+                          <Link href="/account" className="w-full flex">
                             <User className="mr-2 h-4 w-4" />Profile
                           </Link>
                         </DropdownMenuItem>
@@ -169,8 +109,8 @@ export function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild variant="outline" onClick={playClickSound}>
-                    <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login</Link>
+                <Button asChild variant="default" className="font-bold">
+                    <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Sign In</Link>
                 </Button>
               )}
           </div>
@@ -178,32 +118,32 @@ export function Header() {
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => { playClickSound(); setIsMobileMenuOpen(true); }}>
+                <Button variant="ghost" size="icon" className="hover:bg-accent/80 focus-visible:ring-primary" onClick={() => setIsMobileMenuOpen(true)}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[260px] p-0 flex flex-col">
-                 <SheetHeader className="p-6 pb-2">
+              <SheetContent side="right" className="w-[260px] p-0 flex flex-col bg-card">
+                 <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
-                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
-                      <GraduationCap className="h-5 w-5 text-primary" />
-                      <span className="font-bold text-md font-headline">MGQs</span>
+                    <Link href="/generate" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <GraduationCap className="h-5 w-5 text-accent" />
+                      <span className="font-bold text-md font-headline text-foreground">MGQs</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
 
                 {isInitialized && user ? (
                   <>
-                    <div className="p-6 pt-0 border-b">
+                    <div className="p-4 border-b">
                         <div>
-                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
+                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => setIsMobileMenuOpen(false)}>
                               <Avatar className="h-9 w-9 mr-3">
                                   <AvatarImage src={user.avatarUrl} alt={user.fullName} />
                                   <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div>
-                                  <p className="font-semibold">{user.fullName}</p>
+                                  <p className="font-semibold text-foreground">{user.fullName}</p>
                                   <p className="text-sm text-muted-foreground">View Account</p>
                               </div>
                           </Link>
@@ -212,31 +152,45 @@ export function Header() {
                           </div>
                         </div>
                     </div>
-                    <nav className="flex flex-col space-y-3 p-6 flex-grow overflow-y-auto">
-                      {[...navLinks, ...moreToolsLinks].map((link) => (
+                    <nav className="flex flex-col space-y-1 p-4 flex-grow overflow-y-auto">
+                      <p className="text-xs font-semibold text-muted-foreground px-2 pt-2 pb-1 uppercase">Features</p>
+                      {[...mainFeatures].map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           className={cn(
-                            "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md",
-                            getIsActive(link.href) ? "text-primary bg-muted" : "text-foreground/80 hover:bg-muted/50"
+                            "flex items-center text-base font-medium transition-colors hover:text-accent py-2 px-2 rounded-md text-foreground/80 hover:bg-accent/10"
                           )}
-                          onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
+                          {link.label}
+                        </Link>
+                      ))}
+                       <p className="text-xs font-semibold text-muted-foreground px-2 pt-4 pb-1 uppercase">All Tools</p>
+                       {[...allToolsLinks].map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={cn(
+                            "flex items-center text-base font-medium transition-colors hover:text-accent py-2 px-2 rounded-md text-foreground/80 hover:bg-accent/10"
+                          )}
+                          onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                           {link.label}
                         </Link>
                       ))}
                     </nav>
-                    <div className="p-6 border-t">
-                        <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                    <div className="p-4 border-t">
+                        <Button variant="ghost" className="w-full justify-start text-foreground/80" onClick={handleLogout}>
                             <LogOut className="mr-3 h-5 w-5"/> Logout
                         </Button>
                     </div>
                   </>
                 ) : (
-                  <div className="p-6 flex flex-col gap-4">
-                     <Button asChild className="w-full" onClick={() => { playClickSound(); setIsMobileMenuOpen(false); }}>
+                  <div className="p-4 flex flex-col gap-4">
+                     <Button asChild className="w-full" variant="accent" onClick={() => setIsMobileMenuOpen(false)}>
                         <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login / Sign Up</Link>
                     </Button>
                   </div>
