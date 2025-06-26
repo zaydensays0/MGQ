@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -74,6 +75,9 @@ export function Header() {
               <span className="font-bold sm:inline-block text-lg font-headline">
                 MGQs
               </span>
+              <span className="text-xs text-primary/80 font-medium tracking-wider -mt-1">
+                MEHDI Gave Question
+              </span>
             </div>
           </Link>
           <nav className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
@@ -135,8 +139,11 @@ export function Header() {
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
                     <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                      <GraduationCap className="h-5 w-5 text-primary" />
-                      <span className="font-bold text-md font-headline text-foreground">MGQs</span>
+                      <GraduationCap className="h-6 w-6 text-primary" />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-md font-headline text-foreground">MGQs</span>
+                        <span className="text-[10px] text-primary/80 font-medium tracking-wide -mt-1">MEHDI Gave Question</span>
+                      </div>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
