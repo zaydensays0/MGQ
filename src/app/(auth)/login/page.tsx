@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 import { Button } from '@/components/ui/button';
@@ -72,8 +72,16 @@ export default function LoginPage() {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
-  const { login, signup, sendPasswordReset } = useUser();
+  const { user, isInitialized, login, signup, sendPasswordReset } = useUser();
   const router = useRouter();
+
+  // Redirect if user is already logged in and context is initialized
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.replace('/generate');
+    }
+  }, [user, isInitialized, router]);
+
 
   if (!isFirebaseConfigured) {
       return <FirebaseNotConfigured />;
@@ -93,7 +101,8 @@ export default function LoginPage() {
         }
         await signup(fullName, email, password, userClass);
       }
-      router.replace('/generate');
+      // The redirection is now handled by the useEffect hook above,
+      // which waits for the user state to be updated globally.
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError('Invalid email or password. Please check your credentials and try again.');
