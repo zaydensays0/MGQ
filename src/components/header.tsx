@@ -69,14 +69,16 @@ export function Header() {
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/home" className="mr-6 flex items-baseline space-x-2">
-            <GraduationCap className="h-6 w-6 text-primary" />
-            <span className="font-bold sm:inline-block text-xl font-headline">
-              MGQ
-            </span>
-            <span className="text-sm text-primary font-semibold tracking-wide">
-              MEHDI Gave Question
-            </span>
+          <Link href="/home" className="mr-6 flex items-center space-x-2">
+            <GraduationCap className="h-7 w-7 text-primary" />
+            <div>
+              <span className="font-bold sm:inline-block text-xl font-headline">
+                MGQ
+              </span>
+              <p className="text-xs text-primary font-bold tracking-wide -mt-1">
+                MEHDI Gave Question
+              </p>
+            </div>
           </Link>
           <nav className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
             {mainFeatures.map((link) => (
@@ -136,10 +138,12 @@ export function Header() {
               <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-card">
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
-                    <Link href="/home" className="flex items-baseline space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                        <GraduationCap className="h-6 w-6 text-primary" />
-                        <span className="font-bold text-lg font-headline text-foreground">MGQ</span>
-                        <span className="text-xs text-primary font-semibold tracking-wide">MEHDI Gave Question</span>
+                    <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                        <GraduationCap className="h-7 w-7 text-primary" />
+                        <div>
+                          <span className="font-bold text-lg font-headline text-foreground">MGQ</span>
+                          <p className="text-xs text-primary font-bold tracking-wide -mt-1">MEHDI Gave Question</p>
+                        </div>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
