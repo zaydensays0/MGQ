@@ -73,9 +73,9 @@ export function Header() {
             <GraduationCap className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
               <span className="font-bold sm:inline-block text-lg font-headline">
-                MGQs
+                MGQ
               </span>
-              <span className="text-xs text-primary/80 font-medium tracking-wider -mt-1">
+              <span className="text-xs text-primary font-medium tracking-wider -mt-1">
                 MEHDI Gave Question
               </span>
             </div>
@@ -141,8 +141,10 @@ export function Header() {
                     <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <GraduationCap className="h-6 w-6 text-primary" />
                       <div className="flex flex-col">
-                        <span className="font-bold text-md font-headline text-foreground">MGQs</span>
-                        <span className="text-[10px] text-primary/80 font-medium tracking-wide -mt-1">MEHDI Gave Question</span>
+                        <span className="font-bold text-md font-headline text-foreground">MGQ</span>
+                        <span className="text-[10px] text-primary font-medium tracking-wide -mt-1">
+                          MEHDI Gave Question
+                        </span>
                       </div>
                     </Link>
                   </SheetTitle>
