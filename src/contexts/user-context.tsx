@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, GradeLevelNCERT } from '@/types';
+import type { User, GradeLevelNCERT, Gender } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -56,7 +56,7 @@ interface UserContextType {
   firebaseUser: FirebaseUser | null;
   isInitialized: boolean;
   login: (email: string, pass: string) => Promise<void>;
-  signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => Promise<void>;
+  signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender) => Promise<void>;
   logout: () => Promise<void>;
   handleCorrectAnswer: (baseXp: number) => void;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -103,10 +103,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, pass: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
+    new Audio('/sounds/login-success.mp3').play().catch(e => console.error("Error playing sound:", e));
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 
-  const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT) => {
+  const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender) => {
     if (!auth || !db) throw new Error("Firebase is not configured.");
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const { uid } = userCredential.user;
@@ -122,6 +123,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       lastCorrectAnswerDate: '',
       badges: [],
       class: userClass,
+      gender,
     };
     
     await setDoc(doc(db, 'users', uid), newUser);
