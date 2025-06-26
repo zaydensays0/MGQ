@@ -69,16 +69,14 @@ export function Header() {
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/home" className="mr-6 flex items-center space-x-2">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            <div className="flex flex-col">
-              <span className="font-bold sm:inline-block text-lg font-headline">
-                MGQ
-              </span>
-              <span className="text-xs text-primary font-medium tracking-wider -mt-1">
-                MEHDI Gave Question
-              </span>
-            </div>
+          <Link href="/home" className="mr-6 flex items-baseline space-x-2">
+            <GraduationCap className="h-6 w-6 text-primary" />
+            <span className="font-bold sm:inline-block text-xl font-headline">
+              MGQ
+            </span>
+            <span className="text-sm text-primary font-semibold tracking-wide">
+              MEHDI Gave Question
+            </span>
           </Link>
           <nav className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
             {mainFeatures.map((link) => (
@@ -135,17 +133,13 @@ export function Header() {
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[260px] p-0 flex flex-col bg-card">
+              <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-card">
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
-                    <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                      <GraduationCap className="h-6 w-6 text-primary" />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-md font-headline text-foreground">MGQ</span>
-                        <span className="text-[10px] text-primary font-medium tracking-wide -mt-1">
-                          MEHDI Gave Question
-                        </span>
-                      </div>
+                    <Link href="/home" className="flex items-baseline space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+                        <GraduationCap className="h-6 w-6 text-primary" />
+                        <span className="font-bold text-lg font-headline text-foreground">MGQ</span>
+                        <span className="text-xs text-primary font-semibold tracking-wide">MEHDI Gave Question</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
