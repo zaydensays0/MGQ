@@ -4,13 +4,11 @@ import Link from 'next/link';
 import {
   Sparkles,
   BookMarked,
-  ClipboardCheck,
   FileText,
   PenSquare,
   Layers,
-  MessageSquareQuote,
+  MessageSquare,
   SpellCheck,
-  Brain,
   History,
   Bot,
   Archive,
@@ -18,33 +16,45 @@ import {
   User,
   Heart,
   LayoutGrid,
-  ArrowRight
+  CheckSquare,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/user-context';
+import type { LucideIcon } from 'lucide-react';
 
-const features = [
-  // Core AI Tools
-  { title: 'Generate Questions', href: '/generate', icon: Sparkles, description: 'Create custom questions on any topic with AI.' },
-  { title: 'AI Notes Generator', href: '/notes-ai', icon: PenSquare, description: 'Let AI generate or summarize notes for you.' },
-  { title: 'Ask an Expert', href: '/subject-expert', icon: Brain, description: 'Get detailed answers on specific chapters.' },
-  { title: 'Ask Jarvis', href: '/jarvis', icon: Bot, description: 'A general-purpose AI assistant for any query.' },
-  // Practice & Test
-  { title: 'Mock Tests', href: '/mock-test', icon: ClipboardCheck, description: 'Take AI-generated mock tests to prepare.' },
-  { title: 'Flashcards', href: '/flashcards', icon: Layers, description: 'Study with smart, auto-generated flashcards.' },
-  { title: 'Grammar Test', href: '/grammar-test', icon: SpellCheck, description: 'Sharpen your grammar with targeted tests.' },
-  { title: 'Grammar Helper', href: '/grammar', icon: MessageSquareQuote, description: 'Get instant answers to grammar questions.' },
-  // Content & Management
-  { title: 'Saved Questions', href: '/saved', icon: BookMarked, description: 'Review and manage all your saved questions.' },
-  { title: 'My Notes', href: '/notes', icon: FileText, description: 'Create and organize your personal study notes.' },
-  { title: 'Expert Archive', href: '/subject-expert-saved', icon: History, description: 'Revisit your saved chats with the Expert AI.' },
-  { title: 'Jarvis Archive', href: '/jarvis-saved', icon: Archive, description: 'Access your saved conversations with Jarvis.' },
-  // Community & Profile
-  { title: 'Leaderboard', href: '/leaderboard', icon: Trophy, description: 'See how you rank against other students.' },
-  { title: 'Account', href: '/account', icon: User, description: 'Manage your profile, stats, and preferences.' },
-  { title: 'Support Us', href: '/donation', icon: Heart, description: 'Help us improve with a small donation.' },
+// Custom icon for Grammar to match the design
+const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</span>);
+
+const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
+  { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
+  { title: 'Notes', href: '/notes', icon: <FileText className="w-6 h-6 text-primary" />, description: 'Create and organize your personal study notes.' },
+  { title: 'Grammar', href: '/grammar', icon: <GrammarIcon />, description: 'Your personal grammar checking tool.' },
+  { title: 'Ask an Expert', href: '/subject-expert', icon: <MessageSquare className="w-6 h-6 text-primary" />, description: 'Chat with subject experts for any topic.' },
+  { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
+  { title: 'AI Notes Generator', href: '/notes-ai', icon: <PenSquare className="w-6 h-6 text-primary" />, description: 'Let AI generate or summarize notes for you.' },
+  { title: 'Ask Jarvis', href: '/jarvis', icon: <Bot className="w-6 h-6 text-primary" />, description: 'A general-purpose AI assistant for any query.' },
+  { title: 'Flashcards', href: '/flashcards', icon: <Layers className="w-6 h-6 text-primary" />, description: 'Study with smart, auto-generated flashcards.' },
+  { title: 'Grammar Test', href: '/grammar-test', icon: <SpellCheck className="w-6 h-6 text-primary" />, description: 'Sharpen your grammar with targeted tests.' },
+  { title: 'Saved Questions', href: '/saved', icon: <BookMarked className="w-6 h-6 text-primary" />, description: 'Review and manage all your saved questions.' },
+  { title: 'Expert Archive', href: '/subject-expert-saved', icon: <History className="w-6 h-6 text-primary" />, description: 'Revisit your saved chats with the Expert AI.' },
+  { title: 'Jarvis Archive', href: '/jarvis-saved', icon: <Archive className="w-6 h-6 text-primary" />, description: 'Access your saved conversations with Jarvis.' },
+  { title: 'Leaderboard', href: '/leaderboard', icon: <Trophy className="w-6 h-6 text-primary" />, description: 'See how you rank against other students.' },
+  { title: 'Account', href: '/account', icon: <User className="w-6 h-6 text-primary" />, description: 'Manage your profile, stats, and preferences.' },
+  { title: 'Support Us', href: '/donation', icon: <Heart className="w-6 h-6 text-primary" />, description: 'Help us improve with a small donation.' },
 ];
+
+const FeatureCard = ({ feature }: { feature: typeof features[0] }) => {
+    return (
+        <Link href={feature.href} className="block group">
+            <div className="p-6 h-full transition-shadow duration-300 group-hover:shadow-xl shadow-md bg-card rounded-2xl border border-transparent hover:border-primary/20">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-6">
+                    {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-1">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+            </div>
+        </Link>
+    );
+};
 
 export default function HomePage() {
   const { user } = useUser();
@@ -63,22 +73,7 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {features.map((feature) => (
-          <Card key={feature.href} className="flex flex-col shadow-lg hover:shadow-primary/20 transition-shadow duration-300 bg-card/50 dark:bg-card/80">
-            <CardHeader>
-              <feature.icon className="w-8 h-8 mb-2 text-primary" />
-              <CardTitle>{feature.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <CardDescription>{feature.description}</CardDescription>
-            </CardContent>
-            <CardFooter>
-              <Button asChild className="w-full">
-                <Link href={feature.href}>
-                  Go to Feature <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
+          <FeatureCard key={feature.href} feature={feature} />
         ))}
       </div>
     </div>
