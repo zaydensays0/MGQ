@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,7 +65,10 @@ export default function GeneratePage() {
     
     try {
       const result = await generateQuestions({
-        ...context,
+        gradeLevel: parseInt(data.gradeLevel, 10),
+        subject: data.subject,
+        chapter: data.chapter,
+        questionType: data.questionType as QuestionTypeNCERT,
         numberOfQuestions: parseInt(data.numberOfQuestions, 10),
       });
 
