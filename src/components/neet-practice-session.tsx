@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -58,7 +59,7 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
 
     useEffect(() => {
         setCurrentQuestionIndex(0);
-    }, [filteredQuestionIndices]);
+    }, [typeFilter, difficultyFilter, statusFilter]);
     
     const activeQuestionIndex = filteredQuestionIndices[currentQuestionIndex];
     const currentQuestion = activeQuestionIndex !== undefined ? questions[activeQuestionIndex] : null;
