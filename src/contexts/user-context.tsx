@@ -196,6 +196,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
       xpGained += streakBonus;
 
+      if (newStreak === 3 && !newBadges.includes('mini_streak')) {
+        newBadges.push('mini_streak');
+        toast({ title: 'Badge Unlocked! 🔥', description: 'You earned the "Mini Streak" badge for a 3-day streak!' });
+      }
       if (newStreak === 7 && !newBadges.includes('streak_master')) {
         newBadges.push('streak_master');
         toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
