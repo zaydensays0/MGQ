@@ -118,7 +118,16 @@ function PracticePageContent() {
                     {!isComprehensive && (
                         <div className="space-y-2 text-left">
                             <Label htmlFor="num-questions">Number of Questions</Label>
-                            <Input id="num-questions" type="number" min="1" value={numberOfQuestions} onChange={(e) => setNumberOfQuestions(parseInt(e.target.value))} />
+                            <Input
+                              id="num-questions"
+                              type="number"
+                              min="1"
+                              value={numberOfQuestions}
+                              onChange={(e) => {
+                                const num = parseInt(e.target.value);
+                                setNumberOfQuestions(isNaN(num) ? 0 : num);
+                              }}
+                            />
                         </div>
                     )}
                 </div>
