@@ -55,9 +55,11 @@ interface UserContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   isInitialized: boolean;
+  isGuest: boolean;
   login: (email: string, pass: string) => Promise<void>;
   signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender) => Promise<void>;
   logout: () => Promise<void>;
+  continueAsGuest: () => void;
   handleCorrectAnswer: (baseXp: number) => void;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -70,6 +72,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
@@ -90,6 +93,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
+        setIsGuest(false);
         await fetchUserData(fbUser.uid);
       } else {
         setUser(null);
@@ -100,9 +104,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribe();
   }, [fetchUserData]);
 
+  const continueAsGuest = () => {
+    setIsGuest(true);
+    setUser(null);
+    setFirebaseUser(null);
+    toast({ title: "Welcome, Guest!", description: "You can now explore and generate questions." });
+  };
+  
   const login = async (email: string, pass: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
+    setIsGuest(false);
     new Audio('/sounds/login-success.mp3').play().catch(e => console.error("Error playing sound:", e));
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
@@ -128,14 +140,18 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     await setDoc(doc(db, 'users', uid), newUser);
     setUser(newUser);
+    setIsGuest(false);
     toast({ title: 'Account Created!', description: 'Welcome! You have been logged in.' });
   };
 
   const logout = async () => {
     if (!auth) throw new Error("Firebase is not configured.");
-    await signOut(auth);
+    if (!isGuest && firebaseUser) {
+      await signOut(auth);
+    }
     setUser(null);
     setFirebaseUser(null);
+    setIsGuest(false);
     toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
   };
   
@@ -156,7 +172,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [firebaseUser, toast]);
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
-    if (!user || !firebaseUser || !db) return;
+    if (!user || !firebaseUser || !db || isGuest) return;
     
     let xpGained = baseXp;
     let newStreak = user.streak;
@@ -215,7 +231,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } else {
       toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
-  }, [user, firebaseUser, toast]);
+  }, [user, firebaseUser, toast, isGuest]);
 
   const sendPasswordReset = async (email: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
@@ -253,7 +269,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, login, signup, logout, handleCorrectAnswer, updateUserProfile, sendPasswordReset, changeUserPassword }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, updateUserProfile, sendPasswordReset, changeUserPassword }}>
       {children}
     </UserContext.Provider>
   );

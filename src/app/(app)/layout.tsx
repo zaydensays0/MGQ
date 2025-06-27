@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/header';
@@ -12,7 +13,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isOnline, setIsOnline] = useState(true);
-  const { user, isInitialized } = useUser();
+  const { user, isInitialized, isGuest } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -30,12 +31,12 @@ export default function AppLayout({
   }, []);
   
   useEffect(() => {
-    if (isInitialized && !user) {
+    if (isInitialized && !user && !isGuest) {
       router.replace('/login');
     }
-  }, [user, isInitialized, router, pathname]);
+  }, [user, isGuest, isInitialized, router, pathname]);
 
-  if (!isInitialized || !user) {
+  if (!isInitialized || (!user && !isGuest)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

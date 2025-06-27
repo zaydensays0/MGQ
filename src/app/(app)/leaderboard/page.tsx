@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import type { User, GradeLevelNCERT } from '@/types';
 import { GRADE_LEVELS } from '@/lib/constants';
+import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from 'lucide-react';
+import { LoginPromptDialog } from '@/components/login-prompt-dialog';
 
 
 const LeaderboardRowSkeleton = () => (
@@ -32,16 +35,21 @@ const LeaderboardRowSkeleton = () => (
 
 
 export default function LeaderboardPage() {
-    const { user: currentUser } = useUser();
+    const { user: currentUser, isGuest } = useUser();
     const [leaderboard, setLeaderboard] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filterClass, setFilterClass] = useState<GradeLevelNCERT | 'all'>(currentUser?.class || 'all');
+    const router = useRouter();
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
-            if (!db) {
-                setError("Could not connect to the database.");
+            if (isGuest) {
+                setIsLoading(false);
+                return;
+            }
+            if (!db || !currentUser) {
+                setError("Could not connect to the database or user not found.");
                 setIsLoading(false);
                 return;
             }
@@ -70,7 +78,7 @@ export default function LeaderboardPage() {
         };
 
         fetchLeaderboard();
-    }, [filterClass]);
+    }, [filterClass, currentUser, isGuest]);
 
     const getRankIcon = (rank: number) => {
         if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
@@ -79,6 +87,20 @@ export default function LeaderboardPage() {
         return <span className="font-semibold text-muted-foreground">{rank}</span>;
     };
     
+    if (isGuest) {
+        const handleCancelPrompt = () => router.back();
+        return (
+            <div className="container mx-auto p-4 md:p-8 flex items-center justify-center h-[calc(100vh-10rem)]">
+                <LoginPromptDialog 
+                    open={true} 
+                    onOpenChange={(open) => !open && handleCancelPrompt()} 
+                    onCancel={handleCancelPrompt}>
+                        <div/>
+                </LoginPromptDialog>
+            </div>
+        )
+    }
+
     return (
         <div className="container mx-auto p-4 md:p-8">
             <div className="mb-8">

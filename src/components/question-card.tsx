@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { LoginPromptDialog } from './login-prompt-dialog';
 
 
 interface QuestionCardProps {
@@ -27,6 +28,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [currentOptions, setCurrentOptions] = useState(options);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const [userSelection, setUserSelection] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
@@ -35,7 +37,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
 
   const { addQuestion, isSaved } = useSavedQuestions();
-  const { handleCorrectAnswer } = useUser();
+  const { handleCorrectAnswer, isGuest } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setRecheckResult(null);
   }, [questionText, answerText, options]);
 
-  const isCurrentlySaved = isSaved(currentQuestionText, questionContext);
+  const isCurrentlySaved = isGuest ? false : isSaved(currentQuestionText, questionContext);
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -93,6 +95,10 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   };
 
   const handleSave = () => {
+    if (isGuest) {
+        setShowLoginPrompt(true);
+        return;
+    }
     if (!isCurrentlySaved) {
       addQuestion({
         text: currentQuestionText,
@@ -142,6 +148,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   };
 
   return (
+    <>
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <CardContent className="p-4 flex-grow">
         {renderQuestionText()}
@@ -287,5 +294,9 @@ export function QuestionCard({ questionText, answerText, options, questionContex
         </div>
       </CardFooter>
     </Card>
+    <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <div/>
+    </LoginPromptDialog>
+    </>
   );
 }

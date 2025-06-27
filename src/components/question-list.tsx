@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { SaveAll } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/user-context';
+import { useState } from 'react';
+import { LoginPromptDialog } from './login-prompt-dialog';
+
 
 interface QuestionListProps {
   questions: GeneratedQuestionAnswerPair[];
@@ -17,12 +21,18 @@ interface QuestionListProps {
 export function QuestionList({ questions, questionContext, onRegenerateQuestion }: QuestionListProps) {
   const { addMultipleQuestions } = useSavedQuestions();
   const { toast } = useToast();
+  const { isGuest } = useUser();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   if (!questions || questions.length === 0) {
     return null;
   }
 
   const handleSaveAll = () => {
+    if (isGuest) {
+      setShowLoginPrompt(true);
+      return;
+    }
     addMultipleQuestions(questions, questionContext);
     toast({
       title: "All Questions Saved",
@@ -53,6 +63,9 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
           />
         ))}
       </div>
+      <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+          <div/>
+      </LoginPromptDialog>
     </div>
   );
 }

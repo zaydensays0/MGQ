@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, AlertCircle, Settings, Eye, EyeOff } from 'lucide-react';
+import { Loader2, AlertCircle, Settings, Eye, EyeOff, Users } from 'lucide-react';
 import { GRADE_LEVELS } from '@/lib/constants';
 import type { GradeLevelNCERT, Gender } from '@/types';
 import { isFirebaseConfigured } from '@/lib/firebase';
@@ -75,7 +75,7 @@ export default function LoginPage() {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
-  const { user, isInitialized, login, signup, sendPasswordReset } = useUser();
+  const { user, isInitialized, login, signup, sendPasswordReset, continueAsGuest } = useUser();
   const router = useRouter();
 
   useEffect(() => {
@@ -87,6 +87,11 @@ export default function LoginPage() {
   if (!isFirebaseConfigured) {
       return <FirebaseNotConfigured />;
   }
+
+  const handleGuestLogin = () => {
+    continueAsGuest();
+    router.push('/home');
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -249,6 +254,18 @@ export default function LoginPage() {
             <Button type="submit" className="w-full text-lg h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : (formType === 'login' ? 'Sign In' : 'Sign Up')}
             </Button>
+
+            <div className="relative w-full my-1 flex items-center">
+                <div className="flex-grow border-t border-border"></div>
+                <span className="flex-shrink mx-4 text-xs uppercase text-muted-foreground">Or</span>
+                <div className="flex-grow border-t border-border"></div>
+            </div>
+
+            <Button variant="secondary" type="button" className="w-full" onClick={handleGuestLogin}>
+              <Users className="mr-2 h-4 w-4" />
+              Continue as Guest
+            </Button>
+            
             <p className="text-center text-sm text-muted-foreground">
                 {formType === 'login' ? "Need an account?" : 'Already have an account?'}
                 <Button variant="link" type="button" onClick={toggleFormType} className="p-1 h-auto font-semibold text-accent">
