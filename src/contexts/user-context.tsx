@@ -223,13 +223,16 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const badge = BADGE_DEFINITIONS[badgeKey];
         let conditionMet = false;
+        const statName = badge.stat;
 
-        if (badge.stat === 'xp') {
+        if (statName === 'xp') {
             if (updatedUser.xp >= badge.goal) conditionMet = true;
-        } else if (badge.stat === 'badges') {
+        } else if (statName === 'streak') {
+            if (updatedUser.streak >= badge.goal) conditionMet = true;
+        } else if (statName === 'badges') {
             if (updatedUser.badges.length >= badge.goal) conditionMet = true;
-        } else if (badge.stat in updatedUser.stats) {
-            if (updatedUser.stats[badge.stat as keyof UserStats] >= badge.goal) {
+        } else if (updatedUser.stats && (statName in updatedUser.stats)) {
+            if (updatedUser.stats[statName as keyof UserStats] >= badge.goal) {
                 // Special handling for situational badges
                 if (badgeKey === 'quick_starter') {
                     const twentyFourHours = 24 * 60 * 60 * 1000;

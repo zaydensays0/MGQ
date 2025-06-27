@@ -29,21 +29,21 @@ export const QUESTION_TYPES: QuestionTypeOption[] = [
 export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
   // Stat-based
   legend: { name: 'Legend', description: "Generate {goal} questions.", icon: Brain, goal: 100, stat: 'questionsGenerated' },
-  the_goat: { name: 'The GOAT', description: "Score 100% in {goal} mock test.", icon: Trophy, goal: 1, stat: 'perfectMockTests' },
+  the_goat: { name: 'The GOAT', description: "Score 100% in any mock test.", icon: Trophy, goal: 1, stat: 'perfectMockTests' },
   mock_warrior: { name: 'Mock Warrior', description: "Complete {goal} mock tests.", icon: Shield, goal: 10, stat: 'mockTestsCompleted' },
   note_ninja: { name: 'Note Ninja', description: "Save {goal} notes.", icon: BookMarked, goal: 50, stat: 'notesSaved' },
   accuracy_ace: { name: 'Accuracy Ace', description: "Maintain 90%+ accuracy in {goal} mock tests.", icon: Target, goal: 5, stat: 'highAccuracyMockTests' },
   grammar_genius: { name: 'Grammar Genius', description: "Complete {goal} grammar test questions.", icon: Puzzle, goal: 20, stat: 'grammarQuestionsCompleted' },
   
   // Streak-based
-  streak_master: { name: 'Streak Master', description: "Maintain a {goal}-day study streak.", icon: PenLine, goal: 7, stat: 'questionsGenerated' }, // stat is placeholder
+  streak_master: { name: 'Streak Master', description: "Maintain a {goal}-day study streak.", icon: Flame, goal: 7, stat: 'streak' },
   
   // Complex / situational
   elite_learner: { name: 'Elite Learner', description: "Unlock any {goal} badges.", icon: Gem, goal: 5, stat: 'badges' },
   quick_starter: { name: 'Quick Starter', description: "Take your first mock test within 24 hours of joining.", icon: Rocket, goal: 1, stat: 'mockTestsCompleted' },
   comeback_kid: { name: 'Comeback Kid', description: "Score higher after two low-score tests.", icon: TrendingUp, goal: 1, stat: 'mockTestsCompleted' },
   silent_slayer: { name: 'Silent Slayer', description: "Complete {goal} full mock tests in a single day.", icon: Moon, goal: 3, stat: 'mockTestsCompleted' },
-  welcome_rookie: { name: 'Welcome Rookie', description: "Earned by successfully logging in for the first time.", icon: Unlock, goal: 1, stat: 'questionsGenerated' }, // stat is placeholder
+  welcome_rookie: { name: 'Welcome Rookie', description: "Earned by successfully logging in for the first time.", icon: Unlock, goal: 1, stat: 'xp' },
 
   // XP-based
   xp_hunter: { name: 'XP Hunter', description: "Earn {goal} XP.", icon: Coins, goal: 1000, stat: 'xp' },

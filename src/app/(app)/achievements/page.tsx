@@ -3,7 +3,7 @@
 
 import { useUser } from '@/contexts/user-context';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
-import type { BadgeKey } from '@/types';
+import type { BadgeKey, UserStats } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -77,9 +77,20 @@ export default function AchievementsPage() {
                         const isUnlocked = user.badges.includes(key);
                         const isEquipped = user.equippedBadge === key;
 
-                        const isStreakBadge = key === 'mini_streak' || key === 'streak_master';
-                        const progressValue = isStreakBadge ? user.streak : user.stats[badge.stat];
-                        const progressPercent = Math.min((progressValue / badge.goal) * 100, 100);
+                        let progressValue = 0;
+                        const statName = badge.stat;
+                        
+                        if (statName === 'xp') {
+                            progressValue = user.xp;
+                        } else if (statName === 'badges') {
+                            progressValue = user.badges.length;
+                        } else if (statName === 'streak') {
+                            progressValue = user.streak;
+                        } else if (user.stats && statName in user.stats) {
+                            progressValue = user.stats[statName as keyof UserStats];
+                        }
+
+                        const progressPercent = badge.goal > 0 ? Math.min((progressValue / badge.goal) * 100, 100) : (isUnlocked ? 100 : 0);
                         const description = badge.description.replace('{goal}', badge.goal.toString());
 
                         return (
@@ -104,7 +115,7 @@ export default function AchievementsPage() {
                                         <div className="space-y-1.5">
                                             <div className="flex justify-between text-sm font-medium text-muted-foreground">
                                                 <span>Progress</span>
-                                                <span>{progressValue} / {badge.goal}</span>
+                                                <span>{progressValue.toLocaleString()} / {badge.goal.toLocaleString()}</span>
                                             </div>
                                             <Progress value={progressPercent} />
                                         </div>
