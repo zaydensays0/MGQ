@@ -17,9 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GRADE_LEVELS, BADGE_DEFINITIONS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { generateAvatar } from '@/ai/flows/generate-avatar';
+import { cn } from '@/lib/utils';
+
 
 export default function AccountPage() {
-    const { user, isInitialized, updateUserProfile, changeUserPassword, sendPasswordReset } = useUser();
+    const { user, isInitialized, updateUserProfile, changeUserPassword, sendPasswordReset, equipBadge } = useUser();
     
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
@@ -250,25 +252,38 @@ export default function AccountPage() {
 
                     <Card className="shadow-lg">
                         <CardHeader>
-                            <CardTitle className="flex items-center"><Medal className="w-5 h-5 mr-2 text-yellow-500" /> Badges</CardTitle>
+                            <CardTitle className="flex items-center"><Medal className="w-5 h-5 mr-2 text-yellow-500" /> Select Display Badge</CardTitle>
+                            <CardDescription>Choose which unlocked badge to show next to your name.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {user.badges.length > 0 ? (
                                 <TooltipProvider>
-                                    <div className="flex flex-wrap gap-4">
+                                    <div className="grid grid-cols-4 gap-4">
                                         {user.badges.map(badgeKey => {
                                             const badge = BADGE_DEFINITIONS[badgeKey];
                                             if (!badge) return null;
+                                            
+                                            const isEquipped = user.equippedBadge === badgeKey;
+
                                             return (
                                                 <Tooltip key={badgeKey}>
                                                     <TooltipTrigger asChild>
-                                                        <div className="flex flex-col items-center gap-2 p-2 rounded-md border-2 border-transparent hover:border-primary transition-colors cursor-pointer">
-                                                            <badge.icon className="w-10 h-10 text-primary" />
-                                                            <span className="text-xs font-semibold">{badge.name}</span>
-                                                        </div>
+                                                        <button 
+                                                            onClick={() => equipBadge(badgeKey)}
+                                                            className={cn(
+                                                                "flex flex-col items-center justify-start gap-2 p-2 rounded-md border-2 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring",
+                                                                isEquipped ? "border-primary bg-primary/10" : "border-transparent hover:border-primary/50"
+                                                            )}
+                                                            aria-label={`Equip ${badge.name} badge`}
+                                                        >
+                                                            <badge.icon className="w-10 h-10 text-primary flex-shrink-0" />
+                                                            <span className="text-xs font-semibold text-center h-8 flex items-center">{badge.name}</span>
+                                                        </button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
+                                                        <p className="font-bold">{badge.name}</p>
                                                         <p>{badge.description.replace('{goal}', badge.goal.toString())}</p>
+                                                        {isEquipped && <p className="text-primary font-bold mt-1">Currently Equipped</p>}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             );
@@ -276,9 +291,16 @@ export default function AccountPage() {
                                     </div>
                                 </TooltipProvider>
                             ) : (
-                                <p className="text-sm text-muted-foreground">No badges unlocked yet. Keep learning!</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">No badges unlocked yet. Keep learning to earn some!</p>
                             )}
                         </CardContent>
+                        {user.badges.length > 0 && (
+                            <CardFooter className="justify-center border-t pt-4">
+                                <Button variant="ghost" size="sm" onClick={() => equipBadge(null)} disabled={!user.equippedBadge}>
+                                    Unequip Badge
+                                </Button>
+                            </CardFooter>
+                        )}
                     </Card>
                     
                     <Card className="shadow-lg">
