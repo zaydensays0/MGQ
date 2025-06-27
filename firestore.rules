@@ -1,0 +1,23 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Any authenticated user can read user profiles (for leaderboard, etc.)
+      allow read: if request.auth != null;
+      
+      // Only the user themselves can create, update, or delete their own profile
+      allow create, update, delete: if request.auth.uid == userId;
+
+      // Rules for all subcollections under a user's document
+      // e.g., /users/{userId}/savedQuestions/{questionId}
+      // e.g., /users/{userId}/wrongQuestions/{questionId}
+      match /{subcollection}/{docId} {
+        // Only the owner of the user document can read or write to its subcollections
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+  }
+}
