@@ -314,7 +314,6 @@ export const GenerateNeetQuestionsInputSchema = z.object({
   subject: z.string().describe('The subject for the questions (e.g., physics).'),
   classLevel: z.string().describe('The class level for the questions (e.g., 11 or 12).'),
   chapter: z.string().describe('The specific chapter to generate questions from.'),
-  numberOfQuestions: z.number().int().positive().describe('The number of questions to generate.'),
 });
 export type GenerateNeetQuestionsInput = z.infer<typeof GenerateNeetQuestionsInputSchema>;
 

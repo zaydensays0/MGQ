@@ -34,7 +34,6 @@ function PracticePageContent() {
                 subject,
                 classLevel,
                 chapter,
-                numberOfQuestions: 15 // Generate a decent number for a practice session
             });
             if (result && result.questions.length > 0) {
                 setQuestions(result.questions);
