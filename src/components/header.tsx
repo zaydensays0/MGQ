@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -28,6 +28,7 @@ const mainFeatures = [
 ];
 
 const allToolsLinks = [
+  { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },

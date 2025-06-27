@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, GradeLevelNCERT, Gender } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -18,6 +18,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
+import { BADGE_DEFINITIONS } from '@/lib/constants';
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -61,7 +62,9 @@ interface UserContextType {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   handleCorrectAnswer: (baseXp: number) => void;
+  trackStats: (statsToIncrement: Partial<UserStats>) => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  equipBadge: (badgeKey: BadgeKey | null) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   changeUserPassword: (currentPass: string, newPass: string) => Promise<void>;
 }
@@ -136,6 +139,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       badges: [],
       class: userClass,
       gender,
+      stats: {
+        questionsGenerated: 0,
+        mockTestsCompleted: 0,
+        perfectMockTests: 0,
+      },
+      equippedBadge: null,
     };
     
     await setDoc(doc(db, 'users', uid), newUser);
@@ -170,6 +179,78 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw error;
     }
   }, [firebaseUser, toast]);
+  
+  const equipBadge = useCallback(async (badgeKey: BadgeKey | null) => {
+    if (!user || !firebaseUser || !db || isGuest) {
+      toast({ title: "Action Failed", description: "You must be logged in to equip badges.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await updateUserProfile({ equippedBadge: badgeKey });
+      toast({ title: "Badge Equipped!", description: "Your new badge is now visible on the leaderboard." });
+    } catch (error) {
+      // Error toast handled in updateUserProfile
+    }
+  }, [user, firebaseUser, isGuest, updateUserProfile, toast]);
+
+  const trackStats = useCallback(async (statsToIncrement: Partial<UserStats>) => {
+    if (!user || !firebaseUser || !db || isGuest) return;
+
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    
+    // Create Firestore increment objects
+    const increments: { [key: string]: any } = {};
+    for (const key in statsToIncrement) {
+      increments[`stats.${key}`] = increment(statsToIncrement[key as keyof UserStats]!);
+    }
+    
+    // Calculate new stats for badge checking
+    const newStats = { ...user.stats };
+    for (const key in statsToIncrement) {
+      const statKey = key as keyof UserStats;
+      newStats[statKey] += statsToIncrement[statKey]!;
+    }
+
+    // Check for newly unlocked badges
+    const newlyUnlockedBadges: BadgeKey[] = [];
+    for (const key in BADGE_DEFINITIONS) {
+        const badgeKey = key as BadgeKey;
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        const isStreakBadge = badgeKey === 'mini_streak' || badgeKey === 'streak_master';
+
+        if (!isStreakBadge && !user.badges.includes(badgeKey)) {
+            if (newStats[badge.stat] >= badge.goal) {
+                newlyUnlockedBadges.push(badgeKey);
+            }
+        }
+    }
+    
+    const updates: { [key: string]: any } = { ...increments };
+    if (newlyUnlockedBadges.length > 0) {
+      updates.badges = [...user.badges, ...newlyUnlockedBadges];
+    }
+    
+    // Update Firestore
+    await updateDoc(userDocRef, updates);
+
+    // Optimistically update local state
+    setUser(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        stats: newStats,
+        badges: newlyUnlockedBadges.length > 0 ? [...prev.badges, ...newlyUnlockedBadges] : prev.badges,
+      };
+    });
+
+    // Show toasts for new badges
+    newlyUnlockedBadges.forEach(badgeKey => {
+      const badge = BADGE_DEFINITIONS[badgeKey];
+      toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
+    });
+
+  }, [user, firebaseUser, isGuest, db, toast]);
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
     if (!user || !firebaseUser || !db || isGuest) return;
@@ -196,11 +277,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
       xpGained += streakBonus;
 
-      if (newStreak === 3 && !newBadges.includes('mini_streak')) {
+      if (newStreak >= 3 && !newBadges.includes('mini_streak')) {
         newBadges.push('mini_streak');
         toast({ title: 'Badge Unlocked! 🔥', description: 'You earned the "Mini Streak" badge for a 3-day streak!' });
       }
-      if (newStreak === 7 && !newBadges.includes('streak_master')) {
+      if (newStreak >= 7 && !newBadges.includes('streak_master')) {
         newBadges.push('streak_master');
         toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
       }
@@ -235,7 +316,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } else {
       toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
-  }, [user, firebaseUser, toast, isGuest]);
+  }, [user, firebaseUser, toast, isGuest, db]);
 
   const sendPasswordReset = async (email: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
@@ -273,7 +354,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, updateUserProfile, sendPasswordReset, changeUserPassword }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, equipBadge, sendPasswordReset, changeUserPassword }}>
       {children}
     </UserContext.Provider>
   );

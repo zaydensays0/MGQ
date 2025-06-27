@@ -15,6 +15,7 @@ import type {
   GradeLevelNCERT,
   QuestionTypeNCERT,
 } from '@/types';
+import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
@@ -26,6 +27,7 @@ export default function GeneratePage() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const { toast } = useToast();
+  const { trackStats } = useUser();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof window.navigator !== 'undefined') {
@@ -74,6 +76,7 @@ export default function GeneratePage() {
 
       if (result && result.questions.length > 0) {
         setGeneratedQuestions(result.questions);
+        trackStats({ questionsGenerated: result.questions.length });
         toast({
           title: 'Questions Generated!',
           description: `Successfully generated ${result.questions.length} questions.`,

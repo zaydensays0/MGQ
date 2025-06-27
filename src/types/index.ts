@@ -101,8 +101,27 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
-// Badge types for gamification
-export type BadgeKey = 'mini_streak' | 'consistent_learner' | 'streak_master';
+// --- Badge Types ---
+export type BadgeKey = 
+  | 'novice_creator' | 'prolific_creator' | 'legend' 
+  | 'quiz_taker' | 'mock_warrior'
+  | 'smarty_pants' | 'the_goat'
+  | 'mini_streak' | 'streak_master';
+
+export interface UserStats {
+  questionsGenerated: number;
+  mockTestsCompleted: number;
+  perfectMockTests: number;
+}
+
+export interface BadgeInfo {
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  goal: number;
+  stat: keyof UserStats;
+}
+
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
@@ -120,6 +139,8 @@ export interface User {
   badges: BadgeKey[];
   class: GradeLevelNCERT;
   gender?: Gender;
+  stats: UserStats;
+  equippedBadge: BadgeKey | null;
 }
 
 // AI Notes Generator Flow Types

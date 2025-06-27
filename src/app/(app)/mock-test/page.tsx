@@ -10,7 +10,7 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ export default function MockTestPage() {
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const { handleCorrectAnswer } = useUser();
+    const { handleCorrectAnswer, trackStats } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
@@ -127,7 +127,8 @@ export default function MockTestPage() {
             new Audio('/sounds/incorrect.mp3').play();
         }
 
-        setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }]);
+        const newAnswers = [...userAnswers, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }];
+        setUserAnswers(newAnswers);
 
         setSelectedOption(null);
 
@@ -135,6 +136,13 @@ export default function MockTestPage() {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
             setTestState('results');
+            // Track stats at the end of the test
+            const correctCount = newAnswers.filter(a => a.isCorrect).length;
+            const statsToTrack: Partial<UserStats> = { mockTestsCompleted: 1 };
+            if (correctCount === testQuestions.length) {
+                statsToTrack.perfectMockTests = 1;
+            }
+            trackStats(statsToTrack);
         }
     };
     

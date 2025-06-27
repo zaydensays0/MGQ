@@ -5,19 +5,19 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import type { User, GradeLevelNCERT } from '@/types';
-import { GRADE_LEVELS } from '@/lib/constants';
+import type { User, GradeLevelNCERT, BadgeKey } from '@/types';
+import { GRADE_LEVELS, BADGE_DEFINITIONS } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Trophy, Medal, Award, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LoginPromptDialog } from '@/components/login-prompt-dialog';
 
 
@@ -152,44 +152,63 @@ export default function LeaderboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {isLoading ? (
-                                <>
-                                    <LeaderboardRowSkeleton />
-                                    <LeaderboardRowSkeleton />
-                                    <LeaderboardRowSkeleton />
-                                    <LeaderboardRowSkeleton />
-                                    <LeaderboardRowSkeleton />
-                                </>
-                            ) : (
-                                leaderboard.map((user, index) => (
-                                    <TableRow key={user.uid} className={cn(
-                                        currentUser?.uid === user.uid && "bg-primary/10 hover:bg-primary/20"
-                                    )}>
-                                        <TableCell>
-                                            <div className="flex items-center justify-center h-full">
-                                                {getRankIcon(index + 1)}
-                                            </div>
+                            <TooltipProvider>
+                                {isLoading ? (
+                                    <>
+                                        <LeaderboardRowSkeleton />
+                                        <LeaderboardRowSkeleton />
+                                        <LeaderboardRowSkeleton />
+                                        <LeaderboardRowSkeleton />
+                                        <LeaderboardRowSkeleton />
+                                    </>
+                                ) : (
+                                    leaderboard.map((user, index) => {
+                                        const equippedBadgeKey = user.equippedBadge;
+                                        const badgeInfo = equippedBadgeKey ? BADGE_DEFINITIONS[equippedBadgeKey] : null;
+
+                                        return (
+                                            <TableRow key={user.uid} className={cn(
+                                                currentUser?.uid === user.uid && "bg-primary/10 hover:bg-primary/20"
+                                            )}>
+                                                <TableCell>
+                                                    <div className="flex items-center justify-center h-full">
+                                                        {getRankIcon(index + 1)}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="font-medium flex items-center gap-4">
+                                                    <Avatar>
+                                                        <AvatarImage src={user.avatarUrl} alt={user.fullName} />
+                                                        <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex items-center gap-2">
+                                                        {user.fullName}
+                                                        {badgeInfo && (
+                                                            <Tooltip>
+                                                                <TooltipTrigger>
+                                                                    <badgeInfo.icon className="w-4 h-4 text-primary" />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p className="font-semibold">{badgeInfo.name}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                    </div>
+                                                    {currentUser?.uid === user.uid && <span className="text-xs font-bold text-primary">(You)</span>}
+                                                </TableCell>
+                                                <TableCell>{user.level}</TableCell>
+                                                <TableCell className="text-right">{user.xp.toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                                {!isLoading && leaderboard.length === 0 && !error && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24">
+                                            No students found for this class. Be the first to join the leaderboard!
                                         </TableCell>
-                                        <TableCell className="font-medium flex items-center gap-4">
-                                            <Avatar>
-                                                <AvatarImage src={user.avatarUrl} alt={user.fullName} />
-                                                <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            {user.fullName}
-                                            {currentUser?.uid === user.uid && <span className="text-xs font-bold text-primary">(You)</span>}
-                                        </TableCell>
-                                        <TableCell>{user.level}</TableCell>
-                                        <TableCell className="text-right">{user.xp.toLocaleString()}</TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                            {!isLoading && leaderboard.length === 0 && !error && (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">
-                                        No students found for this class. Be the first to join the leaderboard!
-                                    </TableCell>
-                                </TableRow>
-                            )}
+                                )}
+                            </TooltipProvider>
                         </TableBody>
                     </Table>
                 </CardContent>
