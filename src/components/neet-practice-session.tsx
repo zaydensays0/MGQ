@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -191,12 +190,12 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                             <Button
                                 key={index}
                                 variant={getOptionStyle(option)}
-                                className="w-full justify-start text-left h-auto p-3"
+                                className="w-full justify-start items-start text-left h-auto p-3 whitespace-normal"
                                 onClick={() => handleAnswerSelect(option)}
                                 disabled={isAttempted}
                             >
                                 <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
-                                {option}
+                                <span className="text-left">{option}</span>
                             </Button>
                         ))}
                     </div>
