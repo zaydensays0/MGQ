@@ -41,7 +41,7 @@ export default function SavedQuestionsPage() {
           Your Saved Questions
         </h1>
         <p className="text-muted-foreground mt-1">
-          Review and manage all the questions you've saved for offline access and revision.
+          Review and manage all the questions you've saved for revision.
         </p>
       </div>
       <DynamicSavedQuestionsList />
