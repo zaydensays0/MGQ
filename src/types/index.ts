@@ -314,6 +314,8 @@ export const GenerateNeetQuestionsInputSchema = z.object({
   subject: z.string().describe('The subject for the questions (e.g., physics).'),
   classLevel: z.string().describe('The class level for the questions (e.g., 11 or 12).'),
   chapter: z.string().describe('The specific chapter to generate questions from.'),
+  isComprehensive: z.boolean().optional().describe("Whether to generate a comprehensive set of questions to master the chapter."),
+  numberOfQuestions: z.number().int().min(1).optional().describe("The number of questions to generate if not in comprehensive mode."),
 });
 export type GenerateNeetQuestionsInput = z.infer<typeof GenerateNeetQuestionsInputSchema>;
 
@@ -322,7 +324,7 @@ export const NeetQuestionSchema = z.object({
   text: z.string().describe("The full question text. For Assertion/Reason, it must contain both parts separated by a newline."),
   options: z.array(z.string()).optional().describe("Array of 4 options for MCQ and Assertion/Reason types."),
   answer: z.string().describe("The correct answer. Must match an option if options are provided."),
-  explanation: z.string().describe("A clear explanation of the correct answer."),
+  explanation: z.string().describe("A clear explanation of the correct answer, which serves as a step-by-step solution for numerical problems."),
   difficulty: DifficultySchema.describe("The difficulty level of the question."),
 });
 export type NeetQuestion = z.infer<typeof NeetQuestionSchema>;

@@ -13,6 +13,9 @@ import type { NeetQuestion } from '@/types';
 import { generateNeetQuestions } from '@/ai/flows/generate-neet-questions';
 import { NeetPracticeSession } from '@/components/neet-practice-session';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 
 function PracticePageContent() {
     const searchParams = useSearchParams();
@@ -23,6 +26,8 @@ function PracticePageContent() {
     const [questions, setQuestions] = useState<NeetQuestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isComprehensive, setIsComprehensive] = useState(true);
+    const [numberOfQuestions, setNumberOfQuestions] = useState(15);
 
     const handleGenerate = async () => {
         if (!subject || !classLevel || !chapter) return;
@@ -34,6 +39,8 @@ function PracticePageContent() {
                 subject,
                 classLevel,
                 chapter,
+                isComprehensive,
+                numberOfQuestions,
             });
             if (result && result.questions.length > 0) {
                 setQuestions(result.questions);
@@ -102,6 +109,20 @@ function PracticePageContent() {
                     <p className="capitalize">{subject}</p>
                     <p>Chapter: {chapter}</p>
                 </div>
+
+                <div className="mt-6 space-y-4 max-w-sm mx-auto">
+                    <div className="flex items-center justify-center space-x-2 rounded-md border p-4">
+                        <Switch id="comprehensive-mode" checked={isComprehensive} onCheckedChange={setIsComprehensive} />
+                        <Label htmlFor="comprehensive-mode" className="text-base">Comprehensive Mode</Label>
+                    </div>
+                    {!isComprehensive && (
+                        <div className="space-y-2 text-left">
+                            <Label htmlFor="num-questions">Number of Questions</Label>
+                            <Input id="num-questions" type="number" min="1" value={numberOfQuestions} onChange={(e) => setNumberOfQuestions(parseInt(e.target.value))} />
+                        </div>
+                    )}
+                </div>
+
                 <Button onClick={handleGenerate} size="lg" className="mt-6">
                     <Sparkles className="mr-2 h-5 w-5" />
                     Start Practice Session

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { NeetQuestion, QuestionContext, QuestionTypeNCERT } from '@/types';
+import type { NeetQuestion, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput } from '@/types';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +15,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { BookMarked, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle } from 'lucide-react';
+import { BookMarked, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle, BookOpenCheck, EyeOff, Loader2 } from 'lucide-react';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
 
 type AnswerStatus = {
     isCorrect: boolean;
@@ -36,7 +37,11 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, AnswerStatus>>({});
-    const [showExplanation, setShowExplanation] = useState(false);
+    
+    // State for numerical question visibility
+    const [numericalVisibility, setNumericalVisibility] = useState<Record<number, { answer?: boolean, solution?: boolean }>>({});
+    const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
+
     
     const isQuestionBookmarked = (q: NeetQuestion) => isSaved(q.text, { ...context, questionType: q.type as QuestionTypeNCERT, gradeLevel: context.classLevel as any });
     
@@ -90,7 +95,11 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
         const isCorrect = selectedOption.toLowerCase() === currentQuestion.answer.toLowerCase();
         
         setAnswers(prev => ({ ...prev, [activeQuestionIndex]: { isCorrect, userAnswer: selectedOption } }));
-        setShowExplanation(true);
+        
+        // For non-numerical, show explanation immediately
+        if (currentQuestion.type !== 'numerical') {
+            setNumericalVisibility(prev => ({ ...prev, [activeQuestionIndex]: { ...prev[activeQuestionIndex], solution: true }}));
+        }
 
         if (isCorrect) {
             toast({ title: "Correct!", description: "+400 XP", className: "bg-success text-success-foreground border-transparent" });
@@ -120,7 +129,6 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     };
 
     const navigate = (direction: number) => {
-        setShowExplanation(false);
         const newIndex = currentQuestionIndex + direction;
         if (newIndex >= 0 && newIndex < filteredQuestionIndices.length) {
             setCurrentQuestionIndex(newIndex);
@@ -136,6 +144,39 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
         if (answerData.userAnswer === option && !answerData.isCorrect) return 'destructive';
         return 'outline';
     };
+
+    const handleRecheck = async () => {
+        if (!currentQuestion) return;
+        setRecheckStates(prev => ({ ...prev, [activeQuestionIndex]: { loading: true, result: null } }));
+        try {
+            const result = await recheckAnswer({
+                question: currentQuestion.text,
+                originalAnswer: currentQuestion.answer,
+                options: currentQuestion.options,
+                gradeLevel: context.classLevel as any,
+                subject: context.subject,
+                chapter: context.chapter,
+            });
+            setRecheckStates(prev => ({ ...prev, [activeQuestionIndex]: { loading: false, result } }));
+            toast({ title: "Recheck Complete" });
+        } catch (error) {
+            setRecheckStates(prev => ({ ...prev, [activeQuestionIndex]: { loading: false, result: null } }));
+            toast({ title: "Recheck Failed", variant: "destructive" });
+        }
+    };
+
+    const toggleVisibility = (field: 'answer' | 'solution') => {
+        setNumericalVisibility(prev => ({
+            ...prev,
+            [activeQuestionIndex]: {
+                ...prev[activeQuestionIndex],
+                [field]: !prev[activeQuestionIndex]?.[field]
+            }
+        }));
+    };
+
+    const recheckState = recheckStates[activeQuestionIndex] || { loading: false, result: null };
+    const visibility = numericalVisibility[activeQuestionIndex] || {};
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -186,22 +227,63 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-base font-semibold leading-relaxed whitespace-pre-wrap">{currentQuestion.text}</p>
-                    <div className="space-y-2">
-                        {currentQuestion.options?.map((option, index) => (
-                            <Button
-                                key={index}
-                                variant={getOptionStyle(option)}
-                                className="w-full justify-start items-start text-left h-auto p-3 whitespace-normal"
-                                onClick={() => handleAnswerSelect(option)}
-                                disabled={isAttempted}
-                            >
-                                <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
-                                <span className="text-left">{option}</span>
-                            </Button>
-                        ))}
-                    </div>
-                    {isAttempted && (
-                        <Accordion type="single" collapsible value={showExplanation ? "item-1" : ""} onValueChange={(v) => setShowExplanation(!!v)}>
+                    
+                    {currentQuestion.type !== 'numerical' && (
+                        <div className="space-y-2">
+                            {currentQuestion.options?.map((option, index) => (
+                                <Button
+                                    key={index}
+                                    variant={getOptionStyle(option)}
+                                    className="w-full justify-start items-start text-left h-auto p-3 whitespace-normal"
+                                    onClick={() => handleAnswerSelect(option)}
+                                    disabled={isAttempted}
+                                >
+                                    <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
+                                    <span className="text-left">{option}</span>
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {currentQuestion.type === 'numerical' && (
+                        <div className="mt-4 space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <Button variant="outline" onClick={() => toggleVisibility('answer')}>
+                                    {visibility.answer ? <EyeOff/> : <Eye/>}
+                                    {visibility.answer ? 'Hide' : 'Show'} Answer
+                                </Button>
+                                <Button variant="outline" onClick={handleRecheck} disabled={recheckState.loading || !!recheckState.result}>
+                                    {recheckState.loading ? <Loader2 className="animate-spin" /> : <RotateCw/>}
+                                    Recheck Answer
+                                </Button>
+                                <Button variant="outline" onClick={() => toggleVisibility('solution')}>
+                                    {visibility.solution ? <EyeOff/> : <BookOpenCheck/>}
+                                    {visibility.solution ? 'Hide' : 'Show'} Solution
+                                </Button>
+                            </div>
+                            
+                            {visibility.answer && (
+                                <Alert>
+                                    <AlertTitle className="font-semibold">Final Answer</AlertTitle>
+                                    <AlertDescription className="text-lg font-bold font-mono">{currentQuestion.answer}</AlertDescription>
+                                </Alert>
+                            )}
+                            
+                            {recheckState.result && (
+                                <Alert variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                    <RotateCw className="h-4 w-4" />
+                                    <AlertTitle>Verification Result</AlertTitle>
+                                    <AlertDescription>
+                                        <p>{recheckState.result.explanation}</p>
+                                        {!recheckState.result.isCorrect && <p className="mt-2 font-semibold">Corrected Answer: {recheckState.result.correctAnswer}</p>}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    )}
+
+                    {(isAttempted || visibility.solution) && (
+                        <Accordion type="single" collapsible value={visibility.solution ? "item-1" : ""} onValueChange={(v) => toggleVisibility('solution')}>
                             <AccordionItem value="item-1">
                                 <AccordionTrigger>
                                     <div className="flex items-center">
