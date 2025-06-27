@@ -240,7 +240,7 @@ export default function GrammarTestPage() {
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const { handleCorrectAnswer } = useUser();
+    const { handleCorrectAnswer, trackStats } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
@@ -306,7 +306,6 @@ export default function GrammarTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
-            toast({ title: "Correct!", description: "Great job!" });
             new Audio('/sounds/correct.mp3').play();
         } else {
             toast({
@@ -318,6 +317,7 @@ export default function GrammarTestPage() {
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }]);
+        trackStats({ grammarQuestionsCompleted: 1 });
 
         setSelectedOption(null);
         setDirectAnswer('');

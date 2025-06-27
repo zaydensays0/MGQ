@@ -62,7 +62,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   handleCorrectAnswer: (baseXp: number) => void;
-  trackStats: (statsToIncrement: Partial<UserStats>) => Promise<void>;
+  trackStats: (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   equipBadge: (badgeKey: BadgeKey | null) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -70,6 +70,18 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
+const getDefaultUserStats = (): UserStats => ({
+    questionsGenerated: 0,
+    mockTestsCompleted: 0,
+    perfectMockTests: 0,
+    notesSaved: 0,
+    grammarQuestionsCompleted: 0,
+    highAccuracyMockTests: 0,
+    lowScoreStreak: 0,
+    mockTestsToday: 0,
+    lastMockTestDate: '',
+});
 
 // --- Provider Component ---
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -85,16 +97,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
         const data = userDoc.data();
-        // Fallback for users created before 'stats' or other fields existed
         const userWithDefaults: User = {
             ...data,
-            stats: data.stats || {
-                questionsGenerated: 0,
-                mockTestsCompleted: 0,
-                perfectMockTests: 0,
-            },
+            stats: { ...getDefaultUserStats(), ...(data.stats || {}) },
             badges: data.badges || [],
             equippedBadge: data.equippedBadge || null,
+            createdAt: data.createdAt || Date.now(),
         } as User;
         setUser(userWithDefaults);
     }
@@ -148,21 +156,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       level: 1,
       streak: 0,
       lastCorrectAnswerDate: '',
-      badges: [],
+      badges: ['welcome_rookie'],
       class: userClass,
       gender,
-      stats: {
-        questionsGenerated: 0,
-        mockTestsCompleted: 0,
-        perfectMockTests: 0,
-      },
+      stats: getDefaultUserStats(),
       equippedBadge: null,
+      createdAt: Date.now(),
     };
     
     await setDoc(doc(db, 'users', uid), newUser);
     setUser(newUser);
     setIsGuest(false);
     toast({ title: 'Account Created!', description: 'Welcome! You have been logged in.' });
+    toast({ title: '🏆 Badge Unlocked!', description: 'You earned the "Welcome Rookie" badge!' });
   };
 
   const logout = async () => {
@@ -206,70 +212,117 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, firebaseUser, isGuest, updateUserProfile, toast]);
 
-  const trackStats = useCallback(async (statsToIncrement: Partial<UserStats>) => {
-    if (!user || !firebaseUser || !db || isGuest) return;
+  const checkAndAwardBadges = useCallback(async (updatedUser: User) => {
+    if (!firebaseUser || !db) return;
 
-    const userDocRef = doc(db, 'users', firebaseUser.uid);
-    
-    // Create Firestore increment objects
-    const increments: { [key: string]: any } = {};
-    for (const key in statsToIncrement) {
-      increments[`stats.${key}`] = increment(statsToIncrement[key as keyof UserStats]!);
-    }
-    
-    // Calculate new stats for badge checking
-    const newStats = { ...user.stats };
-    for (const key in statsToIncrement) {
-      const statKey = key as keyof UserStats;
-      newStats[statKey] += statsToIncrement[statKey]!;
-    }
+    let newlyUnlockedBadges: BadgeKey[] = [];
 
-    // Check for newly unlocked badges
-    const newlyUnlockedBadges: BadgeKey[] = [];
     for (const key in BADGE_DEFINITIONS) {
         const badgeKey = key as BadgeKey;
-        const badge = BADGE_DEFINITIONS[badgeKey];
-        const isStreakBadge = badgeKey === 'mini_streak' || badgeKey === 'streak_master';
+        if (updatedUser.badges.includes(badgeKey)) continue;
 
-        if (!isStreakBadge && !user.badges.includes(badgeKey)) {
-            if (newStats[badge.stat] >= badge.goal) {
-                newlyUnlockedBadges.push(badgeKey);
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        let conditionMet = false;
+
+        if (badge.stat === 'xp') {
+            if (updatedUser.xp >= badge.goal) conditionMet = true;
+        } else if (badge.stat === 'badges') {
+            if (updatedUser.badges.length >= badge.goal) conditionMet = true;
+        } else if (badge.stat in updatedUser.stats) {
+            if (updatedUser.stats[badge.stat as keyof UserStats] >= badge.goal) {
+                // Special handling for situational badges
+                if (badgeKey === 'quick_starter') {
+                    const twentyFourHours = 24 * 60 * 60 * 1000;
+                    if ((Date.now() - updatedUser.createdAt) < twentyFourHours) {
+                        conditionMet = true;
+                    }
+                } else {
+                    conditionMet = true;
+                }
             }
         }
+        
+        if (conditionMet) {
+            newlyUnlockedBadges.push(badgeKey);
+        }
     }
-    
-    const updates: { [key: string]: any } = { ...increments };
+
     if (newlyUnlockedBadges.length > 0) {
-      updates.badges = [...user.badges, ...newlyUnlockedBadges];
+      const allNewBadges = [...updatedUser.badges, ...newlyUnlockedBadges];
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      await updateDoc(userDocRef, { badges: allNewBadges });
+      setUser(prev => prev ? { ...prev, badges: allNewBadges } : null);
+      newlyUnlockedBadges.forEach(badgeKey => {
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
+      });
+    }
+  }, [firebaseUser, db, toast]);
+
+  const trackStats = useCallback(async (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => {
+    if (!user || !firebaseUser || !db || isGuest) return;
+
+    const { accuracy, isFirstTest, ...statsToIncrement } = statsToUpdate;
+    const increments: { [key: string]: any } = {};
+    const newStats: UserStats = { ...user.stats };
+
+    for (const key in statsToIncrement) {
+      const statKey = key as keyof UserStats;
+      const value = statsToIncrement[statKey]!;
+      increments[`stats.${statKey}`] = increment(value);
+      newStats[statKey] += value;
     }
     
-    // Update Firestore
-    await updateDoc(userDocRef, updates);
+    // Handle complex badge logic
+    if (accuracy !== undefined) {
+        // Accuracy Ace
+        if (accuracy >= 0.9) {
+            increments['stats.highAccuracyMockTests'] = increment(1);
+            newStats.highAccuracyMockTests++;
+        }
+        // Comeback Kid
+        if (accuracy < 0.6) {
+            increments['stats.lowScoreStreak'] = increment(1);
+            newStats.lowScoreStreak++;
+        } else {
+            if (user.stats.lowScoreStreak >= 2 && !user.badges.includes('comeback_kid')) {
+                // Award comeback_kid, no increment needed as we just need to check this condition
+            }
+            increments['stats.lowScoreStreak'] = 0; // Reset on a good score
+            newStats.lowScoreStreak = 0;
+        }
+    }
+    // Silent Slayer
+    if (statsToIncrement.mockTestsCompleted) {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        if (user.stats.lastMockTestDate === todayStr) {
+            increments['stats.mockTestsToday'] = increment(1);
+            newStats.mockTestsToday++;
+        } else {
+            increments['stats.mockTestsToday'] = 1;
+            increments['stats.lastMockTestDate'] = todayStr;
+            newStats.mockTestsToday = 1;
+            newStats.lastMockTestDate = todayStr;
+        }
+    }
 
-    // Optimistically update local state
-    setUser(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        stats: newStats,
-        badges: newlyUnlockedBadges.length > 0 ? [...prev.badges, ...newlyUnlockedBadges] : prev.badges,
-      };
-    });
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    if (Object.keys(increments).length > 0) {
+        await updateDoc(userDocRef, increments);
+    }
 
-    // Show toasts for new badges
-    newlyUnlockedBadges.forEach(badgeKey => {
-      const badge = BADGE_DEFINITIONS[badgeKey];
-      toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
-    });
+    const updatedUser = { ...user, stats: newStats };
+    setUser(updatedUser);
+    
+    await checkAndAwardBadges(updatedUser);
 
-  }, [user, firebaseUser, isGuest, db, toast]);
+  }, [user, firebaseUser, isGuest, db, checkAndAwardBadges]);
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
     if (!user || !firebaseUser || !db || isGuest) return;
     
     let xpGained = baseXp;
     let newStreak = user.streak;
-    const newBadges = [...(user.badges || [])];
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
     const lastAnswerDate = user.lastCorrectAnswerDate ? parseISO(user.lastCorrectAnswerDate) : null;
@@ -288,47 +341,34 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const streakIndex = newStreak - 1;
       const streakBonus = STREAK_BONUSES[Math.min(streakIndex, STREAK_BONUSES.length - 1)];
       xpGained += streakBonus;
-
-      if (newStreak >= 3 && !newBadges.includes('mini_streak')) {
-        newBadges.push('mini_streak');
-        toast({ title: 'Badge Unlocked! 🔥', description: 'You earned the "Mini Streak" badge for a 3-day streak!' });
-      }
-      if (newStreak >= 7 && !newBadges.includes('streak_master')) {
-        newBadges.push('streak_master');
-        toast({ title: 'Badge Unlocked! 🏆', description: 'You earned the "Streak Master" badge for a 7-day streak!' });
-      }
     }
 
     const newXp = user.xp + xpGained;
     const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
     
-    const updates: Partial<User> = {
-        xp: newXp,
-        level: newLevel,
-        streak: newStreak,
-        badges: newBadges,
-        lastCorrectAnswerDate: todayStr,
-    };
+    const updates: Partial<User> = { xp: newXp, level: newLevel, streak: newStreak, lastCorrectAnswerDate: todayStr };
     
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userDocRef, {
-        xp: increment(xpGained), // Use increment for atomicity
+        xp: increment(xpGained),
         level: newLevel,
         streak: newStreak,
-        badges: newBadges,
         lastCorrectAnswerDate: todayStr,
     });
     
-    // Optimistically update local state
-    setUser(prev => prev ? {...prev, ...updates} : null);
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
 
     if (newLevel > oldLevel) {
       toast({ title: '🎉 Level Up!', description: `Congratulations, you've reached Level ${newLevel}!` });
     } else {
       toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
-  }, [user, firebaseUser, toast, isGuest, db]);
+
+    await checkAndAwardBadges(updatedUser);
+
+  }, [user, firebaseUser, toast, isGuest, db, checkAndAwardBadges]);
 
   const sendPasswordReset = async (email: string) => {
     if (!auth) throw new Error("Firebase is not configured.");

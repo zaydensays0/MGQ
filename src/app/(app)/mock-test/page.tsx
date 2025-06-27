@@ -31,7 +31,7 @@ interface TestAnswer {
     earnedXp: number;
 }
 
-const difficultyLevels = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', label: 'Hard' }] as const;
+const difficultyLevels = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', 'label': 'Hard' }] as const;
 type Difficulty = typeof difficultyLevels[number]['value'];
 
 const setupSchema = z.object({
@@ -54,7 +54,7 @@ export default function MockTestPage() {
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const { handleCorrectAnswer, trackStats } = useUser();
+    const { user, handleCorrectAnswer, trackStats } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
@@ -138,11 +138,14 @@ export default function MockTestPage() {
             setTestState('results');
             // Track stats at the end of the test
             const correctCount = newAnswers.filter(a => a.isCorrect).length;
-            const statsToTrack: Partial<UserStats> = { mockTestsCompleted: 1 };
-            if (correctCount === testQuestions.length) {
-                statsToTrack.perfectMockTests = 1;
-            }
-            trackStats(statsToTrack);
+            const accuracy = correctCount / testQuestions.length;
+            
+            trackStats({ 
+                mockTestsCompleted: 1, 
+                perfectMockTests: accuracy === 1 ? 1 : 0,
+                accuracy: accuracy,
+                isFirstTest: user?.stats.mockTestsCompleted === 0,
+            });
         }
     };
     

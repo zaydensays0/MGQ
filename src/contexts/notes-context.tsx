@@ -20,7 +20,7 @@ const NotesContext = createContext<NotesContextType | undefined>(undefined);
 
 export const NotesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const { user } = useUser();
+  const { user, trackStats } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,8 +54,12 @@ export const NotesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       updatedAt: Date.now(),
     };
     const docRef = await addDoc(notesCol, newNoteData);
+    
+    // Track stat for badge
+    trackStats({ notesSaved: 1 });
+
     return { id: docRef.id, ...newNoteData };
-  }, [user, toast]);
+  }, [user, toast, trackStats]);
 
   const updateNote = useCallback(async (id: string, noteData: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Note | undefined> => {
     if (!user || !db) return;

@@ -103,15 +103,22 @@ export interface SavedSubjectExpertExchange {
 
 // --- Badge Types ---
 export type BadgeKey = 
-  | 'novice_creator' | 'prolific_creator' | 'legend' 
-  | 'quiz_taker' | 'mock_warrior'
-  | 'smarty_pants' | 'the_goat'
-  | 'mini_streak' | 'streak_master';
+  | 'legend' | 'the_goat' | 'streak_master' | 'mock_warrior'
+  | 'note_ninja' | 'accuracy_ace' | 'grammar_genius' | 'elite_learner'
+  | 'quick_starter' | 'comeback_kid' | 'silent_slayer' | 'xp_hunter'
+  | 'xp_prodigy' | 'xp_master' | 'xp_king_queen' | 'xp_legend'
+  | 'xp_god_mode' | 'welcome_rookie';
 
 export interface UserStats {
   questionsGenerated: number;
   mockTestsCompleted: number;
   perfectMockTests: number;
+  notesSaved: number;
+  grammarQuestionsCompleted: number;
+  highAccuracyMockTests: number;
+  lowScoreStreak: number;
+  mockTestsToday: number;
+  lastMockTestDate: string; // YYYY-MM-DD
 }
 
 export interface BadgeInfo {
@@ -119,9 +126,8 @@ export interface BadgeInfo {
   description: string;
   icon: LucideIcon;
   goal: number;
-  stat: keyof UserStats;
+  stat: keyof UserStats | 'xp' | 'badges';
 }
-
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
@@ -141,6 +147,7 @@ export interface User {
   gender?: Gender;
   stats: UserStats;
   equippedBadge: BadgeKey | null;
+  createdAt: number;
 }
 
 // AI Notes Generator Flow Types

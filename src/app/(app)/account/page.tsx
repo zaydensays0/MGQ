@@ -14,16 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GRADE_LEVELS } from '@/lib/constants';
+import { GRADE_LEVELS, BADGE_DEFINITIONS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { generateAvatar } from '@/ai/flows/generate-avatar';
-
-
-const badgeInfo: Record<BadgeKey, { icon: React.ElementType, label: string, description: string }> = {
-    mini_streak: { icon: Flame, label: 'Mini Streak', description: 'Achieved a 3-day streak!' },
-    consistent_learner: { icon: Award, label: 'Consistent Learner', description: 'Achieved a 7-day streak! (Old System)' },
-    streak_master: { icon: Medal, label: 'Streak Master', description: 'Achieved a 7-day streak! Incredible!' },
-};
 
 export default function AccountPage() {
     const { user, isInitialized, updateUserProfile, changeUserPassword, sendPasswordReset } = useUser();
@@ -137,7 +130,7 @@ export default function AccountPage() {
     };
 
     const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender) && !isUpdatingProfile;
-    const canChangePassword = currentPassword && newPassword && newPassword.length >= 6 && confirmNewPassword && newPassword === confirmNewPassword && !isChangingPassword;
+    const canChangePassword = currentPassword && newPassword.length >= 6 && confirmNewPassword && newPassword === confirmNewPassword && !isChangingPassword;
 
 
     if (!isInitialized || !user) {
@@ -264,18 +257,18 @@ export default function AccountPage() {
                                 <TooltipProvider>
                                     <div className="flex flex-wrap gap-4">
                                         {user.badges.map(badgeKey => {
-                                            const badge = badgeInfo[badgeKey];
+                                            const badge = BADGE_DEFINITIONS[badgeKey];
                                             if (!badge) return null;
                                             return (
                                                 <Tooltip key={badgeKey}>
                                                     <TooltipTrigger asChild>
                                                         <div className="flex flex-col items-center gap-2 p-2 rounded-md border-2 border-transparent hover:border-primary transition-colors cursor-pointer">
                                                             <badge.icon className="w-10 h-10 text-primary" />
-                                                            <span className="text-xs font-semibold">{badge.label}</span>
+                                                            <span className="text-xs font-semibold">{badge.name}</span>
                                                         </div>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        <p>{badge.description}</p>
+                                                        <p>{badge.description.replace('{goal}', badge.goal.toString())}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             );
