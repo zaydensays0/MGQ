@@ -162,40 +162,51 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
 export const NEET_SYLLABUS: NeetSyllabus = {
     physics: {
         class11: [
-            "Physical World and Measurement", "Kinematics", "Laws of Motion", "Work, Energy and Power", 
-            "Motion of System of Particles and Rigid Body", "Gravitation", "Properties of Bulk Matter", 
-            "Thermodynamics", "Behaviour of Perfect Gas and Kinetic Theory", "Oscillations and Waves"
+            "Physical World", "Units and Measurements", "Motion in a Straight Line", "Motion in a Plane", "Laws of Motion", 
+            "Work, Energy and Power", "System of Particles and Rotational Motion", "Gravitation", 
+            "Mechanical Properties of Solids", "Mechanical Properties of Fluids", "Thermal Properties of Matter", 
+            "Thermodynamics", "Kinetic Theory", "Oscillations", "Waves"
         ],
         class12: [
-            "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", 
-            "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", 
-            "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices"
+            "Electric Charges and Fields", "Electrostatic Potential and Capacitance", "Current Electricity", 
+            "Moving Charges and Magnetism", "Magnetism and Matter", "Electromagnetic Induction", "Alternating Current", 
+            "Electromagnetic Waves", "Ray Optics and Optical Instruments", "Wave Optics", 
+            "Dual Nature of Radiation and Matter", "Atoms", "Nuclei", 
+            "Semiconductor Electronics: Materials, Devices and Simple Circuits"
         ]
     },
     chemistry: {
         class11: [
             "Some Basic Concepts of Chemistry", "Structure of Atom", "Classification of Elements and Periodicity in Properties", 
             "Chemical Bonding and Molecular Structure", "States of Matter: Gases and Liquids", "Thermodynamics", 
-            "Equilibrium", "Redox Reactions", "Hydrogen", "s-Block Element (Alkali and Alkaline earth metals)", 
-            "Some p-Block Elements", "Organic Chemistry- Some Basic Principles and Techniques", "Hydrocarbons", 
-            "Environmental Chemistry"
+            "Equilibrium", "Redox Reactions", "Hydrogen", "The s-Block Element", 
+            "The p-Block Element (Group 13 and 14)", "Organic Chemistry - Some Basic Principles and Techniques", 
+            "Hydrocarbons", "Environmental Chemistry"
         ],
         class12: [
-            "Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", 
-            "General Principles and Processes of Isolation of Elements", "p- Block Elements", "d and f Block Elements", 
-            "Coordination Compounds", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", 
-            "Aldehydes, Ketones and Carboxylic Acids", "Organic Compounds Containing Nitrogen", "Biomolecules", 
-            "Polymers", "Chemistry in Everyday Life"
+            "The Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry",
+            "The p-Block Element (Group 15, 16, 17, and 18)", "The d- and f-Block Elements", "Coordination Compounds",
+            "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", "Aldehydes, Ketones and Carboxylic Acids",
+            "Organic Compounds Containing Nitrogen", "Biomolecules", "Polymers", "Chemistry in Everyday Life"
         ]
     },
     biology: {
         class11: [
-            "Diversity in Living World", "Structural Organisation in Animals and Plants", "Cell Structure and Function", 
-            "Plant Physiology", "Human Physiology"
+            "The Living World", "Biological Classification", "Plant Kingdom", "Animal Kingdom", "Morphology of Flowering Plants", 
+            "Anatomy of Flowering Plants", "Structural Organisation in Animals", "Cell – The Unit of Life", "Biomolecules", 
+            "Cell Cycle and Cell Division", "Transport in Plants", "Mineral Nutrition", "Photosynthesis in Higher Plants", 
+            "Respiration in Plants", "Plant Growth and Development", "Digestion and Absorption", "Breathing and Exchange of Gases", 
+            "Body Fluids and Circulation", "Excretory Products and Their Elimination", "Locomotion and Movement", 
+            "Neural Control and Coordination", "Chemical Coordination and Integration"
         ],
         class12: [
-            "Reproduction", "Genetics and Evolution", "Biology and Human Welfare", "Biotechnology and Its Applications", 
-            "Ecology and Environment"
+            "Reproduction in Organisms", "Sexual Reproduction in Flowering Plants", "Human Reproduction", "Reproductive Health", 
+            "Principles of Inheritance and Variation", "Molecular Basis of Inheritance", "Evolution", "Human Health and Disease", 
+            "Strategies for Enhancement in Food Production", "Microbes in Human Welfare", "Biotechnology: Principles and Processes", 
+            "Biotechnology and Its Applications", "Organisms and Populations", "Ecosystem", "Biodiversity and Conservation", 
+            "Environmental Issues"
         ]
     }
 };
+
+    
