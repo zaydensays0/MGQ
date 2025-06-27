@@ -268,9 +268,9 @@ export const TopicToQuestionsInputSchema = z.object({
 export type TopicToQuestionsInput = z.infer<typeof TopicToQuestionsInputSchema>;
 
 export const GeneratedTopicQuestionSchema = z.object({
-    type: z.enum(['multiple_choice', 'true_false', 'fill_in_the_blanks', 'short_answer']).describe('The type of the question.'),
-    question: z.string().describe('The question text itself. For fill-in-the-blanks, use [BLANK].'),
-    options: z.array(z.string()).optional().describe('An array of options for "multiple_choice" or "true_false" questions.'),
+    type: z.enum(['multiple_choice', 'true_false', 'fill_in_the_blanks', 'short_answer', 'assertion_reason']).describe('The type of the question.'),
+    question: z.string().describe('The question text itself. For fill-in-the-blanks, use [BLANK]. For assertion/reason, separate with \\n.'),
+    options: z.array(z.string()).optional().describe('An array of options for "multiple_choice", "true_false", or "assertion_reason" questions.'),
     answer: z.string().describe('The correct answer.'),
     explanation: z.string().describe('A brief explanation for why the answer is correct.'),
 });

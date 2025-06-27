@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Lightbulb, Sparkles, Loader2, Terminal, ShieldCheck, Save, CheckCircle } from 'lucide-react';
+import { Lightbulb, Sparkles, Loader2, Terminal, ShieldCheck, Save, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { topicToQuestions } from '@/ai/flows/doubt-to-mcq';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
@@ -34,8 +34,9 @@ const QuestionDisplay = ({
   onSave: (question: GeneratedTopicQuestion) => void;
   isSaved: boolean;
 }) => {
-  const [userAnswer, setUserAnswer] = useState('');
+  const [userAnswer, setUserAnswer] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
   const { handleCorrectAnswer } = useUser();
   const { toast } = useToast();
 
@@ -44,6 +45,8 @@ const QuestionDisplay = ({
   
   const isMCQ = question.type === 'multiple_choice';
   const isTrueFalse = question.type === 'true_false';
+  const isAssertionReason = question.type === 'assertion_reason';
+  const isInteractive = isMCQ || isTrueFalse || isAssertionReason;
 
   const checkAnswer = (answer: string) => {
     if (isAttempted) return;
@@ -85,6 +88,19 @@ const QuestionDisplay = ({
       setIsRechecking(false);
     }
   };
+  
+  const renderQuestionText = () => {
+    if (isAssertionReason && question.question.includes('\\n')) {
+      const parts = question.question.split('\\n');
+      return (
+        <div className="font-semibold space-y-1">
+          <p>{parts[0]}</p>
+          <p>{parts[1]}</p>
+        </div>
+      );
+    }
+    return <p className="font-semibold">{question.question.replace('[BLANK]', '__________')}</p>;
+  };
 
   return (
     <Card className="shadow-md">
@@ -93,9 +109,9 @@ const QuestionDisplay = ({
         <CardDescription>Type: <span className="capitalize">{question.type.replace(/_/g, ' ')}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="font-semibold">{question.question.replace('[BLANK]', '__________')}</p>
+        {renderQuestionText()}
         
-        {(isMCQ || isTrueFalse) && question.options?.map((option, i) => {
+        {isInteractive && question.options?.map((option, i) => {
             const isSelected = userAnswer === option;
             const isCorrect = question.answer === option;
             let variant: "outline" | "default" | "destructive" = "outline";
@@ -109,28 +125,25 @@ const QuestionDisplay = ({
                 </Button>
             );
         })}
-
-        {(question.type === 'short_answer' || question.type === 'fill_in_the_blanks') && (
-            <>
-                <div className="flex gap-2">
-                    <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Type your answer..." disabled={isAttempted} />
-                    <Button onClick={() => checkAnswer(userAnswer)} disabled={isAttempted}>Submit</Button>
-                </div>
-                {isAttempted && (
-                    <div className={`mt-4 p-3 rounded-md border ${userAnswer.trim().toLowerCase() === question.answer.toLowerCase() ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700'}`}>
-                        <p className={`text-sm font-semibold mb-1 ${userAnswer.trim().toLowerCase() === question.answer.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
-                            Correct Answer:
-                        </p>
-                        <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
-                    </div>
-                )}
-            </>
+        
+        {!isInteractive && !showAnswer && (
+          <Button variant="outline" onClick={() => setShowAnswer(true)} className="w-full">
+            <Eye className="mr-2 h-4 w-4" /> Show Answer
+          </Button>
         )}
       </CardContent>
 
-      {isAttempted && (
+      {(isAttempted || showAnswer) && (
         <CardFooter className="flex-col items-start gap-4 p-4 pt-0 border-t mt-4">
-          <Accordion type="single" collapsible className="w-full">
+          {showAnswer && !isInteractive && (
+             <div className="w-full mt-4 p-3 rounded-md border bg-secondary/30 border-input">
+                <p className="text-sm font-semibold mb-1 text-primary">
+                    Correct Answer:
+                </p>
+                <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
+            </div>
+          )}
+          <Accordion type="single" collapsible className="w-full" defaultValue={showAnswer ? "item-1" : ""}>
             <AccordionItem value="item-1">
               <AccordionTrigger>Why is this the answer?</AccordionTrigger>
               <AccordionContent>{question.explanation}</AccordionContent>
