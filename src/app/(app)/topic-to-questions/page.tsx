@@ -111,10 +111,20 @@ const QuestionDisplay = ({
         })}
 
         {(question.type === 'short_answer' || question.type === 'fill_in_the_blanks') && (
-            <div className="flex gap-2">
-                <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Type your answer..." disabled={isAttempted} />
-                <Button onClick={() => checkAnswer(userAnswer)} disabled={isAttempted}>Submit</Button>
-            </div>
+            <>
+                <div className="flex gap-2">
+                    <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Type your answer..." disabled={isAttempted} />
+                    <Button onClick={() => checkAnswer(userAnswer)} disabled={isAttempted}>Submit</Button>
+                </div>
+                {isAttempted && (
+                    <div className={`mt-4 p-3 rounded-md border ${userAnswer.trim().toLowerCase() === question.answer.toLowerCase() ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700'}`}>
+                        <p className={`text-sm font-semibold mb-1 ${userAnswer.trim().toLowerCase() === question.answer.toLowerCase() ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                            Correct Answer:
+                        </p>
+                        <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
+                    </div>
+                )}
+            </>
         )}
       </CardContent>
 
