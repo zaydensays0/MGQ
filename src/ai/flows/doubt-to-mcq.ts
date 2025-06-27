@@ -1,52 +1,60 @@
 'use server';
 /**
- * @fileOverview An AI agent that converts a user's topic into a set of multiple-choice questions.
+ * @fileOverview An AI agent that converts a user's topic into a set of mixed-type practice questions.
  *
- * - topicToMcq - A function that handles the MCQ generation process.
+ * - topicToQuestions - A function that handles the question generation process.
  */
 
 import {ai} from '@/ai/genkit';
 import {
-    TopicToMcqInputSchema,
-    TopicToMcqOutputSchema,
-    type TopicToMcqInput,
-    type TopicToMcqOutput,
+    TopicToQuestionsInputSchema,
+    TopicToQuestionsOutputSchema,
+    type TopicToQuestionsInput,
+    type TopicToQuestionsOutput,
 } from '@/types';
 
 
-export async function topicToMcq(input: TopicToMcqInput): Promise<TopicToMcqOutput> {
-  return topicToMcqFlow(input);
+export async function topicToQuestions(input: TopicToQuestionsInput): Promise<TopicToQuestionsOutput> {
+  return topicToQuestionsFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'topicToMcqPrompt',
-  input: {schema: TopicToMcqInputSchema},
-  output: {schema: TopicToMcqOutputSchema},
-  prompt: `You are an expert educator who excels at creating practice questions to help students solidify their understanding.
+  name: 'topicToQuestionsPrompt',
+  input: {schema: TopicToQuestionsInputSchema},
+  output: {schema: TopicToQuestionsOutputSchema},
+  prompt: `You are an expert educator who creates diverse practice questions to help students solidify their understanding of a topic.
   
-A student has provided a concept or a topic they are studying. Your task is to generate 3-5 high-quality Multiple Choice Questions (MCQs) directly related to their input. These questions should be designed to test their understanding.
+A student has provided a topic and requested a specific number of questions. Your task is to generate exactly {{numberOfQuestions}} high-quality questions about the topic: "{{topic}}".
 
-For each question, you MUST adhere to the following structure:
-- "question": The question text.
-- "options": An array of exactly 4 distinct string options.
-- "answer": The single correct answer, which must exactly match one of the four options.
+Create a mix of the following question types:
+- 'multiple_choice': A standard MCQ.
+- 'true_false': A true or false statement.
+- 'fill_in_the_blanks': A sentence with a word or phrase missing, indicated by [BLANK].
+- 'short_answer': A question requiring a brief, direct answer.
+
+For each question, you MUST provide:
+- "type": One of the four types listed above.
+- "question": The question text. For 'fill_in_the_blanks', use [BLANK] for the missing part.
+- "options": 
+    - For 'multiple_choice', provide an array of exactly 4 distinct string options.
+    - For 'true_false', provide the array ["True", "False"].
+    - For other types, this field can be omitted.
+- "answer": The single correct answer. For 'multiple_choice', it must match an option. For 'true_false', it must be "True" or "False". For 'fill_in_the_blanks', it is the word that fills the blank.
 - "explanation": A brief, clear explanation for why the provided answer is correct.
 
-User's topic: "{{topic}}"
-
-Generate the MCQs now.`,
+Generate the questions now.`,
 });
 
-const topicToMcqFlow = ai.defineFlow(
+const topicToQuestionsFlow = ai.defineFlow(
   {
-    name: 'topicToMcqFlow',
-    inputSchema: TopicToMcqInputSchema,
-    outputSchema: TopicToMcqOutputSchema,
+    name: 'topicToQuestionsFlow',
+    inputSchema: TopicToQuestionsInputSchema,
+    outputSchema: TopicToQuestionsOutputSchema,
   },
   async (input) => {
     const {output} = await prompt(input);
     if (!output || output.questions.length === 0) {
-      throw new Error('Failed to generate MCQs for the provided topic. Please try rephrasing.');
+      throw new Error('Failed to generate questions for the provided topic. Please try rephrasing.');
     }
     return output;
   }

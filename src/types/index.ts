@@ -258,21 +258,23 @@ export const RecheckAnswerOutputSchema = z.object({
 });
 export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;
 
-// AI Topic to MCQ Flow Types
-export const TopicToMcqInputSchema = z.object({
-  topic: z.string().describe("The user's concept or topic to be converted into MCQs."),
+// AI Topic to Questions Flow Types
+export const TopicToQuestionsInputSchema = z.object({
+  topic: z.string().describe("The user's concept or topic to be converted into questions."),
+  numberOfQuestions: z.number().int().min(1).max(10).describe("The number of questions to generate."),
 });
-export type TopicToMcqInput = z.infer<typeof TopicToMcqInputSchema>;
+export type TopicToQuestionsInput = z.infer<typeof TopicToQuestionsInputSchema>;
 
-export const McqSchema = z.object({
-    question: z.string().describe('The generated multiple-choice question.'),
-    options: z.array(z.string()).length(4).describe('An array of exactly 4 string options for the question.'),
-    answer: z.string().describe('The correct answer, which must be one of the provided options.'),
+export const GeneratedTopicQuestionSchema = z.object({
+    type: z.enum(['multiple_choice', 'true_false', 'fill_in_the_blanks', 'short_answer']).describe('The type of the question.'),
+    question: z.string().describe('The question text itself. For fill-in-the-blanks, use [BLANK].'),
+    options: z.array(z.string()).optional().describe('An array of options for "multiple_choice" or "true_false" questions.'),
+    answer: z.string().describe('The correct answer.'),
     explanation: z.string().describe('A brief explanation for why the answer is correct.'),
 });
-export type Mcq = z.infer<typeof McqSchema>;
+export type GeneratedTopicQuestion = z.infer<typeof GeneratedTopicQuestionSchema>;
 
-export const TopicToMcqOutputSchema = z.object({
-  questions: z.array(McqSchema).min(3).max(5).describe('An array of 3-5 generated multiple-choice questions.'),
+export const TopicToQuestionsOutputSchema = z.object({
+  questions: z.array(GeneratedTopicQuestionSchema).describe('An array of generated questions of mixed types.'),
 });
-export type TopicToMcqOutput = z.infer<typeof TopicToMcqOutputSchema>;
+export type TopicToQuestionsOutput = z.infer<typeof TopicToQuestionsOutputSchema>;
