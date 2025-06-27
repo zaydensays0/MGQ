@@ -10,7 +10,8 @@ export type QuestionTypeNCERT =
   | 'short_answer'
   | 'long_answer'
   | 'fill_in_the_blanks'
-  | 'true_false';
+  | 'true_false'
+  | 'numerical'; // Added for NEET
 
 export interface SavedQuestion {
   id: string;
@@ -113,6 +114,11 @@ export interface Stream {
   questionTypes: string[];
 }
 
+export interface NeetSyllabus {
+    physics: { class11: string[], class12: string[] };
+    chemistry: { class11: string[], class12: string[] };
+    biology: { class11: string[], class12: string[] };
+}
 
 // --- Badge Types ---
 export type BadgeKey = 
@@ -295,3 +301,34 @@ export const TopicToQuestionsOutputSchema = z.object({
   questions: z.array(GeneratedTopicQuestionSchema).describe('An array of generated questions of mixed types.'),
 });
 export type TopicToQuestionsOutput = z.infer<typeof TopicToQuestionsOutputSchema>;
+
+
+// NEET Question Generation Types
+export const NeetQuestionTypeSchema = z.enum(['mcq', 'assertion_reason', 'numerical']);
+export type NeetQuestionType = z.infer<typeof NeetQuestionTypeSchema>;
+
+export const DifficultySchema = z.enum(['easy', 'medium', 'hard']);
+export type Difficulty = z.infer<typeof DifficultySchema>;
+
+export const GenerateNeetQuestionsInputSchema = z.object({
+  subject: z.string().describe('The subject for the questions (e.g., physics).'),
+  classLevel: z.string().describe('The class level for the questions (e.g., 11 or 12).'),
+  chapter: z.string().describe('The specific chapter to generate questions from.'),
+  numberOfQuestions: z.number().int().positive().describe('The number of questions to generate.'),
+});
+export type GenerateNeetQuestionsInput = z.infer<typeof GenerateNeetQuestionsInputSchema>;
+
+export const NeetQuestionSchema = z.object({
+  type: NeetQuestionTypeSchema.describe("The type of NEET question."),
+  text: z.string().describe("The full question text. For Assertion/Reason, it must contain both parts separated by a newline."),
+  options: z.array(z.string()).optional().describe("Array of 4 options for MCQ and Assertion/Reason types."),
+  answer: z.string().describe("The correct answer. Must match an option if options are provided."),
+  explanation: z.string().describe("A clear explanation of the correct answer."),
+  difficulty: DifficultySchema.describe("The difficulty level of the question."),
+});
+export type NeetQuestion = z.infer<typeof NeetQuestionSchema>;
+
+export const GenerateNeetQuestionsOutputSchema = z.object({
+  questions: z.array(NeetQuestionSchema).describe('An array of generated NEET questions.'),
+});
+export type GenerateNeetQuestionsOutput = z.infer<typeof GenerateNeetQuestionsOutputSchema>;

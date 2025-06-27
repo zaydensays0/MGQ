@@ -1,5 +1,5 @@
 
-import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream } from '@/types';
+import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, NeetSyllabus } from '@/types';
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
@@ -17,6 +17,9 @@ export const SUBJECTS: SubjectOption[] = [
   { value: 'social_science', label: 'Social Science', icon: Globe2 as LucideIcon },
   { value: 'hindi', label: 'Hindi', icon: NotebookText as LucideIcon },
   { value: 'assamese', label: 'Assamese', icon: NotebookText as LucideIcon },
+  { value: 'physics', label: 'Physics', icon: Atom as LucideIcon },
+  { value: 'chemistry', label: 'Chemistry', icon: FlaskConical as LucideIcon },
+  { value: 'biology', label: 'Biology', icon: Stethoscope as LucideIcon },
 ];
 
 export const QUESTION_TYPES: QuestionTypeOption[] = [
@@ -154,4 +157,45 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
   xp_king_queen: { name: 'XP King/Queen', description: "Earn {goal} XP.", icon: Crown, goal: 50000, stat: 'xp' },
   xp_legend: { name: 'XP Legend', description: "Earn {goal} XP.", icon: Star, goal: 70000, stat: 'xp' },
   xp_god_mode: { name: 'XP God Mode', description: "Earn {goal} XP.", icon: Flame, goal: 100000, stat: 'xp' },
+};
+
+export const NEET_SYLLABUS: NeetSyllabus = {
+    physics: {
+        class11: [
+            "Physical World and Measurement", "Kinematics", "Laws of Motion", "Work, Energy and Power", 
+            "Motion of System of Particles and Rigid Body", "Gravitation", "Properties of Bulk Matter", 
+            "Thermodynamics", "Behaviour of Perfect Gas and Kinetic Theory", "Oscillations and Waves"
+        ],
+        class12: [
+            "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", 
+            "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", 
+            "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices"
+        ]
+    },
+    chemistry: {
+        class11: [
+            "Some Basic Concepts of Chemistry", "Structure of Atom", "Classification of Elements and Periodicity in Properties", 
+            "Chemical Bonding and Molecular Structure", "States of Matter: Gases and Liquids", "Thermodynamics", 
+            "Equilibrium", "Redox Reactions", "Hydrogen", "s-Block Element (Alkali and Alkaline earth metals)", 
+            "Some p-Block Elements", "Organic Chemistry- Some Basic Principles and Techniques", "Hydrocarbons", 
+            "Environmental Chemistry"
+        ],
+        class12: [
+            "Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", 
+            "General Principles and Processes of Isolation of Elements", "p- Block Elements", "d and f Block Elements", 
+            "Coordination Compounds", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", 
+            "Aldehydes, Ketones and Carboxylic Acids", "Organic Compounds Containing Nitrogen", "Biomolecules", 
+            "Polymers", "Chemistry in Everyday Life"
+        ]
+    },
+    biology: {
+        class11: [
+            "Diversity in Living World", "Structural Organisation in Animals and Plants", "Cell Structure and Function", 
+            "Plant Physiology", "Human Physiology"
+        ],
+        class12: [
+            "Reproduction", "Genetics and Evolution", "Biology and Human Welfare", "Biotechnology and Its Applications", 
+            "Ecology and Environment"
+        ]
+    }
 };
