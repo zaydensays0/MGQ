@@ -1,4 +1,3 @@
-
 import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
@@ -260,4 +259,19 @@ export const RecheckAnswerOutputSchema = z.object({
 export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;
 
 // AI Doubt to MCQ Flow Types
-export type { DoubtToMcqInput, DoubtToMcqOutput, McqSchema } from '@/ai/flows/doubt-to-mcq';
+export const DoubtToMcqInputSchema = z.object({
+  doubt: z.string().describe("The user's doubt, concept, or topic to be converted into MCQs."),
+});
+export type DoubtToMcqInput = z.infer<typeof DoubtToMcqInputSchema>;
+
+export const McqSchema = z.object({
+    question: z.string().describe('The generated multiple-choice question.'),
+    options: z.array(z.string()).length(4).describe('An array of exactly 4 string options for the question.'),
+    answer: z.string().describe('The correct answer, which must be one of the provided options.'),
+});
+export type Mcq = z.infer<typeof McqSchema>;
+
+export const DoubtToMcqOutputSchema = z.object({
+  questions: z.array(McqSchema).min(3).max(5).describe('An array of 3-5 generated multiple-choice questions.'),
+});
+export type DoubtToMcqOutput = z.infer<typeof DoubtToMcqOutputSchema>;

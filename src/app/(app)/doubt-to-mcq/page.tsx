@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lightbulb, Sparkles, Loader2, Terminal, Check, XIcon } from 'lucide-react';
-import { doubtToMcq, type DoubtToMcqInput, type McqSchema } from '@/ai/flows/doubt-to-mcq';
+import { doubtToMcq } from '@/ai/flows/doubt-to-mcq';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { useUser } from '@/contexts/user-context';
+import { type DoubtToMcqInput, McqSchema } from '@/types';
 
 
 type Mcq = z.infer<typeof McqSchema>;
