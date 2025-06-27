@@ -49,10 +49,18 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
       return;
     }
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
-    await addDoc(questionsCol, {
-      ...questionData,
+    
+    // Explicitly handle optional 'options' field to avoid 'undefined' in Firestore
+    const { options, ...rest } = questionData;
+    const dataToSave: any = {
+      ...rest,
       timestamp: Date.now(),
-    });
+    };
+    if (options) {
+      dataToSave.options = options;
+    }
+
+    await addDoc(questionsCol, dataToSave);
   }, [user, toast]);
 
   const addMultipleQuestions = useCallback(async (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
@@ -80,13 +88,17 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     uniqueNewQuestions.forEach(qaPair => {
       const newDocRef = doc(questionsCol);
-      batch.set(newDocRef, {
+      // Explicitly construct object to avoid sending `undefined` for options
+      const dataToSet: any = {
         text: qaPair.question,
         answer: qaPair.answer,
-        options: qaPair.options,
         ...context,
         timestamp: Date.now(),
-      });
+      };
+      if (qaPair.options) {
+        dataToSet.options = qaPair.options;
+      }
+      batch.set(newDocRef, dataToSet);
     });
     await batch.commit();
   }, [user, savedQuestions, toast]);
