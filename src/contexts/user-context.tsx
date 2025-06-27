@@ -79,12 +79,24 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
-  const fetchUserData = useCallback(async (uid: string) => {
+  const fetchUserData = useCallback(async (uid: string, fbUser: FirebaseUser) => {
     if (!db) return;
     const userDocRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
-      setUser(userDoc.data() as User);
+        const data = userDoc.data();
+        // Fallback for users created before 'stats' or other fields existed
+        const userWithDefaults: User = {
+            ...data,
+            stats: data.stats || {
+                questionsGenerated: 0,
+                mockTestsCompleted: 0,
+                perfectMockTests: 0,
+            },
+            badges: data.badges || [],
+            equippedBadge: data.equippedBadge || null,
+        } as User;
+        setUser(userWithDefaults);
     }
   }, []);
 
@@ -97,7 +109,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setFirebaseUser(fbUser);
       if (fbUser) {
         setIsGuest(false);
-        await fetchUserData(fbUser.uid);
+        await fetchUserData(fbUser.uid, fbUser);
       } else {
         setUser(null);
       }
