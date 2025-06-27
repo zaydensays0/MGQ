@@ -261,7 +261,9 @@ export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;
 // AI Topic to Questions Flow Types
 export const TopicToQuestionsInputSchema = z.object({
   topic: z.string().describe("The user's concept or topic to be converted into questions."),
-  numberOfQuestions: z.number().int().min(1).max(10).describe("The number of questions to generate."),
+  numberOfQuestions: z.number().int().min(1).optional().describe("The number of questions to generate."),
+  isComprehensive: z.boolean().optional().describe("Whether to generate a comprehensive set of questions covering the whole topic."),
+  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).optional().describe('The grade level, required for comprehensive mode.'),
 });
 export type TopicToQuestionsInput = z.infer<typeof TopicToQuestionsInputSchema>;
 

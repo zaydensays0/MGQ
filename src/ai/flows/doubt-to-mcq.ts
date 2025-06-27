@@ -22,9 +22,15 @@ const prompt = ai.definePrompt({
   name: 'topicToQuestionsPrompt',
   input: {schema: TopicToQuestionsInputSchema},
   output: {schema: TopicToQuestionsOutputSchema},
-  prompt: `You are an expert educator who creates diverse practice questions to help students solidify their understanding of a topic.
-  
-A student has provided a topic and requested a specific number of questions. Your task is to generate exactly {{numberOfQuestions}} high-quality questions about the topic: "{{topic}}".
+  prompt: `You are an expert educator creating practice questions for a student.
+
+The student's topic is: "{{topic}}".
+
+{{#if isComprehensive}}
+Your task is to generate a COMPREHENSIVE set of questions to ensure a Class {{gradeLevel}} student fully understands this topic. Cover all key aspects, definitions, and applications. Generate as many questions as needed to be thorough.
+{{else}}
+Your task is to generate exactly {{numberOfQuestions}} high-quality questions about the topic.
+{{/if}}
 
 Create a mix of the following question types:
 - 'multiple_choice': A standard MCQ.
