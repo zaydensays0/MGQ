@@ -13,7 +13,7 @@ import {z} from 'genkit';
 import type { GradeLevelNCERT } from '@/types'; // Removed ConversationTurn as it's implicitly defined by the schema
 
 const AnswerSubjectQuestionInputSchema = z.object({
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the question context.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level for the question context.'),
   subject: z.string().describe('The subject for the question context.'),
   chapter: z.string().describe('The chapter for the question context.'),
   userQuestion: z.string().describe('The current question asked by the user.'),
@@ -85,4 +85,3 @@ const answerSubjectQuestionFlow = ai.defineFlow(
     return output;
   }
 );
-

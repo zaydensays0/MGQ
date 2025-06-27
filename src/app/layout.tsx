@@ -14,7 +14,7 @@ import { AdBanner } from '@/components/ad-banner';
 
 export const metadata: Metadata = {
   title: 'MGQs',
-  description: 'Generate NCERT-based questions for Classes 9-12 and create notes.',
+  description: 'Generate NCERT-based questions for Classes 5-12 and create notes.',
   // By convention, Next.js will automatically look for a favicon.ico file
   // in the /app directory. Explicitly defining it here is removed to allow
   // the automatic detection to work, which is more robust.

@@ -15,7 +15,7 @@ import {z} from 'genkit';
 import type { GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
 
 const RegenerateQuestionInputSchema = z.object({
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level of the question.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level of the question.'),
   subject: z.string().describe('The subject of the question.'),
   chapter: z.string().describe('The chapter the question is based on.'),
   questionType: z
@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
   name: 'regenerateQuestionPrompt',
   input: {schema: RegenerateQuestionInputSchema},
   output: {schema: RegenerateQuestionOutputSchema},
-  prompt: `You are an expert teacher specializing in creating NCERT textbook questions and answers for classes 9-12.
+  prompt: `You are an expert teacher specializing in creating NCERT textbook questions and answers for classes 5-12.
 
 You will generate a NEW question of type "{{{questionType}}}" and its corresponding answer for grade level "{{{gradeLevel}}}", subject "{{{subject}}}", and chapter "{{{chapter}}}".
 

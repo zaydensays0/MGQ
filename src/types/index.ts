@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
 // Specific types for NCERT context
-export type GradeLevelNCERT = '9' | '10' | '11' | '12';
+export type GradeLevelNCERT = '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 export type QuestionTypeNCERT =
   | 'multiple_choice'
   | 'assertion_reason'
@@ -197,7 +197,7 @@ export interface FlashcardDeck {
 
 // AI Flashcard Generation
 export const GenerateFlashcardsInputSchema = z.object({
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the flashcards.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level for the flashcards.'),
   subject: z.string().describe('The subject for the flashcards.'),
   chapter: z.string().describe('The chapter to generate flashcards from.'),
   numberOfCards: z.number().int().positive().describe('The number of flashcards to generate.'),
@@ -221,7 +221,7 @@ export type GrammarQuestionType = z.infer<typeof GrammarQuestionTypeSchema>;
 
 export const GenerateGrammarTestInputSchema = z.object({
   topic: z.string().describe('The specific grammar topic for the test (e.g., Tenses, Articles).'),
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the test.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level for the test.'),
   questionType: GrammarQuestionTypeSchema.describe('The type of questions to generate.'),
   numberOfQuestions: z.number().int().positive().describe('The number of questions to generate for the test.'),
 });
@@ -263,7 +263,7 @@ export const TopicToQuestionsInputSchema = z.object({
   topic: z.string().describe("The user's concept or topic to be converted into questions."),
   numberOfQuestions: z.number().int().min(1).optional().describe("The number of questions to generate."),
   isComprehensive: z.boolean().optional().describe("Whether to generate a comprehensive set of questions covering the whole topic."),
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).optional().describe('The grade level, required for comprehensive mode.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).optional().describe('The grade level, required for comprehensive mode.'),
 });
 export type TopicToQuestionsInput = z.infer<typeof TopicToQuestionsInputSchema>;
 

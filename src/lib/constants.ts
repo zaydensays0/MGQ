@@ -3,14 +3,15 @@ import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, Badg
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
-    TrendingUp, Moon, Coins, Database, Award, Crown, Star, Flame, Unlock 
+    TrendingUp, Moon, Coins, Database, Award, Crown, Star, Flame, Unlock, Leaf
 } from 'lucide-react';
 
-export const GRADE_LEVELS: GradeLevelNCERT[] = ['9', '10', '11', '12'];
+export const GRADE_LEVELS: GradeLevelNCERT[] = ['5', '6', '7', '8', '9', '10', '11', '12'];
 
 export const SUBJECTS: SubjectOption[] = [
   { value: 'maths', label: 'Maths', icon: Calculator as LucideIcon },
   { value: 'science', label: 'Science', icon: FlaskConical as LucideIcon },
+  { value: 'evs', label: 'Environmental Science', icon: Leaf as LucideIcon },
   { value: 'english', label: 'English', icon: BookOpenText as LucideIcon },
   { value: 'social_science', label: 'Social Science', icon: Globe2 as LucideIcon },
   { value: 'hindi', label: 'Hindi', icon: NotebookText as LucideIcon },

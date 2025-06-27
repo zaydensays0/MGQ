@@ -13,7 +13,7 @@ import {z} from 'genkit';
 import type { GradeLevelNCERT } from '@/types';
 
 const GenerateNotesByChapterInputSchema = z.object({
-  gradeLevel: z.enum<GradeLevelNCERT, ['9', '10', '11', '12']>(['9', '10', '11', '12']).describe('The grade level for the chapter.'),
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level for the chapter.'),
   subject: z.string().describe('The subject of the chapter.'),
   chapter: z.string().describe('The name of the chapter.'),
 });
