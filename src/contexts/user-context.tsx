@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -16,7 +16,7 @@ import {
   reauthenticateWithCredential,
   updatePassword,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment, collection, query, onSnapshot, addDoc, deleteDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
 
@@ -55,6 +55,7 @@ export const getXpForLevel = (level: number): { currentLevelStart: number; nextL
 interface UserContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
+  wrongQuestions: WrongQuestion[];
   isInitialized: boolean;
   isGuest: boolean;
   login: (email: string, pass: string) => Promise<void>;
@@ -68,6 +69,9 @@ interface UserContextType {
   equipBadge: (badgeKey: BadgeKey | null) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   changeUserPassword: (currentPass: string, newPass: string) => Promise<void>;
+  addWrongQuestion: (questionData: Omit<WrongQuestion, 'id' | 'attemptedAt'>) => Promise<void>;
+  removeWrongQuestion: (id: string) => Promise<void>;
+  clearAllWrongQuestions: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -88,6 +92,7 @@ const getDefaultUserStats = (): UserStats => ({
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [wrongQuestions, setWrongQuestions] = useState<WrongQuestion[]>([]);
   const [isGuest, setIsGuest] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
@@ -175,19 +180,36 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsInitialized(true);
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
         setIsGuest(false);
         await fetchUserData(fbUser.uid, fbUser);
       } else {
         setUser(null);
+        setWrongQuestions([]); // Clear wrong questions on logout
       }
       setIsInitialized(true);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, [fetchUserData]);
+
+  // Listener for wrong questions
+  useEffect(() => {
+      if (user && db) {
+          const q = query(collection(db, 'users', user.uid, 'wrongQuestions'),);
+          const unsubscribe = onSnapshot(q, (snapshot) => {
+              const userWrongQuestions: WrongQuestion[] = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as WrongQuestion));
+              setWrongQuestions(userWrongQuestions);
+          }, (error) => {
+              console.error("Error fetching wrong questions:", error);
+              toast({ title: "Error", description: "Could not fetch your list of wrong questions.", variant: "destructive" });
+          });
+          return () => unsubscribe();
+      }
+  }, [user, db, toast]);
+
 
   const continueAsGuest = () => {
     setIsGuest(true);
@@ -443,8 +465,38 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const addWrongQuestion = useCallback(async (questionData: Omit<WrongQuestion, 'id' | 'attemptedAt'>) => {
+    if (!user || !db || isGuest) return;
+    const wrongQuestionsCol = collection(db, 'users', user.uid, 'wrongQuestions');
+    const dataToSave = { ...questionData, attemptedAt: Date.now() };
+    await addDoc(wrongQuestionsCol, dataToSave);
+  }, [user, isGuest, db]);
+
+  const removeWrongQuestion = useCallback(async (id: string) => {
+    if (!user || !db || isGuest) return;
+    const questionDocRef = doc(db, 'users', user.uid, 'wrongQuestions', id);
+    await deleteDoc(questionDocRef);
+  }, [user, isGuest, db]);
+
+  const clearAllWrongQuestions = useCallback(async () => {
+    if (!user || !db || isGuest) return;
+    const wrongQuestionsCol = collection(db, 'users', user.uid, 'wrongQuestions');
+    const snapshot = await getDocs(wrongQuestionsCol);
+
+    if (snapshot.empty) {
+      toast({ title: "Nothing to clear!", description: "Your revision list is already empty." });
+      return;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    toast({ title: "List Cleared!", description: "Your 'Recently Wrong Questions' list has been reset." });
+  }, [user, isGuest, db, toast]);
+
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, claimBadge, equipBadge, sendPasswordReset, changeUserPassword }}>
+    <UserContext.Provider value={{ user, firebaseUser, wrongQuestions, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, claimBadge, equipBadge, sendPasswordReset, changeUserPassword, addWrongQuestion, removeWrongQuestion, clearAllWrongQuestions }}>
       {children}
     </UserContext.Provider>
   );

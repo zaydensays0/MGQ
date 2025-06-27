@@ -54,7 +54,7 @@ export default function MockTestPage() {
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const { user, handleCorrectAnswer, trackStats } = useUser();
+    const { user, handleCorrectAnswer, trackStats, addWrongQuestion } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
@@ -125,6 +125,20 @@ export default function MockTestPage() {
                 variant: "destructive"
             });
             new Audio('/sounds/incorrect.mp3').play();
+            // Save the wrong question
+            addWrongQuestion({
+                questionText: currentQuestion.text,
+                userAnswer: selectedOption,
+                correctAnswer: currentQuestion.answer,
+                options: currentQuestion.options,
+                explanation: `This question was part of a mock test on ${form.getValues('chapters')}.`,
+                context: {
+                    gradeLevel: form.getValues('gradeLevel'),
+                    subject: form.getValues('subject'),
+                    chapter: form.getValues('chapters'),
+                    questionType: currentQuestion.type as QuestionTypeNCERT,
+                }
+            });
         }
 
         const newAnswers = [...userAnswers, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }];

@@ -19,7 +19,8 @@ import {
   LayoutGrid,
   CheckSquare,
   Lightbulb,
-  Target
+  Target,
+  RotateCw
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { LucideIcon } from 'lucide-react';
@@ -30,8 +31,9 @@ const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</
 const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
   { title: 'Study Streams', href: '/streams', icon: <Target className="w-6 h-6 text-primary" />, description: 'Focused prep for competitive exams.' },
   { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
+  { title: 'Wrong Questions', href: '/wrong-questions', icon: <RotateCw className="w-6 h-6 text-primary" />, description: 'Practice the questions you got wrong.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
-  { title: 'Topic to Questions', href: '/topic-to-mcq', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any topic into a quick practice quiz.' },
+  { title: 'Topic to Questions', href: '/topic-to-questions', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any topic into a quick practice quiz.' },
   { title: 'Notes', href: '/notes', icon: <FileText className="w-6 h-6 text-primary" />, description: 'Create and organize your personal study notes.' },
   { title: 'Grammar', href: '/grammar', icon: <GrammarIcon />, description: 'Your personal grammar checking tool.' },
   { title: 'Ask an Expert', href: '/subject-expert', icon: <MessageSquare className="w-6 h-6 text-primary" />, description: 'Chat with subject experts for any topic.' },

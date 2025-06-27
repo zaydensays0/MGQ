@@ -29,7 +29,7 @@ type AnswerStatus = {
 type FilterStatus = 'all' | 'attempted' | 'not_attempted' | 'bookmarked';
 
 export const NeetPracticeSession = ({ questions, context }: { questions: NeetQuestion[], context: { subject: string, classLevel: string, chapter: string } }) => {
-    const { handleCorrectAnswer } = useUser();
+    const { handleCorrectAnswer, addWrongQuestion } = useUser();
     const { toast } = useToast();
 
     const streamKey = `neet-bookmarks-${context.subject}-${context.chapter}`.replace(/\s+/g, '-');
@@ -66,6 +66,8 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                 return typeMatch && difficultyMatch && statusMatch;
             });
     }, [questions, typeFilter, difficultyFilter, statusFilter, answers, isBookmarked]);
+    
+    const activeQuestionIndex = useMemo(() => filteredQuestionIndices[currentQuestionIndex], [filteredQuestionIndices, currentQuestionIndex]);
 
     useEffect(() => {
         const activeQuestionStillExists = filteredQuestionIndices.includes(activeQuestionIndex);
@@ -74,7 +76,6 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
         }
     }, [filteredQuestionIndices, activeQuestionIndex]);
     
-    const activeQuestionIndex = filteredQuestionIndices[currentQuestionIndex];
     const currentQuestion = activeQuestionIndex !== undefined ? questions[activeQuestionIndex] : null;
 
     if (!currentQuestion) {
@@ -115,6 +116,19 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${currentQuestion.answer}`, variant: "destructive" });
             new Audio('/sounds/incorrect.mp3').play();
+            addWrongQuestion({
+                questionText: currentQuestion.text,
+                userAnswer: selectedOption,
+                correctAnswer: currentQuestion.answer,
+                options: currentQuestion.options,
+                explanation: currentQuestion.explanation,
+                context: {
+                    gradeLevel: context.classLevel as GradeLevelNCERT,
+                    subject: context.subject,
+                    chapter: context.chapter,
+                    questionType: currentQuestion.type as QuestionTypeNCERT,
+                }
+            });
         }
     };
     

@@ -333,3 +333,19 @@ export const GenerateNeetQuestionsOutputSchema = z.object({
   questions: z.array(NeetQuestionSchema).describe('An array of generated NEET questions.'),
 });
 export type GenerateNeetQuestionsOutput = z.infer<typeof GenerateNeetQuestionsOutputSchema>;
+
+export interface WrongQuestion {
+  id: string;
+  questionText: string;
+  userAnswer: string;
+  correctAnswer: string;
+  options?: string[];
+  explanation?: string;
+  context: {
+    gradeLevel: GradeLevelNCERT;
+    subject: string;
+    chapter: string;
+    questionType: QuestionTypeNCERT;
+  };
+  attemptedAt: number;
+}
