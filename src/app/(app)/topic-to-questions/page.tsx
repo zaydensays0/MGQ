@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent, useEffect } from 'react';
@@ -13,7 +14,7 @@ import { topicToQuestions } from '@/ai/flows/doubt-to-mcq';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { TopicToQuestionsInput, GeneratedTopicQuestion, RecheckAnswerOutput, QuestionTypeNCERT, GradeLevelNCERT } from '@/types';
+import type { TopicToQuestionsInput, GeneratedTopicQuestion, RecheckAnswerOutput, QuestionTypeNCERT, GradeLevelNCERT, GeneratedQuestionAnswerPair } from '@/types';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -135,7 +136,7 @@ const QuestionDisplay = ({
 
       {(isAttempted || showAnswer) && (
         <CardFooter className="flex-col items-start gap-4 p-4 pt-0 border-t mt-4">
-          {showAnswer && !isInteractive && (
+          {(showAnswer && !isInteractive) && (
              <div className="w-full mt-4 p-3 rounded-md border bg-secondary/30 border-input">
                 <p className="text-sm font-semibold mb-1 text-primary">
                     Correct Answer:
@@ -143,7 +144,7 @@ const QuestionDisplay = ({
                 <p className="text-foreground/90 leading-relaxed">{question.answer}</p>
             </div>
           )}
-          <Accordion type="single" collapsible className="w-full" defaultValue={showAnswer ? "item-1" : ""}>
+          <Accordion type="single" collapsible className="w-full" defaultValue={showAnswer ? "item-1" : undefined}>
             <AccordionItem value="item-1">
               <AccordionTrigger>Why is this the answer?</AccordionTrigger>
               <AccordionContent>{question.explanation}</AccordionContent>
@@ -258,10 +259,11 @@ export default function TopicToQuestionsPage() {
   };
   
   const handleSaveAll = () => {
-    const questionsToSave = generatedQuestions.map(transformToSavedQuestion);
     if (generatedQuestions.length > 0) {
       const context = getContextForSaving(generatedQuestions[0]);
-      addMultipleQuestions(questionsToSave, context);
+      // The `generatedQuestions` array has a structure compatible with `GeneratedQuestionAnswerPair[]`
+      // because it contains `question`, `answer`, and `options` fields.
+      addMultipleQuestions(generatedQuestions as GeneratedQuestionAnswerPair[], context);
       toast({ title: 'All Questions Saved', description: 'All generated questions have been added to your collection.' });
     }
   };
