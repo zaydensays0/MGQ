@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMemo } from 'react';
 
 const BadgeCardSkeleton = () => (
     <Card className="flex flex-col">
@@ -40,6 +41,27 @@ const BadgeCardSkeleton = () => (
 export default function AchievementsPage() {
     const { user, equipBadge, isInitialized } = useUser();
 
+    const sortedBadgeKeys = useMemo(() => {
+        if (!user) return Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
+
+        const badgeKeys = Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
+
+        const getSortOrder = (key: BadgeKey) => {
+            const isUnlocked = user.badges.includes(key);
+            const isEquipped = user.equippedBadge === key;
+
+            if (isUnlocked && !isEquipped) return 1; // Unlocked, ready to equip -> Top
+            if (!isUnlocked) return 2;               // Locked, in progress -> Middle
+            if (isUnlocked && isEquipped) return 3;  // Equipped -> Bottom
+            return 4;
+        };
+        
+        return badgeKeys.sort((a, b) => {
+            return getSortOrder(a) - getSortOrder(b);
+        });
+    }, [user]);
+
+
     if (!isInitialized || !user) {
         return (
              <div className="container mx-auto p-4 md:p-8">
@@ -55,8 +77,6 @@ export default function AchievementsPage() {
             </div>
         );
     }
-    
-    const badgeKeys = Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -72,7 +92,7 @@ export default function AchievementsPage() {
             
             <TooltipProvider>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {badgeKeys.map(key => {
+                    {sortedBadgeKeys.map(key => {
                         const badge = BADGE_DEFINITIONS[key];
                         const isUnlocked = user.badges.includes(key);
                         const isEquipped = user.equippedBadge === key;

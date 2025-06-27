@@ -91,6 +91,61 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
+  const checkAndAwardBadges = useCallback(async (userObject: User): Promise<User> => {
+    if (!firebaseUser || !db || !userObject) return userObject;
+
+    let newlyUnlockedBadges: BadgeKey[] = [];
+
+    for (const key in BADGE_DEFINITIONS) {
+        const badgeKey = key as BadgeKey;
+        if (userObject.badges.includes(badgeKey)) continue;
+
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        let conditionMet = false;
+        const statName = badge.stat;
+        
+        if (statName === 'xp') {
+            if (userObject.xp >= badge.goal) conditionMet = true;
+        } else if (statName === 'streak') {
+            if (userObject.streak >= badge.goal) conditionMet = true;
+        } else if (statName === 'badges') {
+            if (userObject.badges.length >= badge.goal) conditionMet = true;
+        } else if (userObject.stats && statName in userObject.stats) {
+            const userStatValue = userObject.stats[statName as keyof UserStats];
+            if (userStatValue >= badge.goal) {
+                // Special handling for situational badges
+                if (badgeKey === 'quick_starter') {
+                    const twentyFourHours = 24 * 60 * 60 * 1000;
+                    if ((Date.now() - userObject.createdAt) < twentyFourHours) {
+                        conditionMet = true;
+                    }
+                } else {
+                    conditionMet = true;
+                }
+            }
+        }
+        
+        if (conditionMet) {
+            newlyUnlockedBadges.push(badgeKey);
+        }
+    }
+
+    if (newlyUnlockedBadges.length > 0) {
+      const allNewBadges = [...userObject.badges, ...newlyUnlockedBadges];
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      await updateDoc(userDocRef, { badges: allNewBadges });
+      
+      newlyUnlockedBadges.forEach(badgeKey => {
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
+      });
+
+      return { ...userObject, badges: allNewBadges };
+    }
+
+    return userObject;
+  }, [firebaseUser, db, toast]);
+  
   const fetchUserData = useCallback(async (uid: string, fbUser: FirebaseUser) => {
     if (!db) return;
     const userDocRef = doc(db, 'users', uid);
@@ -104,9 +159,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             equippedBadge: data.equippedBadge || null,
             createdAt: data.createdAt || Date.now(),
         } as User;
-        setUser(userWithDefaults);
+        
+        const finalUser = await checkAndAwardBadges(userWithDefaults);
+        setUser(finalUser);
     }
-  }, []);
+  }, [checkAndAwardBadges]);
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
@@ -212,56 +269,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, firebaseUser, isGuest, updateUserProfile, toast]);
 
-  const checkAndAwardBadges = useCallback(async (updatedUser: User) => {
-    if (!firebaseUser || !db) return;
-
-    let newlyUnlockedBadges: BadgeKey[] = [];
-
-    for (const key in BADGE_DEFINITIONS) {
-        const badgeKey = key as BadgeKey;
-        if (updatedUser.badges.includes(badgeKey)) continue;
-
-        const badge = BADGE_DEFINITIONS[badgeKey];
-        let conditionMet = false;
-        const statName = badge.stat;
-
-        if (statName === 'xp') {
-            if (updatedUser.xp >= badge.goal) conditionMet = true;
-        } else if (statName === 'streak') {
-            if (updatedUser.streak >= badge.goal) conditionMet = true;
-        } else if (statName === 'badges') {
-            if (updatedUser.badges.length >= badge.goal) conditionMet = true;
-        } else if (updatedUser.stats && (statName in updatedUser.stats)) {
-            if (updatedUser.stats[statName as keyof UserStats] >= badge.goal) {
-                // Special handling for situational badges
-                if (badgeKey === 'quick_starter') {
-                    const twentyFourHours = 24 * 60 * 60 * 1000;
-                    if ((Date.now() - updatedUser.createdAt) < twentyFourHours) {
-                        conditionMet = true;
-                    }
-                } else {
-                    conditionMet = true;
-                }
-            }
-        }
-        
-        if (conditionMet) {
-            newlyUnlockedBadges.push(badgeKey);
-        }
-    }
-
-    if (newlyUnlockedBadges.length > 0) {
-      const allNewBadges = [...updatedUser.badges, ...newlyUnlockedBadges];
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      await updateDoc(userDocRef, { badges: allNewBadges });
-      setUser(prev => prev ? { ...prev, badges: allNewBadges } : null);
-      newlyUnlockedBadges.forEach(badgeKey => {
-        const badge = BADGE_DEFINITIONS[badgeKey];
-        toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
-      });
-    }
-  }, [firebaseUser, db, toast]);
-
   const trackStats = useCallback(async (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => {
     if (!user || !firebaseUser || !db || isGuest) return;
 
@@ -314,11 +321,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await updateDoc(userDocRef, increments);
     }
 
-    const updatedUser = { ...user, stats: newStats };
+    let updatedUser = { ...user, stats: newStats };
+    updatedUser = await checkAndAwardBadges(updatedUser);
     setUser(updatedUser);
-    
-    await checkAndAwardBadges(updatedUser);
-
   }, [user, firebaseUser, isGuest, db, checkAndAwardBadges]);
 
   const handleCorrectAnswer = useCallback(async (baseXp: number) => {
@@ -350,7 +355,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
     
-    const updates: Partial<User> = { xp: newXp, level: newLevel, streak: newStreak, lastCorrectAnswerDate: todayStr };
+    const updates = { xp: newXp, level: newLevel, streak: newStreak, lastCorrectAnswerDate: todayStr };
     
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userDocRef, {
@@ -360,7 +365,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         lastCorrectAnswerDate: todayStr,
     });
     
-    const updatedUser = { ...user, ...updates };
+    let updatedUser = { ...user, ...updates };
+    updatedUser = await checkAndAwardBadges(updatedUser);
     setUser(updatedUser);
 
     if (newLevel > oldLevel) {
@@ -368,9 +374,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } else {
       toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
-
-    await checkAndAwardBadges(updatedUser);
-
   }, [user, firebaseUser, toast, isGuest, db, checkAndAwardBadges]);
 
   const sendPasswordReset = async (email: string) => {
