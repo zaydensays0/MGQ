@@ -4,8 +4,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { NeetQuestion, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput } from '@/types';
 import { useUser } from '@/contexts/user-context';
-import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
+import { useStreamBookmarks } from '@/hooks/use-stream-bookmarks';
+import { StreamBookmarksDialog } from './stream-bookmarks-dialog';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -15,8 +16,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { BookMarked, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle, BookOpenCheck, EyeOff, Loader2 } from 'lucide-react';
+import { Bookmark, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle, BookOpenCheck, EyeOff, Loader2 } from 'lucide-react';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
+import { Dialog, DialogTrigger } from './ui/dialog';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 type AnswerStatus = {
     isCorrect: boolean;
@@ -26,9 +29,11 @@ type AnswerStatus = {
 type FilterStatus = 'all' | 'attempted' | 'not_attempted' | 'bookmarked';
 
 export const NeetPracticeSession = ({ questions, context }: { questions: NeetQuestion[], context: { subject: string, classLevel: string, chapter: string } }) => {
-    const { handleCorrectAnswer, trackStats } = useUser();
-    const { addQuestion, isSaved } = useSavedQuestions();
+    const { handleCorrectAnswer } = useUser();
     const { toast } = useToast();
+
+    const streamKey = `neet-bookmarks-${context.subject}-${context.chapter}`.replace(/\s+/g, '-');
+    const { bookmarks, addBookmark, removeBookmark, isBookmarked } = useStreamBookmarks(streamKey);
 
     // Filters
     const [typeFilter, setTypeFilter] = useState('all');
@@ -43,7 +48,7 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
 
     
-    const isQuestionBookmarked = (q: NeetQuestion) => isSaved(q.text, { ...context, questionType: q.type as QuestionTypeNCERT, gradeLevel: context.classLevel as any });
+    const isQuestionBookmarked = (q: NeetQuestion) => isBookmarked(q.text);
     
     const filteredQuestionIndices = useMemo(() => {
         return questions
@@ -60,15 +65,14 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                 
                 return typeMatch && difficultyMatch && statusMatch;
             });
-    }, [questions, typeFilter, difficultyFilter, statusFilter, answers, isSaved, context]);
+    }, [questions, typeFilter, difficultyFilter, statusFilter, answers, isBookmarked]);
 
     useEffect(() => {
-        // Only reset index if the currently selected question is no longer in the filtered list
         const activeQuestionStillExists = filteredQuestionIndices.includes(activeQuestionIndex);
         if (!activeQuestionStillExists) {
             setCurrentQuestionIndex(0);
         }
-    }, [filteredQuestionIndices]);
+    }, [filteredQuestionIndices, activeQuestionIndex]);
     
     const activeQuestionIndex = filteredQuestionIndices[currentQuestionIndex];
     const currentQuestion = activeQuestionIndex !== undefined ? questions[activeQuestionIndex] : null;
@@ -100,7 +104,6 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
         
         setAnswers(prev => ({ ...prev, [activeQuestionIndex]: { isCorrect, userAnswer: selectedOption } }));
         
-        // For non-numerical, show explanation immediately
         if (currentQuestion.type !== 'numerical') {
             setNumericalVisibility(prev => ({ ...prev, [activeQuestionIndex]: { ...prev[activeQuestionIndex], solution: true }}));
         }
@@ -116,20 +119,11 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     };
     
     const handleBookmark = () => {
-        if (isQuestionBookmarked(currentQuestion)) {
-            toast({ title: "Already bookmarked!" });
-            return;
+        if (isBookmarked(currentQuestion.text)) {
+            removeBookmark(currentQuestion.text);
+        } else {
+            addBookmark(currentQuestion);
         }
-        addQuestion({
-            text: currentQuestion.text,
-            answer: currentQuestion.answer,
-            options: currentQuestion.options,
-            questionType: currentQuestion.type as QuestionTypeNCERT,
-            gradeLevel: context.classLevel as any,
-            subject: context.subject,
-            chapter: context.chapter,
-        });
-        toast({ title: "Bookmarked!", description: "Question saved for revision." });
     };
 
     const navigate = (direction: number) => {
@@ -183,10 +177,34 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     const visibility = numericalVisibility[activeQuestionIndex] || {};
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="w-full max-w-4xl mx-auto space-y-6 relative">
+             <div className="absolute top-0 left-0 z-10">
+                <Dialog>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="icon" className="relative">
+                                        <Bookmark />
+                                        {bookmarks.length > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                                {bookmarks.length}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </DialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>View your saved items for this stream.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <StreamBookmarksDialog bookmarks={bookmarks} removeBookmark={removeBookmark} streamContext={context} />
+                </Dialog>
+            </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Filters</CardTitle>
+                    <CardTitle className="text-center">Filters</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                      <div className="space-y-1.5">
@@ -298,24 +316,22 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                                     <div className="prose prose-sm max-w-none dark:prose-invert">
                                         {currentQuestion.explanation}
                                     </div>
-                                    {currentQuestion.type !== 'numerical' && (
-                                        <div className="border-t pt-4">
-                                            <Button variant="outline" onClick={handleRecheck} disabled={recheckState.loading || !!recheckState.result} className="w-full">
-                                                {recheckState.loading ? <Loader2 className="animate-spin" /> : <RotateCw className="mr-2"/>}
-                                                Recheck AI's Answer
-                                            </Button>
-                                            {recheckState.result && (
-                                                <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
-                                                    <RotateCw className="h-4 w-4" />
-                                                    <AlertTitle>Verification Result</AlertTitle>
-                                                    <AlertDescription>
-                                                        <p>{recheckState.result.explanation}</p>
-                                                        {!recheckState.result.isCorrect && <p className="mt-2 font-semibold">Corrected Answer: {recheckState.result.correctAnswer}</p>}
-                                                    </AlertDescription>
-                                                </Alert>
-                                            )}
-                                        </div>
-                                    )}
+                                    <div className="border-t pt-4">
+                                        <Button variant="outline" onClick={handleRecheck} disabled={recheckState.loading || !!recheckState.result} className="w-full">
+                                            {recheckState.loading ? <Loader2 className="animate-spin" /> : <RotateCw className="mr-2"/>}
+                                            Recheck AI's Answer
+                                        </Button>
+                                        {recheckState.result && (
+                                            <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                                <RotateCw className="h-4 w-4" />
+                                                <AlertTitle>Verification Result</AlertTitle>
+                                                <AlertDescription>
+                                                    <p>{recheckState.result.explanation}</p>
+                                                    {!recheckState.result.isCorrect && <p className="mt-2 font-semibold">Corrected Answer: {recheckState.result.correctAnswer}</p>}
+                                                </AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </div>
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
@@ -326,8 +342,8 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                         <ChevronsLeft className="mr-2" /> Previous
                     </Button>
                     <Button variant="ghost" onClick={handleBookmark}>
-                        {isQuestionBookmarked(currentQuestion) ? <CheckCircle className="mr-2 text-green-500" /> : <BookMarked className="mr-2" />}
-                        {isQuestionBookmarked(currentQuestion) ? "Bookmarked" : "Bookmark"}
+                        {isBookmarked(currentQuestion) ? <Bookmark className="mr-2 text-primary fill-primary" /> : <Bookmark className="mr-2" />}
+                        {isBookmarked(currentQuestion) ? "Bookmarked" : "Bookmark"}
                     </Button>
                     <Button onClick={() => navigate(1)} disabled={currentQuestionIndex === filteredQuestionIndices.length - 1}>
                         Next <ChevronsRight className="ml-2" />
