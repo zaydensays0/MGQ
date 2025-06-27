@@ -69,8 +69,7 @@ export default function AchievementsPage() {
                     <Skeleton className="h-10 w-64" />
                     <Skeleton className="h-5 w-96 mt-2" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <BadgeCardSkeleton />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <BadgeCardSkeleton />
                     <BadgeCardSkeleton />
                 </div>
@@ -91,7 +90,7 @@ export default function AchievementsPage() {
             </div>
             
             <TooltipProvider>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {sortedBadgeKeys.map(key => {
                         const badge = BADGE_DEFINITIONS[key];
                         const isUnlocked = user.badges.includes(key);
