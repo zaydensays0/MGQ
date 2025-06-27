@@ -142,6 +142,7 @@ export interface User {
   level: number;
   streak: number;
   lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
+  unclaimedBadges: BadgeKey[];
   badges: BadgeKey[];
   class: GradeLevelNCERT;
   gender?: Gender;

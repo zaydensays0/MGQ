@@ -64,6 +64,7 @@ interface UserContextType {
   handleCorrectAnswer: (baseXp: number) => void;
   trackStats: (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  claimBadge: (badgeKey: BadgeKey) => Promise<void>;
   equipBadge: (badgeKey: BadgeKey | null) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   changeUserPassword: (currentPass: string, newPass: string) => Promise<void>;
@@ -94,11 +95,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const checkAndAwardBadges = useCallback(async (userObject: User): Promise<User> => {
     if (!firebaseUser || !db || !userObject) return userObject;
 
-    let newlyUnlockedBadges: BadgeKey[] = [];
+    let newlyUnlockableBadges: BadgeKey[] = [];
+    const currentlyClaimable = userObject.unclaimedBadges || [];
+    const alreadyClaimed = userObject.badges || [];
 
     for (const key in BADGE_DEFINITIONS) {
         const badgeKey = key as BadgeKey;
-        if (userObject.badges.includes(badgeKey)) continue;
+        if (currentlyClaimable.includes(badgeKey) || alreadyClaimed.includes(badgeKey)) continue;
 
         const badge = BADGE_DEFINITIONS[badgeKey];
         let conditionMet = false;
@@ -126,21 +129,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         if (conditionMet) {
-            newlyUnlockedBadges.push(badgeKey);
+            newlyUnlockableBadges.push(badgeKey);
         }
     }
 
-    if (newlyUnlockedBadges.length > 0) {
-      const allNewBadges = [...userObject.badges, ...newlyUnlockedBadges];
+    if (newlyUnlockableBadges.length > 0) {
+      const allUnclaimed = [...currentlyClaimable, ...newlyUnlockableBadges];
       const userDocRef = doc(db, 'users', firebaseUser.uid);
-      await updateDoc(userDocRef, { badges: allNewBadges });
+      await updateDoc(userDocRef, { unclaimedBadges: allUnclaimed });
       
-      newlyUnlockedBadges.forEach(badgeKey => {
+      newlyUnlockableBadges.forEach(badgeKey => {
         const badge = BADGE_DEFINITIONS[badgeKey];
-        toast({ title: '🏆 Badge Unlocked!', description: `You earned the "${badge.name}" badge!` });
+        toast({ title: '🌟 New Badge Available!', description: `You can now collect the "${badge.name}" badge!` });
       });
 
-      return { ...userObject, badges: allNewBadges };
+      return { ...userObject, unclaimedBadges: allUnclaimed };
     }
 
     return userObject;
@@ -155,6 +158,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userWithDefaults: User = {
             ...data,
             stats: { ...getDefaultUserStats(), ...(data.stats || {}) },
+            unclaimedBadges: data.unclaimedBadges || [],
             badges: data.badges || [],
             equippedBadge: data.equippedBadge || null,
             createdAt: data.createdAt || Date.now(),
@@ -213,6 +217,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       level: 1,
       streak: 0,
       lastCorrectAnswerDate: '',
+      unclaimedBadges: [],
       badges: ['welcome_rookie'],
       class: userClass,
       gender,
@@ -255,6 +260,32 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [firebaseUser, toast]);
   
+  const claimBadge = useCallback(async (badgeKey: BadgeKey) => {
+    if (!user || !firebaseUser || !db || isGuest) {
+        toast({ title: "Action Failed", description: "You must be logged in to collect badges.", variant: "destructive" });
+        return;
+    }
+
+    const updatedUnclaimed = user.unclaimedBadges.filter(b => b !== badgeKey);
+    const updatedClaimed = [...user.badges, badgeKey];
+
+    try {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        await updateDoc(userDocRef, {
+            unclaimedBadges: updatedUnclaimed,
+            badges: updatedClaimed
+        });
+
+        setUser(prev => prev ? { ...prev, unclaimedBadges: updatedUnclaimed, badges: updatedClaimed } : null);
+        
+        const badge = BADGE_DEFINITIONS[badgeKey];
+        toast({ title: "🏆 Badge Collected!", description: `You have collected the "${badge.name}" badge!` });
+    } catch (error) {
+        console.error("Error claiming badge:", error);
+        toast({ title: "Collection Failed", description: "Could not collect the badge. Please try again.", variant: "destructive"});
+    }
+  }, [user, firebaseUser, isGuest, db, toast]);
+
   const equipBadge = useCallback(async (badgeKey: BadgeKey | null) => {
     if (!user || !firebaseUser || !db || isGuest) {
       toast({ title: "Action Failed", description: "You must be logged in to equip badges.", variant: "destructive" });
@@ -412,7 +443,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, equipBadge, sendPasswordReset, changeUserPassword }}>
+    <UserContext.Provider value={{ user, firebaseUser, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, claimBadge, equipBadge, sendPasswordReset, changeUserPassword }}>
       {children}
     </UserContext.Provider>
   );

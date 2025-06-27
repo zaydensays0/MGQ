@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Award, Check, Lock } from 'lucide-react';
+import { Award, Check, Lock, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -39,7 +39,7 @@ const BadgeCardSkeleton = () => (
 );
 
 export default function AchievementsPage() {
-    const { user, equipBadge, isInitialized } = useUser();
+    const { user, claimBadge, isInitialized } = useUser();
 
     const sortedBadgeKeys = useMemo(() => {
         if (!user) return Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
@@ -47,17 +47,23 @@ export default function AchievementsPage() {
         const badgeKeys = Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
 
         const getSortOrder = (key: BadgeKey) => {
-            const isUnlocked = user.badges.includes(key);
-            const isEquipped = user.equippedBadge === key;
+            const isClaimable = user.unclaimedBadges?.includes(key);
+            const isClaimed = user.badges.includes(key);
 
-            if (isUnlocked && !isEquipped) return 1; // Unlocked, ready to equip -> Top
-            if (!isUnlocked) return 2;               // Locked, in progress -> Middle
-            if (isUnlocked && isEquipped) return 3;  // Equipped -> Bottom
+            if (isClaimable) return 1; // Unlocked, ready to collect -> Top
+            if (!isClaimable && !isClaimed) return 2; // Locked, in progress -> Middle
+            if (isClaimed) return 3; // Already collected/completed -> Bottom
             return 4;
         };
         
         return badgeKeys.sort((a, b) => {
-            return getSortOrder(a) - getSortOrder(b);
+            const orderA = getSortOrder(a);
+            const orderB = getSortOrder(b);
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            // If order is the same, you can add secondary sort criteria here if needed
+            return 0;
         });
     }, [user]);
 
@@ -85,7 +91,7 @@ export default function AchievementsPage() {
                     Achievements
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    Unlock badges for your accomplishments and show them off on the leaderboard!
+                    Unlock and collect badges for your accomplishments. Equip your favorite from the Account page!
                 </p>
             </div>
             
@@ -93,8 +99,9 @@ export default function AchievementsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {sortedBadgeKeys.map(key => {
                         const badge = BADGE_DEFINITIONS[key];
-                        const isUnlocked = user.badges.includes(key);
-                        const isEquipped = user.equippedBadge === key;
+                        const isClaimable = user.unclaimedBadges?.includes(key);
+                        const isClaimed = user.badges.includes(key);
+                        const isLocked = !isClaimable && !isClaimed;
 
                         let progressValue = 0;
                         const statName = badge.stat;
@@ -109,13 +116,15 @@ export default function AchievementsPage() {
                             progressValue = user.stats[statName as keyof UserStats];
                         }
 
-                        const progressPercent = badge.goal > 0 ? Math.min((progressValue / badge.goal) * 100, 100) : (isUnlocked ? 100 : 0);
+                        const progressPercent = badge.goal > 0 ? Math.min((progressValue / badge.goal) * 100, 100) : ((isClaimable || isClaimed) ? 100 : 0);
                         const description = badge.description.replace('{goal}', badge.goal.toString());
+                        
+                        const cardStateClass = isClaimable ? "border-accent/50 bg-accent/5" : isClaimed ? "border-primary/30 bg-primary/5" : "bg-card";
 
                         return (
-                            <Card key={key} className={cn("flex flex-col shadow-md hover:shadow-lg transition-all", isUnlocked ? "border-primary/30 bg-primary/5" : "bg-card")}>
+                            <Card key={key} className={cn("flex flex-col shadow-md hover:shadow-lg transition-all", cardStateClass)}>
                                 <CardHeader className="flex-row items-center gap-4">
-                                    <div className={cn("p-4 rounded-full bg-gradient-to-br", isUnlocked ? "from-yellow-400 to-orange-500 text-white" : "from-muted to-secondary text-muted-foreground")}>
+                                    <div className={cn("p-4 rounded-full bg-gradient-to-br", !isLocked ? "from-yellow-400 to-orange-500 text-white" : "from-muted to-secondary text-muted-foreground")}>
                                         <badge.icon className="w-8 h-8" />
                                     </div>
                                     <div className="flex-1">
@@ -124,11 +133,17 @@ export default function AchievementsPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="flex-grow">
-                                    {isUnlocked ? (
-                                        <Alert variant="default" className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300">
-                                            <Check className="h-4 w-4 text-green-500" />
+                                    {isClaimable ? (
+                                        <Alert variant="default" className="border-accent-500/50 bg-accent-500/10 text-accent-700 dark:text-accent-300">
+                                            <Gift className="h-4 w-4 text-accent" />
                                             <AlertTitle>Unlocked!</AlertTitle>
-                                            <AlertDescription>You've earned this badge. Great job!</AlertDescription>
+                                            <AlertDescription>You've earned this badge. Collect it now!</AlertDescription>
+                                        </Alert>
+                                    ) : isClaimed ? (
+                                         <Alert variant="default" className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <AlertTitle>Collected!</AlertTitle>
+                                            <AlertDescription>Great job! You can equip this from your Account page.</AlertDescription>
                                         </Alert>
                                     ) : (
                                         <div className="space-y-1.5">
@@ -145,15 +160,15 @@ export default function AchievementsPage() {
                                         <TooltipTrigger asChild>
                                              <Button 
                                                 className="w-full" 
-                                                disabled={!isUnlocked || isEquipped}
-                                                onClick={() => equipBadge(key)}
+                                                disabled={!isClaimable}
+                                                onClick={() => claimBadge(key)}
+                                                variant={isClaimable ? "accent" : "default"}
                                             >
-                                                {isEquipped ? 'Equipped' : (isUnlocked ? 'Equip Badge' : 'Locked')}
-                                                {isUnlocked ? <Check className="ml-2 h-4 w-4" /> : <Lock className="ml-2 h-4 w-4" />}
+                                                {isClaimable ? <><Gift className="mr-2 h-4 w-4" />Collect Badge</> : isClaimed ? <><Check className="mr-2 h-4 w-4" />Collected</> : <><Lock className="mr-2 h-4 w-4" />Locked</>}
                                             </Button>
                                         </TooltipTrigger>
-                                        {!isUnlocked && <TooltipContent><p>Keep learning to unlock this badge!</p></TooltipContent>}
-                                         {isEquipped && <TooltipContent><p>This badge is displayed on the leaderboard.</p></TooltipContent>}
+                                        {isLocked && <TooltipContent><p>Keep learning to unlock this badge!</p></TooltipContent>}
+                                        {isClaimed && <TooltipContent><p>This badge is in your collection.</p></TooltipContent>}
                                     </Tooltip>
                                 </CardFooter>
                             </Card>
