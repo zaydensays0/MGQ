@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
@@ -140,7 +141,7 @@ export interface User {
   xp: number;
   level: number;
   streak: number;
-  lastCorrectAnswerDate: string; // ISO date string: 'YYYY-MM-DD'
+  lastActivityTimestamp: number; // Unix timestamp in milliseconds
   unclaimedBadges: BadgeKey[];
   badges: BadgeKey[];
   class: GradeLevelNCERT;

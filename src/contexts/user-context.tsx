@@ -157,6 +157,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const data = userDoc.data();
         const userWithDefaults: User = {
             ...data,
+            lastActivityTimestamp: data.lastActivityTimestamp || (data.lastCorrectAnswerDate ? new Date(data.lastCorrectAnswerDate).getTime() : 0),
             stats: { ...getDefaultUserStats(), ...(data.stats || {}) },
             unclaimedBadges: data.unclaimedBadges || [],
             badges: data.badges || [],
@@ -216,7 +217,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       xp: 0,
       level: 1,
       streak: 0,
-      lastCorrectAnswerDate: '',
+      lastActivityTimestamp: 0,
       unclaimedBadges: [],
       badges: ['welcome_rookie'],
       class: userClass,
@@ -363,12 +364,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let xpGained = baseXp;
     let newStreak = user.streak;
     const today = new Date();
-    const todayStr = format(today, 'yyyy-MM-dd');
-    const lastAnswerDate = user.lastCorrectAnswerDate ? parseISO(user.lastCorrectAnswerDate) : null;
+    const lastAnswerDate = user.lastActivityTimestamp ? new Date(user.lastActivityTimestamp) : null;
     
     let isFirstAnswerToday = true;
     if (lastAnswerDate) {
-        isFirstAnswerToday = format(lastAnswerDate, 'yyyy-MM-dd') !== todayStr;
+        isFirstAnswerToday = differenceInCalendarDays(today, lastAnswerDate) >= 1;
     }
 
     if (isFirstAnswerToday) {
@@ -386,14 +386,14 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const oldLevel = user.level;
     const newLevel = getLevelFromXp(newXp);
     
-    const updates = { xp: newXp, level: newLevel, streak: newStreak, lastCorrectAnswerDate: todayStr };
+    const updates = { xp: newXp, level: newLevel, streak: newStreak, lastActivityTimestamp: Date.now() };
     
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userDocRef, {
         xp: increment(xpGained),
         level: newLevel,
         streak: newStreak,
-        lastCorrectAnswerDate: todayStr,
+        lastActivityTimestamp: Date.now(),
     });
     
     let updatedUser = { ...user, ...updates };

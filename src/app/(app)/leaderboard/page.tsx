@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import type { User, GradeLevelNCERT, BadgeKey } from '@/types';
-import { GRADE_LEVELS, BADGE_DEFINITIONS } from '@/lib/constants';
+import type { User } from '@/types';
+import { BADGE_DEFINITIONS } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
+import { startOfToday, startOfWeek, startOfMonth } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,13 +34,14 @@ const LeaderboardRowSkeleton = () => (
     </TableRow>
 );
 
+type TimeFilter = 'today' | 'week' | 'month' | 'all';
 
 export default function LeaderboardPage() {
     const { user: currentUser, isGuest } = useUser();
     const [leaderboard, setLeaderboard] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [filterClass, setFilterClass] = useState<GradeLevelNCERT | 'all'>(currentUser?.class || 'all');
+    const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
     const router = useRouter();
 
     useEffect(() => {
@@ -58,14 +60,21 @@ export default function LeaderboardPage() {
 
             try {
                 const usersRef = collection(db, 'users');
-                let q;
-
-                if (filterClass === 'all') {
-                    q = query(usersRef, orderBy('xp', 'desc'), limit(100));
-                } else {
-                    q = query(usersRef, where('class', '==', filterClass), orderBy('xp', 'desc'), limit(100));
+                const queryConstraints = [orderBy('xp', 'desc'), limit(100)];
+                
+                if (timeFilter !== 'all') {
+                    let startDate: Date;
+                    if (timeFilter === 'today') {
+                        startDate = startOfToday();
+                    } else if (timeFilter === 'week') {
+                        startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+                    } else { // month
+                        startDate = startOfMonth(new Date());
+                    }
+                    queryConstraints.unshift(where('lastActivityTimestamp', '>=', startDate.getTime()));
                 }
 
+                const q = query(usersRef, ...queryConstraints);
                 const querySnapshot = await getDocs(q);
                 const usersData = querySnapshot.docs.map(doc => doc.data() as User);
                 setLeaderboard(usersData);
@@ -78,7 +87,7 @@ export default function LeaderboardPage() {
         };
 
         fetchLeaderboard();
-    }, [filterClass, currentUser, isGuest]);
+    }, [timeFilter, currentUser, isGuest]);
 
     const getRankIcon = (rank: number) => {
         if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
@@ -109,7 +118,7 @@ export default function LeaderboardPage() {
                     Leaderboard
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    See who's at the top of the class. Keep learning to climb the ranks!
+                    See who's at the top. Keep learning to climb the ranks!
                 </p>
             </div>
             
@@ -128,15 +137,15 @@ export default function LeaderboardPage() {
                         <CardDescription>Ranked by total experience points (XP). Showing top 100.</CardDescription>
                     </div>
                      <div className="w-full md:w-auto mt-4 md:mt-0">
-                        <Select value={filterClass} onValueChange={(value) => setFilterClass(value as GradeLevelNCERT | 'all')}>
+                        <Select value={timeFilter} onValueChange={(value) => setTimeFilter(value as TimeFilter)}>
                             <SelectTrigger className="w-full md:w-[180px]">
-                                <SelectValue placeholder="Filter by Class" />
+                                <SelectValue placeholder="Filter by Time" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Classes</SelectItem>
-                                {GRADE_LEVELS.map(g => (
-                                    <SelectItem key={g} value={g}>Class {g}</SelectItem>
-                                ))}
+                                <SelectItem value="all">All Time</SelectItem>
+                                <SelectItem value="month">This Month</SelectItem>
+                                <SelectItem value="week">This Week</SelectItem>
+                                <SelectItem value="today">Today</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -204,7 +213,7 @@ export default function LeaderboardPage() {
                                 {!isLoading && leaderboard.length === 0 && !error && (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center h-24">
-                                            No students found for this class. Be the first to join the leaderboard!
+                                            No active students found for this period. Be the first to the top!
                                         </TableCell>
                                     </TableRow>
                                 )}
