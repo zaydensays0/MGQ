@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -34,6 +34,7 @@ const allToolsLinks = [
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
+  { href: '/doubt-to-mcq', label: 'Doubt to MCQ', icon: Lightbulb },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },

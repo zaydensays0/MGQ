@@ -1,0 +1,203 @@
+'use client';
+
+import { useState, type FormEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Lightbulb, Sparkles, Loader2, Terminal, Check, XIcon } from 'lucide-react';
+import { doubtToMcq, type DoubtToMcqInput, type McqSchema } from '@/ai/flows/doubt-to-mcq';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { useUser } from '@/contexts/user-context';
+
+
+type Mcq = z.infer<typeof McqSchema>;
+
+const McqDisplayCard = ({ mcq, index }: { mcq: Mcq, index: number }) => {
+    const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [isAttempted, setIsAttempted] = useState(false);
+    const { handleCorrectAnswer } = useUser();
+    const { toast } = useToast();
+
+    const handleSelect = (option: string) => {
+        if (isAttempted) return;
+        
+        setIsAttempted(true);
+        setSelectedOption(option);
+        
+        if (option === mcq.answer) {
+            handleCorrectAnswer(50); // Give some XP for this
+        } else {
+            toast({ title: "Incorrect!", description: `The correct answer is: ${mcq.answer}`, variant: 'destructive' });
+        }
+    };
+
+    return (
+        <Card className="shadow-md">
+            <CardHeader>
+                <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p className="font-semibold">{mcq.question}</p>
+                <div className="space-y-2">
+                    {mcq.options.map((option, i) => {
+                        const isSelected = selectedOption === option;
+                        const isCorrect = mcq.answer === option;
+                        
+                        let variant: "outline" | "default" | "destructive" = "outline";
+
+                        if (isAttempted) {
+                            if (isCorrect) {
+                                variant = 'default';
+                            } else if (isSelected && !isCorrect) {
+                                variant = 'destructive';
+                            }
+                        }
+
+                        return (
+                            <Button 
+                                key={i} 
+                                variant={variant}
+                                className="w-full justify-start text-left h-auto p-3"
+                                onClick={() => handleSelect(option)}
+                                disabled={isAttempted}
+                            >
+                                <span className="flex-grow">{option}</span>
+                            </Button>
+                        );
+                    })}
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+
+export default function DoubtToMcqPage() {
+  const [doubt, setDoubt] = useState('');
+  const [mcqs, setMcqs] = useState<Mcq[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!doubt.trim()) {
+      toast({
+        title: 'Empty Doubt',
+        description: 'Please enter a doubt or topic to generate questions.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setMcqs([]);
+
+    const input: DoubtToMcqInput = { doubt };
+
+    try {
+      const result = await doubtToMcq(input);
+      if (result && result.questions.length > 0) {
+        setMcqs(result.questions);
+        toast({
+          title: 'MCQs Generated!',
+          description: "Here are some questions to practice.",
+        });
+      } else {
+        throw new Error('No questions received from AI.');
+      }
+    } catch (err) {
+      console.error('Error generating MCQs:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Failed to get an answer. ${errorMessage}`);
+      toast({
+        title: 'Error',
+        description: `Could not generate questions. ${errorMessage}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4 md:p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-headline font-bold flex items-center">
+          <Lightbulb className="w-8 h-8 mr-3 text-primary" />
+          Doubt to MCQ
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Turn any doubt, topic, or confusion into a quick practice quiz.
+        </p>
+      </div>
+
+      <Card className="w-full max-w-2xl mx-auto shadow-lg">
+        <CardHeader>
+          <CardTitle>What's on your mind?</CardTitle>
+          <CardDescription>
+            Type your doubt, a concept you're stuck on, or any topic below. We'll generate some MCQs to help you practice.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="doubt-input">Your Doubt or Topic</Label>
+              <Textarea
+                id="doubt-input"
+                value={doubt}
+                onChange={(e) => setDoubt(e.target.value)}
+                placeholder="e.g., The difference between mitosis and meiosis, or what are non-cooperation movements?"
+                rows={5}
+                className="text-base"
+                disabled={isLoading}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-5 w-5" />
+              )}
+              {isLoading ? 'Generating Quiz...' : 'Generate MCQs'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <Alert variant="destructive" className="mt-6 w-full max-w-2xl mx-auto">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {isLoading && !error && (
+         <Card className="mt-6 w-full max-w-2xl mx-auto shadow-md animate-pulse">
+          <CardHeader>
+            <div className="h-6 bg-muted rounded w-3/4"></div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="h-4 bg-muted rounded w-full"></div>
+            <div className="h-4 bg-muted rounded w-full"></div>
+            <div className="h-4 bg-muted rounded w-5/6"></div>
+          </CardContent>
+        </Card>
+      )}
+
+      {mcqs.length > 0 && !isLoading && (
+        <div className="mt-8 w-full max-w-2xl mx-auto space-y-4">
+          <h2 className="text-2xl font-headline font-semibold text-center">Practice Questions</h2>
+            {mcqs.map((mcq, index) => (
+                <McqDisplayCard key={index} mcq={mcq} index={index} />
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}

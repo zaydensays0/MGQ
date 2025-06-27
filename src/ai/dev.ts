@@ -14,3 +14,4 @@ import '@/ai/flows/generate-flashcards.ts';
 import '@/ai/flows/generate-grammar-test.ts';
 import '@/ai/flows/generate-avatar.ts';
 import '@/ai/flows/recheck-answer.ts';
+import '@/ai/flows/doubt-to-mcq.ts';

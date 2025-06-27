@@ -126,7 +126,7 @@ export interface BadgeInfo {
   description: string;
   icon: LucideIcon;
   goal: number;
-  stat: keyof UserStats | 'xp' | 'badges';
+  stat: keyof UserStats | 'xp' | 'badges' | 'streak';
 }
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
@@ -258,3 +258,6 @@ export const RecheckAnswerOutputSchema = z.object({
   explanation: z.string().describe('A brief explanation of why the original answer was correct or incorrect.'),
 });
 export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;
+
+// AI Doubt to MCQ Flow Types
+export type { DoubtToMcqInput, DoubtToMcqOutput, McqSchema } from '@/ai/flows/doubt-to-mcq';
