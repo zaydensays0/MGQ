@@ -1,31 +1,30 @@
 'use server';
 /**
- * @fileOverview An AI agent that converts a user's doubt or topic into a set of multiple-choice questions.
+ * @fileOverview An AI agent that converts a user's topic into a set of multiple-choice questions.
  *
- * - doubtToMcq - A function that handles the MCQ generation process.
+ * - topicToMcq - A function that handles the MCQ generation process.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
 import {
-    DoubtToMcqInputSchema,
-    DoubtToMcqOutputSchema,
-    type DoubtToMcqInput,
-    type DoubtToMcqOutput,
+    TopicToMcqInputSchema,
+    TopicToMcqOutputSchema,
+    type TopicToMcqInput,
+    type TopicToMcqOutput,
 } from '@/types';
 
 
-export async function doubtToMcq(input: DoubtToMcqInput): Promise<DoubtToMcqOutput> {
-  return doubtToMcqFlow(input);
+export async function topicToMcq(input: TopicToMcqInput): Promise<TopicToMcqOutput> {
+  return topicToMcqFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'doubtToMcqPrompt',
-  input: {schema: DoubtToMcqInputSchema},
-  output: {schema: DoubtToMcqOutputSchema},
+  name: 'topicToMcqPrompt',
+  input: {schema: TopicToMcqInputSchema},
+  output: {schema: TopicToMcqOutputSchema},
   prompt: `You are an expert educator who excels at creating practice questions to help students solidify their understanding.
   
-A student has provided a doubt, a concept, or a topic they are confused about. Your task is to generate 3-5 high-quality Multiple Choice Questions (MCQs) directly related to their input. These questions should be designed to test their understanding and help them overcome their confusion.
+A student has provided a concept or a topic they are studying. Your task is to generate 3-5 high-quality Multiple Choice Questions (MCQs) directly related to their input. These questions should be designed to test their understanding.
 
 For each question, you MUST adhere to the following structure:
 - "question": The question text.
@@ -33,16 +32,16 @@ For each question, you MUST adhere to the following structure:
 - "answer": The single correct answer, which must exactly match one of the four options.
 - "explanation": A brief, clear explanation for why the provided answer is correct.
 
-User's doubt/topic: "{{doubt}}"
+User's topic: "{{topic}}"
 
 Generate the MCQs now.`,
 });
 
-const doubtToMcqFlow = ai.defineFlow(
+const topicToMcqFlow = ai.defineFlow(
   {
-    name: 'doubtToMcqFlow',
-    inputSchema: DoubtToMcqInputSchema,
-    outputSchema: DoubtToMcqOutputSchema,
+    name: 'topicToMcqFlow',
+    inputSchema: TopicToMcqInputSchema,
+    outputSchema: TopicToMcqOutputSchema,
   },
   async (input) => {
     const {output} = await prompt(input);

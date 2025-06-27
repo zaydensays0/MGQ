@@ -258,11 +258,11 @@ export const RecheckAnswerOutputSchema = z.object({
 });
 export type RecheckAnswerOutput = z.infer<typeof RecheckAnswerOutputSchema>;
 
-// AI Doubt to MCQ Flow Types
-export const DoubtToMcqInputSchema = z.object({
-  doubt: z.string().describe("The user's doubt, concept, or topic to be converted into MCQs."),
+// AI Topic to MCQ Flow Types
+export const TopicToMcqInputSchema = z.object({
+  topic: z.string().describe("The user's concept or topic to be converted into MCQs."),
 });
-export type DoubtToMcqInput = z.infer<typeof DoubtToMcqInputSchema>;
+export type TopicToMcqInput = z.infer<typeof TopicToMcqInputSchema>;
 
 export const McqSchema = z.object({
     question: z.string().describe('The generated multiple-choice question.'),
@@ -272,7 +272,7 @@ export const McqSchema = z.object({
 });
 export type Mcq = z.infer<typeof McqSchema>;
 
-export const DoubtToMcqOutputSchema = z.object({
+export const TopicToMcqOutputSchema = z.object({
   questions: z.array(McqSchema).min(3).max(5).describe('An array of 3-5 generated multiple-choice questions.'),
 });
-export type DoubtToMcqOutput = z.infer<typeof DoubtToMcqOutputSchema>;
+export type TopicToMcqOutput = z.infer<typeof TopicToMcqOutputSchema>;

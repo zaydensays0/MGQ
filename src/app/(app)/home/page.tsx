@@ -28,7 +28,7 @@ const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</
 const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
   { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
-  { title: 'Doubt to MCQ', href: '/doubt-to-mcq', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any doubt into a quick practice quiz.' },
+  { title: 'Topic to MCQ', href: '/doubt-to-mcq', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any topic into a quick practice quiz.' },
   { title: 'Notes', href: '/notes', icon: <FileText className="w-6 h-6 text-primary" />, description: 'Create and organize your personal study notes.' },
   { title: 'Grammar', href: '/grammar', icon: <GrammarIcon />, description: 'Your personal grammar checking tool.' },
   { title: 'Ask an Expert', href: '/subject-expert', icon: <MessageSquare className="w-6 h-6 text-primary" />, description: 'Chat with subject experts for any topic.' },

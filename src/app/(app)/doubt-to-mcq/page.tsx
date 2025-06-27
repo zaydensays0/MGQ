@@ -7,17 +7,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lightbulb, Sparkles, Loader2, Terminal, ShieldCheck } from 'lucide-react';
-import { doubtToMcq } from '@/ai/flows/doubt-to-mcq';
+import { topicToMcq } from '@/ai/flows/doubt-to-mcq';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { useUser } from '@/contexts/user-context';
-import { type DoubtToMcqInput, McqSchema, type RecheckAnswerOutput } from '@/types';
+import { type TopicToMcqInput, McqSchema, type RecheckAnswerOutput } from '@/types';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type Mcq = z.infer<typeof McqSchema>;
 
-const McqDisplayCard = ({ mcq, index, doubt }: { mcq: Mcq, index: number, doubt: string }) => {
+const McqDisplayCard = ({ mcq, index, topic }: { mcq: Mcq, index: number, topic: string }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isAttempted, setIsAttempted] = useState(false);
     const { user, handleCorrectAnswer } = useUser();
@@ -34,8 +34,10 @@ const McqDisplayCard = ({ mcq, index, doubt }: { mcq: Mcq, index: number, doubt:
         
         if (option === mcq.answer) {
             handleCorrectAnswer(50); // Give some XP for this
+            new Audio('/sounds/correct.mp3').play();
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${mcq.answer}`, variant: 'destructive' });
+            new Audio('/sounds/incorrect.mp3').play();
         }
     };
 
@@ -49,7 +51,7 @@ const McqDisplayCard = ({ mcq, index, doubt }: { mcq: Mcq, index: number, doubt:
                 options: mcq.options,
                 gradeLevel: user?.class || '10',
                 subject: 'General Knowledge',
-                chapter: doubt,
+                chapter: topic,
             });
             setRecheckResult(result);
             toast({
@@ -141,8 +143,8 @@ const McqDisplayCard = ({ mcq, index, doubt }: { mcq: Mcq, index: number, doubt:
 };
 
 
-export default function DoubtToMcqPage() {
-  const [doubt, setDoubt] = useState('');
+export default function TopicToMcqPage() {
+  const [topic, setTopic] = useState('');
   const [mcqs, setMcqs] = useState<Mcq[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,10 +152,10 @@ export default function DoubtToMcqPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!doubt.trim()) {
+    if (!topic.trim()) {
       toast({
-        title: 'Empty Doubt',
-        description: 'Please enter a doubt or topic to generate questions.',
+        title: 'Empty Topic',
+        description: 'Please enter a topic to generate questions.',
         variant: 'destructive',
       });
       return;
@@ -163,10 +165,10 @@ export default function DoubtToMcqPage() {
     setError(null);
     setMcqs([]);
 
-    const input: DoubtToMcqInput = { doubt };
+    const input: TopicToMcqInput = { topic };
 
     try {
-      const result = await doubtToMcq(input);
+      const result = await topicToMcq(input);
       if (result && result.questions.length > 0) {
         setMcqs(result.questions);
         toast({
@@ -195,28 +197,28 @@ export default function DoubtToMcqPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
           <Lightbulb className="w-8 h-8 mr-3 text-primary" />
-          Doubt to MCQ
+          Topic to MCQ
         </h1>
         <p className="text-muted-foreground mt-1">
-          Turn any doubt, topic, or confusion into a quick practice quiz.
+          Turn any topic or concept into a quick practice quiz.
         </p>
       </div>
 
       <Card className="w-full max-w-2xl mx-auto shadow-lg">
         <CardHeader>
-          <CardTitle>What's on your mind?</CardTitle>
+          <CardTitle>What's the topic?</CardTitle>
           <CardDescription>
-            Type your doubt, a concept you're stuck on, or any topic below. We'll generate some MCQs to help you practice.
+            Type a concept you're stuck on or any topic below. We'll generate some MCQs to help you practice.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="doubt-input">Your Doubt or Topic</Label>
+              <Label htmlFor="topic-input">Your Topic</Label>
               <Textarea
-                id="doubt-input"
-                value={doubt}
-                onChange={(e) => setDoubt(e.target.value)}
+                id="topic-input"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g., The difference between mitosis and meiosis, or what are non-cooperation movements?"
                 rows={5}
                 className="text-base"
@@ -260,7 +262,7 @@ export default function DoubtToMcqPage() {
         <div className="mt-8 w-full max-w-2xl mx-auto space-y-4">
           <h2 className="text-2xl font-headline font-semibold text-center">Practice Questions</h2>
             {mcqs.map((mcq, index) => (
-                <McqDisplayCard key={index} mcq={mcq} index={index} doubt={doubt} />
+                <McqDisplayCard key={index} mcq={mcq} index={index} topic={topic} />
             ))}
         </div>
       )}

@@ -34,7 +34,7 @@ const allToolsLinks = [
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
-  { href: '/doubt-to-mcq', label: 'Doubt to MCQ', icon: Lightbulb },
+  { href: '/doubt-to-mcq', label: 'Topic to MCQ', icon: Lightbulb },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
