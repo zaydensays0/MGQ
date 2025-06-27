@@ -4,23 +4,27 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lightbulb, Sparkles, Loader2, Terminal, Check, XIcon } from 'lucide-react';
+import { Lightbulb, Sparkles, Loader2, Terminal, ShieldCheck } from 'lucide-react';
 import { doubtToMcq } from '@/ai/flows/doubt-to-mcq';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { useUser } from '@/contexts/user-context';
-import { type DoubtToMcqInput, McqSchema } from '@/types';
-
+import { type DoubtToMcqInput, McqSchema, type RecheckAnswerOutput } from '@/types';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type Mcq = z.infer<typeof McqSchema>;
 
-const McqDisplayCard = ({ mcq, index }: { mcq: Mcq, index: number }) => {
+const McqDisplayCard = ({ mcq, index, doubt }: { mcq: Mcq, index: number, doubt: string }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isAttempted, setIsAttempted] = useState(false);
-    const { handleCorrectAnswer } = useUser();
+    const { user, handleCorrectAnswer } = useUser();
     const { toast } = useToast();
+    
+    const [isRechecking, setIsRechecking] = useState(false);
+    const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
 
     const handleSelect = (option: string) => {
         if (isAttempted) return;
@@ -32,6 +36,35 @@ const McqDisplayCard = ({ mcq, index }: { mcq: Mcq, index: number }) => {
             handleCorrectAnswer(50); // Give some XP for this
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${mcq.answer}`, variant: 'destructive' });
+        }
+    };
+
+    const handleRecheck = async () => {
+        setIsRechecking(true);
+        setRecheckResult(null);
+        try {
+            const result = await recheckAnswer({
+                question: mcq.question,
+                originalAnswer: mcq.answer,
+                options: mcq.options,
+                gradeLevel: user?.class || '10',
+                subject: 'General Knowledge',
+                chapter: doubt,
+            });
+            setRecheckResult(result);
+            toast({
+                title: "Recheck Complete",
+                description: result.isCorrect ? "The original answer was confirmed correct." : "A correction was found.",
+            });
+        } catch (error) {
+            console.error("Recheck error:", error);
+            toast({
+                title: "Recheck Failed",
+                description: "Could not verify the answer at this time.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsRechecking(false);
         }
     };
 
@@ -71,6 +104,38 @@ const McqDisplayCard = ({ mcq, index }: { mcq: Mcq, index: number }) => {
                     })}
                 </div>
             </CardContent>
+            {isAttempted && (
+                <CardFooter className="flex-col items-start gap-4 p-4 pt-0 border-t mt-4">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-1">
+                            <AccordionTrigger>Why is this the answer?</AccordionTrigger>
+                            <AccordionContent>
+                                {mcq.explanation}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleRecheck}
+                        disabled={isRechecking || !!recheckResult}
+                        className="w-full justify-center"
+                    >
+                        {isRechecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                        {isRechecking ? 'Verifying...' : 'Recheck AI Answer'}
+                    </Button>
+                    {recheckResult && (
+                         <Alert className="mt-2" variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                            <ShieldCheck className="h-4 w-4" />
+                            <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                            <AlertDescription className="space-y-1">
+                                <p>{recheckResult.explanation}</p>
+                                {!recheckResult.isCorrect && <p><b>Corrected:</b> {recheckResult.correctAnswer}</p>}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                </CardFooter>
+            )}
         </Card>
     );
 };
@@ -195,7 +260,7 @@ export default function DoubtToMcqPage() {
         <div className="mt-8 w-full max-w-2xl mx-auto space-y-4">
           <h2 className="text-2xl font-headline font-semibold text-center">Practice Questions</h2>
             {mcqs.map((mcq, index) => (
-                <McqDisplayCard key={index} mcq={mcq} index={index} />
+                <McqDisplayCard key={index} mcq={mcq} index={index} doubt={doubt} />
             ))}
         </div>
       )}

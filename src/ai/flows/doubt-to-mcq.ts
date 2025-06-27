@@ -31,6 +31,7 @@ For each question, you MUST adhere to the following structure:
 - "question": The question text.
 - "options": An array of exactly 4 distinct string options.
 - "answer": The single correct answer, which must exactly match one of the four options.
+- "explanation": A brief, clear explanation for why the provided answer is correct.
 
 User's doubt/topic: "{{doubt}}"
 

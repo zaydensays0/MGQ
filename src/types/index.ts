@@ -268,6 +268,7 @@ export const McqSchema = z.object({
     question: z.string().describe('The generated multiple-choice question.'),
     options: z.array(z.string()).length(4).describe('An array of exactly 4 string options for the question.'),
     answer: z.string().describe('The correct answer, which must be one of the provided options.'),
+    explanation: z.string().describe('A brief explanation for why the answer is correct.'),
 });
 export type Mcq = z.infer<typeof McqSchema>;
 
