@@ -101,6 +101,19 @@ export interface SavedSubjectExpertExchange {
   timestamp: number;
 }
 
+// --- Study Stream Types ---
+export type StreamId = 'neet' | 'jee' | 'mbbs' | 'btech' | 'upsc' | 'ssc' | 'banking' | 'cuet' | 'clat' | 'nda' | 'ca' | 'iti';
+
+export interface Stream {
+  id: StreamId;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  subjects: string[];
+  questionTypes: string[];
+}
+
+
 // --- Badge Types ---
 export type BadgeKey = 
   | 'legend' | 'the_goat' | 'streak_master' | 'mock_warrior'
@@ -149,6 +162,7 @@ export interface User {
   stats: UserStats;
   equippedBadge: BadgeKey | null;
   createdAt: number;
+  stream?: StreamId;
 }
 
 // AI Notes Generator Flow Types

@@ -10,9 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, AlertCircle, Settings, Eye, EyeOff, Users } from 'lucide-react';
-import { GRADE_LEVELS } from '@/lib/constants';
-import type { GradeLevelNCERT, Gender } from '@/types';
+import { Loader2, AlertCircle, Settings, Eye, EyeOff, Users, Target } from 'lucide-react';
+import { GRADE_LEVELS, STREAMS } from '@/lib/constants';
+import type { GradeLevelNCERT, Gender, StreamId } from '@/types';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import {
   Dialog,
@@ -67,6 +67,7 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [userClass, setUserClass] = useState<GradeLevelNCERT | ''>('');
   const [gender, setGender] = useState<Gender | ''>('');
+  const [stream, setStream] = useState<StreamId | ''>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -105,7 +106,7 @@ export default function LoginPage() {
         if (!fullName || !userClass) {
           throw new Error("Full name and class are required for signup.");
         }
-        await signup(fullName, email, password, userClass, gender || 'prefer_not_to_say');
+        await signup(fullName, email, password, userClass, gender || 'prefer_not_to_say', stream || undefined);
       }
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
@@ -142,6 +143,7 @@ export default function LoginPage() {
     setFullName('');
     setUserClass('');
     setGender('');
+    setStream('');
   };
 
   return (
@@ -184,6 +186,13 @@ export default function LoginPage() {
                           </SelectContent>
                       </Select>
                     </div>
+                </div>
+                <div className="space-y-1">
+                    <Label htmlFor="stream-select">Study Stream (Optional)</Label>
+                    <Select value={stream} onValueChange={(value) => setStream(value as StreamId)}>
+                        <SelectTrigger id="stream-select"><SelectValue placeholder="Select your target exam" /></SelectTrigger>
+                        <SelectContent>{STREAMS.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                    </Select>
                 </div>
               </>
             )}

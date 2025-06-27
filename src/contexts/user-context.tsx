@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -58,7 +58,7 @@ interface UserContextType {
   isInitialized: boolean;
   isGuest: boolean;
   login: (email: string, pass: string) => Promise<void>;
-  signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender) => Promise<void>;
+  signup: (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender, stream?: StreamId) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   handleCorrectAnswer: (baseXp: number) => void;
@@ -204,7 +204,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 
-  const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender) => {
+  const signup = async (fullName: string, email: string, pass: string, userClass: GradeLevelNCERT, gender: Gender, stream?: StreamId) => {
     if (!auth || !db) throw new Error("Firebase is not configured.");
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const { uid } = userCredential.user;
@@ -222,6 +222,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       badges: ['welcome_rookie'],
       class: userClass,
       gender,
+      stream,
       stats: getDefaultUserStats(),
       equippedBadge: null,
       createdAt: Date.now(),

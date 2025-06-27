@@ -6,15 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { User, Flame, Medal, Award, AlertTriangle, Loader2, Sparkles, KeyRound, Eye, EyeOff, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, getXpForLevel } from '@/contexts/user-context';
-import type { User as UserType, BadgeKey, GradeLevelNCERT, Gender } from '@/types';
+import type { User as UserType, BadgeKey, GradeLevelNCERT, Gender, StreamId } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GRADE_LEVELS, BADGE_DEFINITIONS } from '@/lib/constants';
+import { GRADE_LEVELS, BADGE_DEFINITIONS, STREAMS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { generateAvatar } from '@/ai/flows/generate-avatar';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,7 @@ export default function AccountPage() {
     const [fullName, setFullName] = useState('');
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
     const [selectedGender, setSelectedGender] = useState<Gender | undefined>(undefined);
+    const [selectedStream, setSelectedStream] = useState<StreamId | undefined>(undefined);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
     
@@ -47,6 +48,7 @@ export default function AccountPage() {
             setFullName(user.fullName);
             setSelectedClass(user.class);
             setSelectedGender(user.gender);
+            setSelectedStream(user.stream);
         }
     }, [isInitialized, user]);
 
@@ -58,6 +60,7 @@ export default function AccountPage() {
         if (fullName.trim() && fullName !== user.fullName) updates.fullName = fullName;
         if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
         if (selectedGender !== user.gender) updates.gender = selectedGender;
+        if (selectedStream !== user.stream) updates.stream = selectedStream;
 
         if (Object.keys(updates).length > 0) {
             try {
@@ -131,7 +134,7 @@ export default function AccountPage() {
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender) && !isUpdatingProfile;
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender || selectedStream !== user.stream) && !isUpdatingProfile;
     const canChangePassword = currentPassword && newPassword.length >= 6 && confirmNewPassword && newPassword === confirmNewPassword && !isChangingPassword;
 
 
@@ -205,19 +208,32 @@ export default function AccountPage() {
                                     </Select>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="gender-select">Gender</Label>
-                                <Select value={selectedGender} onValueChange={(value) => setSelectedGender(value as Gender)}>
-                                    <SelectTrigger id="gender-select">
-                                        <SelectValue placeholder="-- Select Gender --" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="male">Male</SelectItem>
-                                        <SelectItem value="female">Female</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                        <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="gender-select">Gender</Label>
+                                    <Select value={selectedGender} onValueChange={(value) => setSelectedGender(value as Gender)}>
+                                        <SelectTrigger id="gender-select">
+                                            <SelectValue placeholder="-- Select Gender --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="male">Male</SelectItem>
+                                            <SelectItem value="female">Female</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                            <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="stream-select">Study Stream</Label>
+                                    <Select value={selectedStream} onValueChange={(value) => setSelectedStream(value as StreamId)}>
+                                        <SelectTrigger id="stream-select">
+                                            <SelectValue placeholder="-- Select Stream --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {STREAMS.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                     </CardContent>

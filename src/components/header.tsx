@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -20,6 +21,7 @@ import { BADGE_DEFINITIONS } from '@/lib/constants';
 
 const mainFeatures = [
   { href: '/home', label: 'Dashboard', icon: LayoutGrid },
+  { href: '/streams', label: 'Study Streams', icon: Target },
   { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/notes', label: 'Notes', icon: FileText },

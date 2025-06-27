@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import {
   LayoutGrid,
   CheckSquare,
   Lightbulb,
+  Target
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { LucideIcon } from 'lucide-react';
@@ -26,6 +28,7 @@ import type { LucideIcon } from 'lucide-react';
 const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</span>);
 
 const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
+  { title: 'Study Streams', href: '/streams', icon: <Target className="w-6 h-6 text-primary" />, description: 'Focused prep for competitive exams.' },
   { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
   { title: 'Topic to Questions', href: '/topic-to-mcq', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any topic into a quick practice quiz.' },
