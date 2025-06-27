@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -18,7 +17,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Progress } from './ui/progress';
 import { playSound } from '@/lib/sounds';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 const mainFeatures = [
   { href: '/home', label: 'Dashboard', icon: LayoutGrid },
@@ -156,7 +154,6 @@ export function Header() {
                 {isInitialized && user ? (
                   <>
                     <div className="p-4 border-b">
-                      <TooltipProvider>
                         <div>
                           <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}>
                               <Avatar className="h-9 w-9 mr-3">
@@ -170,14 +167,7 @@ export function Header() {
                                           const badgeInfo = user.equippedBadge ? BADGE_DEFINITIONS[user.equippedBadge] : null;
                                           if (!badgeInfo) return null;
                                           return (
-                                              <Tooltip>
-                                                  <TooltipTrigger>
-                                                      <badgeInfo.icon className="w-4 h-4 text-primary" />
-                                                  </TooltipTrigger>
-                                                  <TooltipContent side="bottom">
-                                                      <p className="font-semibold">{badgeInfo.name}</p>
-                                                  </TooltipContent>
-                                              </Tooltip>
+                                            <badgeInfo.icon className="w-4 h-4 text-primary" />
                                           );
                                       })()}
                                   </div>
@@ -188,7 +178,6 @@ export function Header() {
                               <UserProgress user={user} />
                           </div>
                         </div>
-                      </TooltipProvider>
                     </div>
                     <nav className="flex flex-col space-y-1 p-4 flex-grow overflow-y-auto">
                       <p className="text-xs font-semibold text-muted-foreground px-2 pt-2 pb-1 uppercase">Features</p>
