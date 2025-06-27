@@ -63,8 +63,12 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
     }, [questions, typeFilter, difficultyFilter, statusFilter, answers, isSaved, context]);
 
     useEffect(() => {
-        setCurrentQuestionIndex(0);
-    }, [typeFilter, difficultyFilter, statusFilter]);
+        // Only reset index if the currently selected question is no longer in the filtered list
+        const activeQuestionStillExists = filteredQuestionIndices.includes(activeQuestionIndex);
+        if (!activeQuestionStillExists) {
+            setCurrentQuestionIndex(0);
+        }
+    }, [filteredQuestionIndices]);
     
     const activeQuestionIndex = filteredQuestionIndices[currentQuestionIndex];
     const currentQuestion = activeQuestionIndex !== undefined ? questions[activeQuestionIndex] : null;
@@ -283,15 +287,35 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                     )}
 
                     {(isAttempted || visibility.solution) && (
-                        <Accordion type="single" collapsible value={visibility.solution ? "item-1" : ""} onValueChange={(v) => toggleVisibility('solution')}>
-                            <AccordionItem value="item-1">
+                        <Accordion type="single" collapsible defaultValue={isAttempted ? "explanation" : undefined}>
+                            <AccordionItem value="explanation">
                                 <AccordionTrigger>
                                     <div className="flex items-center">
                                         <Lightbulb className="mr-2 h-4 w-4" /> Explanation
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="prose prose-sm max-w-none dark:prose-invert">
-                                    {currentQuestion.explanation}
+                                <AccordionContent className="space-y-4">
+                                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                                        {currentQuestion.explanation}
+                                    </div>
+                                    {currentQuestion.type !== 'numerical' && (
+                                        <div className="border-t pt-4">
+                                            <Button variant="outline" onClick={handleRecheck} disabled={recheckState.loading || !!recheckState.result} className="w-full">
+                                                {recheckState.loading ? <Loader2 className="animate-spin" /> : <RotateCw className="mr-2"/>}
+                                                Recheck AI's Answer
+                                            </Button>
+                                            {recheckState.result && (
+                                                <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                                    <RotateCw className="h-4 w-4" />
+                                                    <AlertTitle>Verification Result</AlertTitle>
+                                                    <AlertDescription>
+                                                        <p>{recheckState.result.explanation}</p>
+                                                        {!recheckState.result.isCorrect && <p className="mt-2 font-semibold">Corrected Answer: {recheckState.result.correctAnswer}</p>}
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
+                                        </div>
+                                    )}
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
