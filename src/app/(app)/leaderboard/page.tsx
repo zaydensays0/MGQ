@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, QueryConstraint } from 'firebase/firestore';
 import type { User } from '@/types';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
@@ -60,10 +60,16 @@ export default function LeaderboardPage() {
 
             try {
                 const usersRef = collection(db, 'users');
-                const queryConstraints = [orderBy('xp', 'desc'), limit(100)];
+                let queryConstraints: QueryConstraint[] = [];
+                let startDate: Date | null = null;
                 
-                if (timeFilter !== 'all') {
-                    let startDate: Date;
+                if (timeFilter === 'all') {
+                    queryConstraints = [orderBy('xp', 'desc'), limit(100)];
+                } else {
+                    // For time-based filters, query by most recent activity to avoid needing a composite index, then filter/sort client-side.
+                    // Fetching a larger number to ensure a good pool for filtering.
+                    queryConstraints = [orderBy('lastActivityTimestamp', 'desc'), limit(200)]; 
+                    
                     if (timeFilter === 'today') {
                         startDate = startOfToday();
                     } else if (timeFilter === 'week') {
@@ -71,16 +77,24 @@ export default function LeaderboardPage() {
                     } else { // month
                         startDate = startOfMonth(new Date());
                     }
-                    queryConstraints.unshift(where('lastActivityTimestamp', '>=', startDate.getTime()));
                 }
-
+                
                 const q = query(usersRef, ...queryConstraints);
                 const querySnapshot = await getDocs(q);
-                const usersData = querySnapshot.docs.map(doc => doc.data() as User);
+                let usersData = querySnapshot.docs.map(doc => doc.data() as User);
+
+                if (startDate) {
+                    // Perform client-side filtering and sorting for time-based views
+                    usersData = usersData
+                        .filter(user => user.lastActivityTimestamp >= startDate!.getTime())
+                        .sort((a, b) => b.xp - a.xp) // Now sort the filtered results by XP
+                        .slice(0, 100); // And finally, take the top 100 of that group
+                }
+
                 setLeaderboard(usersData);
             } catch (err) {
                 console.error("Error fetching leaderboard: ", err);
-                setError("Failed to load leaderboard data. You may need to create a Firestore index.");
+                setError("Failed to load leaderboard data. Please try again later.");
             } finally {
                 setIsLoading(false);
             }
