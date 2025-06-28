@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { NeetQuestion, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput } from '@/types';
+import type { NeetQuestion, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput, GradeLevelNCERT } from '@/types';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useStreamBookmarks } from '@/hooks/use-stream-bookmarks';
@@ -16,7 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Bookmark, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle, BookOpenCheck, EyeOff, Loader2 } from 'lucide-react';
+import { Bookmark, Check, ChevronsLeft, ChevronsRight, Eye, Lightbulb, RotateCw, Sparkles, Trophy, X, CheckCircle, BookOpenCheck, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Dialog, DialogTrigger } from './ui/dialog';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -67,16 +67,24 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
             });
     }, [questions, typeFilter, difficultyFilter, statusFilter, answers, isBookmarked]);
     
-    const activeQuestionIndex = useMemo(() => filteredQuestionIndices[currentQuestionIndex], [filteredQuestionIndices, currentQuestionIndex]);
+    const activeQuestionIndexInFilteredList = useMemo(() => {
+        const currentActiveGlobalIndex = filteredQuestionIndices[currentQuestionIndex];
+        return filteredQuestionIndices.indexOf(currentActiveGlobalIndex);
+    }, [filteredQuestionIndices, currentQuestionIndex]);
 
     useEffect(() => {
-        const activeQuestionStillExists = filteredQuestionIndices.includes(activeQuestionIndex);
-        if (!activeQuestionStillExists) {
+        const activeQuestionGlobalIndex = filteredQuestionIndices[currentQuestionIndex];
+        const activeQuestionStillExists = filteredQuestionIndices.includes(activeQuestionGlobalIndex);
+        if (!activeQuestionStillExists && filteredQuestionIndices.length > 0) {
             setCurrentQuestionIndex(0);
+        } else if (filteredQuestionIndices.length === 0) {
+            // Handle case where no questions match filters
         }
-    }, [filteredQuestionIndices, activeQuestionIndex]);
+    }, [filteredQuestionIndices, currentQuestionIndex]);
     
+    const activeQuestionIndex = filteredQuestionIndices[currentQuestionIndex];
     const currentQuestion = activeQuestionIndex !== undefined ? questions[activeQuestionIndex] : null;
+
 
     if (!currentQuestion) {
         return (
@@ -332,12 +340,12 @@ export const NeetPracticeSession = ({ questions, context }: { questions: NeetQue
                                     </div>
                                     <div className="border-t pt-4">
                                         <Button variant="outline" onClick={handleRecheck} disabled={recheckState.loading || !!recheckState.result} className="w-full">
-                                            {recheckState.loading ? <Loader2 className="animate-spin" /> : <RotateCw className="mr-2"/>}
+                                            {recheckState.loading ? <Loader2 className="animate-spin" /> : <ShieldCheck className="mr-2"/>}
                                             Recheck AI's Answer
                                         </Button>
                                         {recheckState.result && (
                                             <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
-                                                <RotateCw className="h-4 w-4" />
+                                                <ShieldCheck className="h-4 w-4" />
                                                 <AlertTitle>Verification Result</AlertTitle>
                                                 <AlertDescription>
                                                     <p>{recheckState.result.explanation}</p>
