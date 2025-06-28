@@ -14,7 +14,7 @@ import { CheckCircle2, Circle, Ticket, Gift, Loader2 } from 'lucide-react';
 import { differenceInMilliseconds, formatDuration, intervalToDuration } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import Confetti from 'react-confetti';
-import useWindowSize from 'react-use/lib/useWindowSize';
+import { useWindowSize } from 'react-use';
 
 
 const WHEEL_SEGMENTS = [
