@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -46,27 +45,12 @@ const AIGenerationDialog = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { addDeck } = useFlashcards();
     const { toast } = useToast();
-    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Form state
     const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
     const [subject, setSubject] = useState('');
     const [chapter, setChapter] = useState('');
     const [numberOfCards, setNumberOfCards] = useState('10');
-
-    useEffect(() => {
-        const audioElement = audioRef.current;
-        if (audioElement) {
-          if (isLoading) {
-            audioElement.play().catch(error => {
-              console.error("Audio play failed.", error);
-            });
-          } else {
-            audioElement.pause();
-            audioElement.currentTime = 0;
-          }
-        }
-    }, [isLoading]);
 
 
     const handleGenerate = async (e: React.FormEvent) => {
@@ -104,7 +88,6 @@ const AIGenerationDialog = () => {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
             <DialogTrigger asChild>
                 <Button size="icon" aria-label="Generate with AI">
                     <Sparkles className="h-4 w-4" />

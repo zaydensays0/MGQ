@@ -48,11 +48,9 @@ const QuestionDisplay = ({
 
     if (answer.trim().toLowerCase() === question.answer.toLowerCase()) {
       handleCorrectAnswer(50);
-      new Audio('/sounds/correct.mp3').play();
       toast({ title: 'Correct!', description: 'Great job!' });
     } else {
       toast({ title: "Incorrect!", description: `The correct answer is: ${question.answer}`, variant: 'destructive' });
-      new Audio('/sounds/incorrect.mp3').play();
     }
   };
 

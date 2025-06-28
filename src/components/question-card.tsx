@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,6 @@ import { useUser } from '@/contexts/user-context';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { LoginPromptDialog } from './login-prompt-dialog';
-import { playSound } from '@/lib/sounds';
 
 
 interface QuestionCardProps {
@@ -132,10 +130,8 @@ export function QuestionCard({ questionText, answerText, options, explanation, q
 
     if (selected.trim().toLowerCase() === currentAnswerText.trim().toLowerCase()) {
       handleCorrectAnswer(100);
-      playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
-      playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
       addWrongQuestion({
           questionText: currentQuestionText,
           userAnswer: selected,

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -12,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput } from '@/types';
 import { BOARDS, SUBJECTS, BOARD_CLASSES, BOARD_QUESTION_TYPES } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
-import { playSound } from '@/lib/sounds';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,10 +70,8 @@ const GeneratedQuestionCard = ({
     if (isCorrect) {
       toast({ title: 'Correct!', description: '+200 XP' });
       handleCorrectAnswer(200);
-      playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
     } else {
       toast({ title: 'Incorrect', description: `The correct answer was: ${question.answer}`, variant: 'destructive' });
-      playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
       addWrongQuestion({
         questionText: question.question,
         userAnswer: option,

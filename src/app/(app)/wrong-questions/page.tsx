@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -16,7 +15,6 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { BOARDS } from '@/lib/constants';
-import { playSound } from '@/lib/sounds';
 
 const WrongQuestionCard = ({ question }: { question: WrongQuestion }) => {
   return (
@@ -227,10 +225,8 @@ export default function WrongQuestionsPage() {
         if (wasCorrect) {
             removeWrongQuestion(questionId);
             toast({ title: "Correct!", description: "This question has been mastered and removed." });
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
         } else {
             toast({ title: "Incorrect", description: "This question will remain in your list for now." , variant: 'destructive'});
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
         }
         setTestSession(prev => prev ? ({
             ...prev,

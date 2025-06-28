@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -12,7 +11,6 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
 import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
-import { playSound } from '@/lib/sounds';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +52,6 @@ export default function MockTestPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
-    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const { user, handleCorrectAnswer, trackStats, addWrongQuestion } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
@@ -68,20 +65,6 @@ export default function MockTestPage() {
             difficulty: 'medium',
         },
     });
-
-    useEffect(() => {
-        const audioElement = audioRef.current;
-        if (audioElement) {
-            if (isLoading && testState === 'setup') {
-                audioElement.play().catch(error => {
-                    console.error("Audio play failed.", error);
-                });
-            } else {
-                audioElement.pause();
-                audioElement.currentTime = 0;
-            }
-        }
-    }, [isLoading, testState]);
 
     const handleStartTest = async (data: SetupFormValues) => {
         setIsLoading(true);
@@ -119,14 +102,12 @@ export default function MockTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
         } else {
             toast({
                 title: "Incorrect",
                 description: `The correct answer was: "${currentQuestion.answer}"`,
                 variant: "destructive"
             });
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
             // Save the wrong question
             addWrongQuestion({
                 questionText: currentQuestion.text,
@@ -412,7 +393,6 @@ export default function MockTestPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8">
-            <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
             {renderContent()}
         </div>
     );

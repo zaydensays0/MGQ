@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,6 @@ import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
-import { playSound } from '@/lib/sounds';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -51,10 +49,8 @@ export const StreamPracticeSession = ({ questions, context }: {
         if (isCorrect) {
             toast({ title: "Correct!", description: "+500 XP", className: "bg-success text-success-foreground border-transparent" });
             handleCorrectAnswer(500);
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${currentQuestion.answer}`, variant: "destructive" });
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
             addWrongQuestion({
                 questionText: currentQuestion.text,
                 userAnswer: selectedAnswer,

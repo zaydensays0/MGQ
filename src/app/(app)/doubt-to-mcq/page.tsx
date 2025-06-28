@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -15,7 +14,6 @@ import { useUser } from '@/contexts/user-context';
 import { type TopicToMcqInput, McqSchema, type RecheckAnswerOutput } from '@/types';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { playSound } from '@/lib/sounds';
 
 type Mcq = z.infer<typeof McqSchema>;
 
@@ -36,10 +34,8 @@ const McqDisplayCard = ({ mcq, index, topic }: { mcq: Mcq, index: number, topic:
         
         if (option === mcq.answer) {
             handleCorrectAnswer(50); // Give some XP for this
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${mcq.answer}`, variant: 'destructive' });
-            playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
         }
     };
 

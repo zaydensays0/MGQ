@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType, BoardId } from '@/types';
@@ -19,7 +18,6 @@ import {
 import { doc, getDoc, setDoc, updateDoc, increment, collection, query, onSnapshot, addDoc, deleteDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
-import { playSound } from '@/lib/sounds';
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -241,7 +239,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
     setIsGuest(false);
-    playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3');
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 
@@ -359,7 +356,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (spinWheelData.lastFreeSpinDate !== todayStr) {
         spinWheelData = {
             lastFreeSpinDate: todayStr,
-            missionsCompletedToday: { practice_session: false, mock_test: false },
+            missionsCompletedToday: { practice_session: false, mock_test: false }, // Reset missions
             spinsClaimedToday: { free: false, practice_session: false, mock_test: false, login_streak: false }
         };
         updates.spinWheel = spinWheelData;
@@ -378,7 +375,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     if (statsToIncrement.mockTestsCompleted) {
         updates['spinWheel.missionsCompletedToday.mock_test'] = true;
-    }
+        }
 
     if (accuracy !== undefined) {
         if (accuracy >= 0.9) {
@@ -493,7 +490,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     switch(spinType) {
         case 'free': canSpin = !spinsClaimedToday.free; break;
         case 'practice_session': canSpin = missionsCompletedToday.practice_session && !spinsClaimedToday.practice_session; break;
-        case 'mock_test': canSpin = missionsCompletedToday.mock_test && !spinsClaimedToday.mock_test; break;
+        case 'mock_test': canSpin = missionsCompletedToday.mock_test && !spinsClaimedToday.practice_session; break;
         case 'login_streak': canSpin = currentUserData.streak >= 3 && !spinsClaimedToday.login_streak; break;
     }
 
