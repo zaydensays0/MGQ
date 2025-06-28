@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 // Base Question Types
 export type GradeLevelNCERT = '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
+export type BoardClass = '9' | '10';
+
 export type QuestionTypeNCERT =
   | 'multiple_choice'
   | 'assertion_reason'
@@ -17,7 +19,12 @@ export const StreamQuestionTypeSchema = z.enum([
 ]);
 export type StreamQuestionType = z.infer<typeof StreamQuestionTypeSchema>;
 
-export type AnyQuestionType = QuestionTypeNCERT | StreamQuestionType;
+export const BoardQuestionTypeSchema = z.enum([
+    'mcq', 'vsa', 'sa', 'la', 'assertion_reason', 'case_based'
+]);
+export type BoardQuestionType = z.infer<typeof BoardQuestionTypeSchema>;
+
+export type AnyQuestionType = QuestionTypeNCERT | StreamQuestionType | BoardQuestionType;
 
 export interface QuestionContext {
   gradeLevel: GradeLevelNCERT | string;
@@ -25,6 +32,7 @@ export interface QuestionContext {
   chapter: string;
   questionType: AnyQuestionType;
   streamId?: StreamId;
+  board?: BoardId;
 }
 
 export interface GeneratedQuestionAnswerPair {
@@ -46,6 +54,8 @@ export interface SavedQuestion {
   chapter: string;
   timestamp: number;
   streamId?: StreamId;
+  board?: BoardId;
+  marks?: number;
 }
 
 // --- Generic Component & Constant Types ---
@@ -97,6 +107,14 @@ export interface SavedSubjectExpertExchange {
   chapter: string;
   exchanges: ConversationExchange[];
   timestamp: number;
+}
+
+// --- Board Exam Types ---
+export type BoardId = 'cbse' | 'seba' | 'icse' | 'maharashtra' | 'tamil_nadu' | 'kerala' | 'west_bengal' | 'bihar' | 'up' | 'karnataka';
+
+export interface Board {
+    id: BoardId;
+    name: string;
 }
 
 // --- Study Stream Types ---
@@ -193,6 +211,7 @@ export interface WrongQuestion {
     chapter: string;
     questionType: AnyQuestionType;
     streamId?: StreamId;
+    board?: BoardId;
   };
   attemptedAt: number;
 }
@@ -288,11 +307,74 @@ export const TopicToQuestionsOutputSchema = z.object({
 });
 export type TopicToQuestionsOutput = z.infer<typeof TopicToQuestionsOutputSchema>;
 
+// Board Exam Question Generation
+export const GenerateBoardQuestionInputSchema = z.object({
+    boardName: z.string().describe("The full name of the educational board (e.g., 'CBSE', 'ICSE')."),
+    className: z.enum(['9', '10']).describe("The class level, 9 or 10."),
+    subject: z.string().describe('The subject for the questions.'),
+    chapters: z.array(z.string()).describe('The specific chapters/topics to generate questions from. Can be ["Full Syllabus"].'),
+    questionTypes: z.array(BoardQuestionTypeSchema).describe("The types of questions to generate."),
+    numberOfQuestions: z.number().int().positive().describe("The number of questions to generate."),
+    isComprehensive: z.boolean().optional().describe("If true, generate all possible high-probability questions for the given chapters."),
+});
+export type GenerateBoardQuestionInput = z.infer<typeof GenerateBoardQuestionInputSchema>;
+
+export const BoardQuestionSchema = z.object({
+    question: z.string().describe("The full question text."),
+    answer: z.string().describe("The correct answer, which should be detailed for long-answer types."),
+    options: z.array(z.string()).optional().describe("Array of options for MCQ/Assertion-Reason type questions."),
+    type: BoardQuestionTypeSchema.describe("The type of exam question."),
+    marks: z.number().int().positive().describe("The marks allocated for this question as per the board pattern."),
+    explanation: z.string().optional().describe("A clear explanation of the correct answer or marking scheme."),
+    isLikelyToAppear: z.boolean().describe("True if the AI predicts this is a high-probability question for the exam."),
+});
+export type BoardQuestion = z.infer<typeof BoardQuestionSchema>;
+
+export const GenerateBoardQuestionOutputSchema = z.object({
+    questions: z.array(BoardQuestionSchema).describe('An array of generated board exam style questions.'),
+});
+export type GenerateBoardQuestionOutput = z.infer<typeof GenerateBoardQuestionOutputSchema>;
+
 // All other flow types can be inferred from their respective files.
 export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';
 export type { GenerateMockTestInput, MockTestQuestion, GenerateMockTestOutput } from '@/ai/flows/generate-mock-test';
-export type { GenerateFlashcardsInput, GenerateFlashcardsOutput, FlashcardSchema } from '@/ai/flows/generate-flashcards';
-export type { GenerateGrammarTestInput, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestOutput } from '@/ai/flows/generate-grammar-test';
+// TODO: Find a way to export these types without circular dependencies
+// export type { GenerateFlashcardsInput, GenerateFlashcardsOutput, FlashcardSchema } from '@/ai/flows/generate-flashcards';
+// export type { GenerateGrammarTestInput, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestOutput } from '@/ai/flows/generate-grammar-test';
+
+export interface GenerateFlashcardsInput {
+  gradeLevel: GradeLevelNCERT;
+  subject: string;
+  chapter: string;
+  numberOfCards: number;
+}
+export interface GenerateFlashcardsOutput {
+  flashcards: {
+    front: string;
+    back: string;
+  }[];
+}
+export interface FlashcardSchema {
+    front: string;
+    back: string;
+}
+
+export type GrammarQuestionType = 'multiple_choice' | 'true_false' | 'direct_answer';
+export interface GenerateGrammarTestInput {
+  topic: string;
+  gradeLevel: GradeLevelNCERT;
+  questionType: GrammarQuestionType;
+  numberOfQuestions: number;
+}
+export interface GrammarTestQuestion {
+  text: string;
+  options?: string[];
+  answer: string;
+  explanation: string;
+}
+export interface GenerateGrammarTestOutput {
+  questions: GrammarTestQuestion[];
+}

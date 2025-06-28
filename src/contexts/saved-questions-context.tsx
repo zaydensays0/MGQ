@@ -1,6 +1,6 @@
 'use client';
 
-import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, AnyQuestionType } from '@/types';
+import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, AnyQuestionType, BoardId } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useUser } from './user-context';
 import { db } from '@/lib/firebase';
@@ -10,9 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 interface SavedQuestionsContextType {
   savedQuestions: SavedQuestion[];
   addQuestion: (questionData: Omit<SavedQuestion, 'id' | 'timestamp'>) => void;
-  addMultipleQuestions: (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => void;
+  addMultipleQuestions: (questions: (GeneratedQuestionAnswerPair | SavedQuestion)[], context: QuestionContext) => void;
   removeQuestion: (id: string) => void;
-  isSaved: (questionText: string, context: QuestionContext) => boolean;
+  isSaved: (questionText: string, context: Partial<QuestionContext>) => boolean;
   getQuestionsBySubjectAndChapter: (subject: string, chapter: string) => SavedQuestion[];
 }
 
@@ -49,19 +49,26 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     }
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
     
-    const { options, explanation, streamId, ...rest } = questionData;
+    // Explicitly copy properties to avoid passing undefined values to Firestore
     const dataToSave: any = {
-      ...rest,
+      text: questionData.text,
+      answer: questionData.answer,
+      questionType: questionData.questionType,
+      gradeLevel: questionData.gradeLevel,
+      subject: questionData.subject,
+      chapter: questionData.chapter,
       timestamp: Date.now(),
     };
-    if (options) dataToSave.options = options;
-    if (explanation) dataToSave.explanation = explanation;
-    if (streamId) dataToSave.streamId = streamId;
+    if (questionData.options) dataToSave.options = questionData.options;
+    if (questionData.explanation) dataToSave.explanation = questionData.explanation;
+    if (questionData.streamId) dataToSave.streamId = questionData.streamId;
+    if (questionData.board) dataToSave.board = questionData.board;
+    if (questionData.marks) dataToSave.marks = questionData.marks;
 
     await addDoc(questionsCol, dataToSave);
   }, [user, toast]);
 
-  const isSaved = useCallback((questionText: string, context: QuestionContext): boolean => {
+  const isSaved = useCallback((questionText: string, context: Partial<QuestionContext>): boolean => {
     return savedQuestions.some(
       (q) =>
         q.text === questionText &&
@@ -69,11 +76,12 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
         q.subject === context.subject &&
         q.chapter === context.chapter &&
         q.questionType === context.questionType &&
-        q.streamId === context.streamId
+        q.streamId === context.streamId &&
+        q.board === context.board
     );
   }, [savedQuestions]);
 
-  const addMultipleQuestions = useCallback(async (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
+  const addMultipleQuestions = useCallback(async (questions: (GeneratedQuestionAnswerPair | SavedQuestion)[], context: QuestionContext) => {
     if (!user || !db) {
       toast({ title: "Not Logged In", description: "You must be logged in to save questions.", variant: "destructive" });
       return;
@@ -81,25 +89,30 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const batch = writeBatch(db);
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
     
-    const uniqueNewQuestions = questions.filter(nq => !isSaved(nq.question, context));
+    const uniqueNewQuestions = questions.filter(nq => {
+        const text = 'text' in nq ? nq.text : nq.question;
+        return !isSaved(text, context);
+    });
 
     if (uniqueNewQuestions.length === 0) {
       toast({ title: "Already Saved", description: "All displayed questions are already in your saved list."});
       return;
     }
 
-    uniqueNewQuestions.forEach(qaPair => {
+    uniqueNewQuestions.forEach(q => {
       const newDocRef = doc(questionsCol);
+      const questionText = 'text' in q ? q.text : q.question;
+
       const dataToSet: any = {
-        text: qaPair.question,
-        answer: qaPair.answer,
+        text: questionText,
+        answer: q.answer,
         ...context,
         timestamp: Date.now(),
       };
-      if (qaPair.options) dataToSet.options = qaPair.options;
-      if (qaPair.explanation) dataToSet.explanation = qaPair.explanation;
-      if (context.streamId) dataToSet.streamId = context.streamId;
-      
+      if (q.options) dataToSet.options = q.options;
+      if (q.explanation) dataToSet.explanation = q.explanation;
+      if ('marks' in q && q.marks) dataToSet.marks = q.marks;
+
       batch.set(newDocRef, dataToSet);
     });
     await batch.commit();

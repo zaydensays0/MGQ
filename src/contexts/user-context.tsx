@@ -1,6 +1,6 @@
 'use client';
 
-import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType, BoardId } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -570,9 +570,26 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addWrongQuestion = useCallback(async (questionData: Omit<WrongQuestion, 'id' | 'attemptedAt'>) => {
     if (!user || !db || isGuest) return;
     const wrongQuestionsCol = collection(db, 'users', user.uid, 'wrongQuestions');
-    const dataToSave: any = { ...questionData, attemptedAt: Date.now() };
-    if (!dataToSave.context.streamId) delete dataToSave.context.streamId;
     
+    // Create a new object to avoid modifying the original and ensure no undefined fields are sent
+    const dataToSave: any = {
+      questionText: questionData.questionText,
+      userAnswer: questionData.userAnswer,
+      correctAnswer: questionData.correctAnswer,
+      context: {
+        gradeLevel: questionData.context.gradeLevel,
+        subject: questionData.context.subject,
+        chapter: questionData.context.chapter,
+        questionType: questionData.context.questionType,
+      },
+      attemptedAt: Date.now()
+    };
+    
+    if (questionData.options) dataToSave.options = questionData.options;
+    if (questionData.explanation) dataToSave.explanation = questionData.explanation;
+    if (questionData.context.streamId) dataToSave.context.streamId = questionData.context.streamId;
+    if (questionData.context.board) dataToSave.context.board = questionData.context.board;
+
     await addDoc(wrongQuestionsCol, dataToSave);
   }, [user, isGuest, db]);
 

@@ -2,19 +2,19 @@
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SavedQuestion, RecheckAnswerOutput } from '@/types';
+import type { SavedQuestion, RecheckAnswerOutput, BoardId } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, NotebookText, Eye, EyeOff, Layers, ShieldCheck, Loader2 } from 'lucide-react';
+import { Trash2, NotebookText, Eye, EyeOff, Layers, ShieldCheck, Loader2, Building } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from 'next/link';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFlashcards } from '@/contexts/flashcards-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { SUBJECTS } from '@/lib/constants';
+import { SUBJECTS, BOARDS } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { useUser } from '@/contexts/user-context';
@@ -31,9 +31,7 @@ const SavedQuestionItem: React.FC<{
   const { toast } = useToast();
   const { addWrongQuestion } = useUser();
 
-  const isMCQ = question.questionType === 'multiple_choice';
-  const isAssertionReason = question.questionType === 'assertion_reason';
-  const isTrueFalse = question.questionType === 'true_false';
+  const isMCQ = question.questionType === 'multiple_choice' || question.questionType === 'assertion_reason' || question.questionType === 'true_false';
 
   useEffect(() => {
     setUserSelection(null);
@@ -43,17 +41,17 @@ const SavedQuestionItem: React.FC<{
   }, [question.id]);
 
   const handleSelectOption = (selected: string) => {
-    if (isAttempted && (isMCQ || isTrueFalse || isAssertionReason)) return; 
+    if (isAttempted && isMCQ) return; 
     
     setUserSelection(selected);
     setIsAttempted(true);
 
     if (selected.trim().toLowerCase() === question.answer.trim().toLowerCase()) {
       toast({ title: "Correct!", description: "Well done!" });
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
+      new Audio('/sounds/correct.mp3').play();
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
+      new Audio('/sounds/incorrect.mp3').play();
       addWrongQuestion({
           questionText: question.text,
           userAnswer: selected,
@@ -65,6 +63,8 @@ const SavedQuestionItem: React.FC<{
               subject: question.subject,
               chapter: question.chapter,
               questionType: question.questionType,
+              streamId: question.streamId,
+              board: question.board,
           }
       });
     }
@@ -100,7 +100,7 @@ const SavedQuestionItem: React.FC<{
   };
 
   const renderQuestionText = () => {
-    if (isAssertionReason && question.text.includes('\\n')) {
+    if (question.questionType === 'assertion_reason' && question.text.includes('\\n')) {
       const parts = question.text.split('\\n');
       return (
         <div className="space-y-1">
@@ -117,12 +117,12 @@ const SavedQuestionItem: React.FC<{
         <CardContent className="p-4 pb-2">
             <div className="grid w-full gap-1.5">
                 <p className="text-sm text-muted-foreground">
-                    Type: {question.questionType.replace(/_/g, ' ')}
+                    Type: {question.questionType.replace(/_/g, ' ')} {question.marks && `(${question.marks} marks)`}
                 </p>
                 {renderQuestionText()}
             </div>
             
-            {(isMCQ || isAssertionReason) && question.options && question.options.length > 0 && (
+            {isMCQ && question.options && question.options.length > 0 && (
               <div className="space-y-1.5 mt-2">
                   {question.options.map((option, index) => {
                   const isSelectedOption = userSelection === option;
@@ -145,35 +145,6 @@ const SavedQuestionItem: React.FC<{
                       disabled={isAttempted}
                       >
                       <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span> {option}
-                      </Button>
-                  );
-                  })}
-              </div>
-            )}
-
-            {isTrueFalse && (
-              <div className="flex space-x-2 mt-2">
-                  {['True', 'False'].map((tfOption) => {
-                  const isSelectedOption = userSelection === tfOption;
-                  const isCorrectOption = question.answer.toLowerCase() === tfOption.toLowerCase();
-                  let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
-
-                  if (isAttempted) {
-                      if (isSelectedOption) {
-                      optionStyle = isCorrectOption ? "bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300 font-semibold" : "bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300 font-semibold";
-                      } else if (isCorrectOption && showAnswer) {
-                      optionStyle = "bg-green-50 dark:bg-green-800/30 border-green-400";
-                      }
-                  }
-                  return (
-                      <Button
-                      key={tfOption}
-                      variant="outline"
-                      className={`flex-1 p-2 text-sm ${optionStyle}`}
-                      onClick={() => handleSelectOption(tfOption)}
-                      disabled={isAttempted}
-                      >
-                      {tfOption}
                       </Button>
                   );
                   })}
@@ -209,11 +180,11 @@ const SavedQuestionItem: React.FC<{
             </AccordionTrigger>
             <AccordionContent className="p-4 pt-2">
                 <div className={`p-3 rounded-md border 
-                    ${isMCQ || isTrueFalse || isAssertionReason ? 
+                    ${isMCQ ? 
                     (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'bg-green-50 dark:bg-green-800/30 border-green-300 dark:border-green-700' : 'bg-red-50 dark:bg-red-800/30 border-red-300 dark:border-red-700') 
                     : 'bg-secondary/50 dark:bg-muted/20 border-input'}`}>
                     <p className={`text-sm font-semibold mb-1 
-                    ${isMCQ || isTrueFalse || isAssertionReason ? 
+                    ${isMCQ ? 
                         (userSelection === null || (userSelection && userSelection.toLowerCase() === question.answer.toLowerCase()) ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
                         : 'text-primary'}`}>
                     Correct Answer:
@@ -250,14 +221,12 @@ const SavedQuestionItem: React.FC<{
   );
 };
 
-const CreateDeckFromChapterDialog = ({ questionsInChapter, chapter, subject, gradeLevel }: {
-  questionsInChapter: SavedQuestion[],
-  chapter: string,
-  subject: string,
-  gradeLevel: string,
+const CreateDeckFromChapterDialog = ({ questions, context }: {
+  questions: SavedQuestion[],
+  context: string
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [deckName, setDeckName] = useState(`Deck: ${chapter}`);
+  const [deckName, setDeckName] = useState(`Deck: ${context}`);
   const { createDeckFromSavedQuestions } = useFlashcards();
   const { toast } = useToast();
 
@@ -266,25 +235,23 @@ const CreateDeckFromChapterDialog = ({ questionsInChapter, chapter, subject, gra
       toast({ title: 'Deck name required', variant: 'destructive' });
       return;
     }
-    createDeckFromSavedQuestions(deckName, questionsInChapter);
+    createDeckFromSavedQuestions(deckName, questions);
     toast({ title: 'Deck Created!', description: `A new flashcard deck "${deckName}" has been created.` });
     setIsOpen(false);
   };
   
-  const subjectLabel = SUBJECTS.find(s => s.value === subject)?.label || subject;
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Layers className="mr-2 h-4 w-4" /> Create Deck
+          <Layers className="mr-2 h-4 w-4" /> Create Flashcard Deck
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Flashcard Deck</DialogTitle>
           <DialogDescription>
-            Create a new deck from the {questionsInChapter.length} question(s) in "{chapter}" (Class {gradeLevel} - {subjectLabel}).
+            Create a new deck from the {questions.length} question(s) in {context}.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2">
@@ -321,60 +288,65 @@ export function SavedQuestionsList() {
     );
   }
 
-  const groupedQuestions = sortedSavedQuestions.reduce((acc, q) => {
-    const subjectKey = `${q.subject} (Class ${q.gradeLevel})`;
-    if (!acc[subjectKey]) {
-      acc[subjectKey] = {};
-    }
-    if (!acc[subjectKey][q.chapter]) {
-      acc[subjectKey][q.chapter] = [];
-    }
-    acc[subjectKey][q.chapter].push(q);
-    return acc;
-  }, {} as Record<string, Record<string, SavedQuestion[]>>);
+  const groupedByBoard = useMemo(() => {
+    return sortedSavedQuestions.reduce((acc, q) => {
+      const boardName = q.board ? BOARDS.find(b => b.id === q.board)?.name || 'Other Boards' : 'General Practice';
+      if (!acc[boardName]) acc[boardName] = [];
+      acc[boardName].push(q);
+      return acc;
+    }, {} as Record<string, SavedQuestion[]>);
+  }, [sortedSavedQuestions]);
+
+  const groupedBySubjectAndChapter = (questions: SavedQuestion[]) => {
+    return questions.reduce((acc, q) => {
+        const subjectKey = `${q.subject} (Class ${q.gradeLevel})`;
+        if (!acc[subjectKey]) acc[subjectKey] = {};
+        if (!acc[subjectKey][q.chapter]) acc[subjectKey][q.chapter] = [];
+        acc[subjectKey][q.chapter].push(q);
+        return acc;
+    }, {} as Record<string, Record<string, SavedQuestion[]>>);
+  };
 
   return (
     <div className="space-y-8">
-      {Object.entries(groupedQuestions).map(([subjectKey, chapters]) => (
-        <Card key={subjectKey} className="shadow-lg">
+      {Object.entries(groupedByBoard).map(([boardName, questions]) => (
+        <Card key={boardName} className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl font-headline capitalize">{subjectKey}</CardTitle>
+            <CardTitle className="text-xl font-headline flex items-center">
+              <Building className="mr-3 h-6 w-6 text-primary" /> {boardName}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Accordion type="multiple" className="w-full space-y-1">
-              {Object.entries(chapters).map(([chapter, questionsInChapter]) => (
-                <AccordionItem value={`${subjectKey}-${chapter}`} key={`${subjectKey}-${chapter}`} className="border rounded-md overflow-hidden">
-                  <AccordionTrigger className="text-lg hover:no-underline px-4 py-3 bg-background hover:bg-muted/50">
-                    <div>
-                      Chapter: {chapter}
-                      <span className="text-sm font-normal text-muted-foreground ml-2">({questionsInChapter.length} questions)</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 p-4 bg-muted/20 dark:bg-muted/5">
-                    <div className="flex justify-end mb-4">
-                      {questionsInChapter.length > 0 && (
-                        <CreateDeckFromChapterDialog 
-                          questionsInChapter={questionsInChapter} 
-                          chapter={chapter}
-                          subject={questionsInChapter[0]?.subject}
-                          gradeLevel={questionsInChapter[0]?.gradeLevel}
-                        />
-                      )}
-                    </div>
-                    <div className="space-y-4">
-                      {questionsInChapter
-                        .map((q) => ( 
-                          <SavedQuestionItem 
-                              key={q.id} 
-                              question={q} 
-                              onRemove={removeQuestion}
-                          />
+            {Object.entries(groupedBySubjectAndChapter(questions)).map(([subjectKey, chapters]) => (
+              <div key={subjectKey} className="mb-4 last:mb-0">
+                  <h3 className="text-lg font-semibold capitalize mb-2 border-b pb-1">{subjectKey}</h3>
+                  <Accordion type="multiple" className="w-full space-y-1">
+                      {Object.entries(chapters).map(([chapter, questionsInChapter]) => (
+                          <AccordionItem value={`${subjectKey}-${chapter}`} key={`${subjectKey}-${chapter}`} className="border rounded-md overflow-hidden">
+                              <AccordionTrigger className="text-md hover:no-underline px-4 py-3 bg-background hover:bg-muted/50">
+                                  <div>
+                                      Chapter: {chapter}
+                                      <span className="text-sm font-normal text-muted-foreground ml-2">({questionsInChapter.length} questions)</span>
+                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pt-2 p-4 bg-muted/20 dark:bg-muted/5">
+                                  <div className="flex justify-end mb-4">
+                                      {questionsInChapter.length > 0 && (
+                                          <CreateDeckFromChapterDialog 
+                                              questions={questionsInChapter} 
+                                              context={`${chapter} - ${subjectKey}`}
+                                          />
+                                      )}
+                                  </div>
+                                  <div className="space-y-4">
+                                      {questionsInChapter.map((q) => <SavedQuestionItem key={q.id} question={q} onRemove={removeQuestion}/>)}
+                                  </div>
+                              </AccordionContent>
+                          </AccordionItem>
                       ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  </Accordion>
+              </div>
+            ))}
           </CardContent>
         </Card>
       ))}

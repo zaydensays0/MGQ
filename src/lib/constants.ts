@@ -1,12 +1,35 @@
-import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus } from '@/types';
+import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId } from '@/types';
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
     TrendingUp, Moon, Coins, Database, Award, Crown, Star, Flame, Unlock, Leaf,
-    Stethoscope, Atom, HeartPulse, Code, Landmark, Users, Banknote, GraduationCap, Gavel, Wrench, Ticket
+    Stethoscope, Atom, HeartPulse, Code, Landmark, Users, Banknote, GraduationCap, Gavel, Wrench, Ticket, Building
 } from 'lucide-react';
 
 export const GRADE_LEVELS: GradeLevelNCERT[] = ['5', '6', '7', '8', '9', '10', '11', '12'];
+export const BOARD_CLASSES: ('9' | '10')[] = ['9', '10'];
+
+export const BOARDS: Board[] = [
+    { id: 'cbse', name: 'CBSE' },
+    { id: 'icse', name: 'ICSE' },
+    { id: 'seba', name: 'SEBA (Assam)' },
+    { id: 'maharashtra', name: 'Maharashtra State Board' },
+    { id: 'tamil_nadu', name: 'Tamil Nadu Board' },
+    { id: 'kerala', name: 'Kerala Board' },
+    { id: 'west_bengal', name: 'West Bengal Board' },
+    { id: 'bihar', name: 'Bihar Board' },
+    { id: 'up', name: 'UP Board' },
+    { id: 'karnataka', name: 'Karnataka Board' },
+];
+
+export const BOARD_QUESTION_TYPES = [
+    { value: 'mcq', label: 'MCQ (Multiple Choice)' },
+    { value: 'vsa', label: 'Very Short Answer (1 mark)' },
+    { value: 'sa', label: 'Short Answer (2-3 marks)' },
+    { value: 'la', label: 'Long Answer (5 marks)' },
+    { value: 'assertion_reason', label: 'Assertion-Reason' },
+    { value: 'case_based', label: 'Case/Source-Based' },
+];
 
 export const SUBJECTS: SubjectOption[] = [
   { value: 'maths', label: 'Maths', icon: Calculator as LucideIcon },
@@ -34,73 +57,73 @@ export const STREAMS: Stream[] = [
     {
         id: 'neet',
         name: 'NEET',
-        description: 'Prepare for the National Eligibility cum Entrance Test for medical courses.',
+        description: 'Medical entrance exam prep.',
         icon: Stethoscope,
     },
     {
         id: 'jee',
         name: 'JEE (Main & Advanced)',
-        description: 'Prepare for the Joint Entrance Examination for engineering colleges.',
+        description: 'Engineering entrance exam prep.',
         icon: Atom,
     },
     {
         id: 'mbbs',
         name: 'MBBS Coursework',
-        description: 'Resources and questions for all professional years of medical college.',
+        description: 'All-years medical college subjects.',
         icon: HeartPulse,
     },
     {
         id: 'btech',
         name: 'B.Tech Coursework',
-        description: 'Subject-wise preparation for yearly engineering coursework.',
+        description: 'Subject-wise engineering prep.',
         icon: Code,
     },
     {
         id: 'upsc',
         name: 'UPSC (Prelims)',
-        description: 'Foundation preparation for the Civil Services Examination.',
+        description: 'Civil Services Exam foundation.',
         icon: Landmark,
     },
     {
         id: 'ssc',
         name: 'SSC (CGL/CHSL)',
-        description: 'Prepare for exams conducted by the Staff Selection Commission.',
+        description: 'Staff Selection Commission exams.',
         icon: Users,
     },
     {
         id: 'banking',
         name: 'Banking (PO/Clerk)',
-        description: 'Preparation for banking exams like SBI, IBPS, and RBI.',
+        description: 'Prep for IBPS, SBI, and RBI exams.',
         icon: Banknote,
     },
     {
         id: 'cuet',
         name: 'CUET-UG',
-        description: 'Prepare for the Common University Entrance Test for UG courses.',
+        description: 'Common University Entrance Test.',
         icon: GraduationCap,
     },
     {
         id: 'clat',
         name: 'CLAT',
-        description: 'Prepare for the Common Law Admission Test for law schools.',
+        description: 'Common Law Admission Test prep.',
         icon: Gavel,
     },
     {
         id: 'nda',
         name: 'NDA',
-        description: 'Prepare for the National Defence Academy entrance examination.',
+        description: 'National Defence Academy exam.',
         icon: Shield,
     },
     {
         id: 'ca-foundation',
         name: 'CA Exams',
-        description: 'Preparation for all levels of the Chartered Accountancy exams.',
+        description: 'Chartered Accountancy prep.',
         icon: Calculator,
     },
     {
         id: 'iti-polytechnic',
         name: 'ITI & Polytechnic',
-        description: 'Vocational and technical course preparation for all years.',
+        description: 'Vocational & technical courses.',
         icon: Wrench,
     }
 ];
@@ -179,7 +202,7 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
         }
     },
     upsc: {
-        'All Topics': {
+        'Prelims GS': {
             'History': ["Ancient Indian History", "Medieval Indian History", "Modern Indian History (Freedom Struggle)", "Post-Independence India", "World History"],
             'Geography': ["Physical Geography (Geomorphology, Climatology, Oceanography)", "Indian Geography", "World Geography (Regional)", "Human and Economic Geography"],
             'Polity': ["Indian Constitution", "System of Government (Union & State)", "Judiciary", "Panchayati Raj", "Constitutional & Non-Constitutional Bodies", "Governance Issues"],
@@ -190,7 +213,7 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
         }
     },
     ssc: {
-        'All Topics': {
+        'Tier-I': {
             'Reasoning': ["Analogy", "Classification", "Series (Number, Alphabet)", "Coding-Decoding", "Blood Relations", "Syllogism", "Venn Diagrams", "Seating Arrangement", "Puzzles"],
             'Quantitative Aptitude': ["Number System", "Percentage", "Profit and Loss", "Ratio and Proportion", "Time and Work", "Time, Speed and Distance", "Simple & Compound Interest", "Algebra", "Geometry", "Trigonometry", "Data Interpretation"],
             'English Language': ["Reading Comprehension", "Cloze Test", "Fill in the Blanks", "Error Spotting", "Para Jumbles", "Idioms & Phrases", "One Word Substitution", "Synonyms & Antonyms", "Spelling Correction"],
@@ -198,16 +221,20 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
         }
     },
     banking: {
-        'All Topics': {
+        'Prelims': {
             'Reasoning Ability': ["Puzzles", "Seating Arrangement", "Syllogism", "Inequality", "Blood Relations", "Coding-Decoding", "Direction Sense", "Alphanumeric Series"],
             'Quantitative Aptitude': ["Data Interpretation (Tables, Charts)", "Number Series", "Simplification & Approximation", "Quadratic Equations", "Arithmetic Problems (Percentage, Ratio, etc.)"],
-            'English Language': ["Reading Comprehension", "Cloze Test", "Error Spotting / Sentence Correction", "Para Jumbles", "Fillers (Single/Double)"],
-            'Banking & Financial Awareness': ["Banking History & Terms", "RBI and its Functions", "Monetary Policy", "Financial Markets", "Government Schemes related to Banking", "Recent Banking News"],
-            'Computer Aptitude': ["Basics of Computers", "Hardware & Software", "Operating Systems", "MS Office", "Networking", "Computer Abbreviations"]
+            'English Language': ["Reading Comprehension", "Cloze Test", "Error Spotting / Sentence Correction", "Para Jumbles", "Fillers (Single/Double)"]
+        },
+        'Mains': {
+            'Reasoning & Computer Aptitude': ["Advanced Puzzles", "Input-Output", "Data Sufficiency", "Basics of Computers", "Networking"],
+            'Data Analysis & Interpretation': ["Advanced DI Sets", "Logical DI", "Quantity-based problems"],
+            'English Language': ["Advanced RC", "Vocabulary-based questions", "Sentence Connectors"],
+            'General/Financial Awareness': ["Banking History & Terms", "RBI and its Functions", "Monetary Policy", "Financial Markets", "Government Schemes related to Banking", "Recent Banking News (Last 6 months)"]
         }
     },
     cuet: {
-        'All Topics': {
+        'Domain Subjects': {
             'General Test': ["General Knowledge & Current Affairs", "General Mental Ability", "Numerical Ability", "Quantitative Reasoning", "Logical and Analytical Reasoning"],
             'English': ["Reading Comprehension (Factual, Narrative, Literary)", "Verbal Ability", "Rearranging the parts", "Choosing the correct word", "Synonyms and Antonyms", "Vocabulary"],
             'Physics': ["Class 12 NCERT Full Syllabus"],
@@ -217,13 +244,13 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Accountancy': ["Accounting for NPOs", "Partnership Firms", "Company Accounts", "Analysis of Financial Statements", "Computerized Accounting"],
             'Business Studies': ["Nature and Significance of Management", "Principles of Management", "Business Environment", "Planning", "Organising", "Staffing", "Directing", "Controlling", "Financial Management", "Financial Markets", "Marketing", "Consumer Protection"],
             'Economics': ["Introductory Microeconomics", "Introductory Macroeconomics", "Indian Economic Development"],
-            'History': ["Themes in Indian History Part-I, II & III (Class 12)"],
+            'History': ["Themes in Indian History Part-I, II &amp; III (Class 12)"],
             'Political Science': ["Contemporary World Politics", "Politics in India Since Independence"],
             'Sociology': ["Indian Society", "Social Change and Development in India"]
         }
     },
     clat: {
-        'All Topics': {
+        'All Sections': {
             'English Language': ["Passage-based Comprehension", "Vocabulary Questions from Passages", "Inference and Conclusion", "Summary of Passage", "Author's Tone and Arguments"],
             'Current Affairs, including GK': ["Passages on Contemporary Events", "National and International Affairs", "Historical Events of Significance", "Arts and Culture", "International Affairs"],
             'Legal Reasoning': ["Passages with Legal Principles", "Application of Principles to Factual Situations", "Understanding Legal Maxims and Terms", "Law of Torts", "Law of Contracts", "Constitutional Law"],
@@ -233,14 +260,14 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
     },
     nda: {
         'Paper I': {
-            'Mathematics': ["Algebra", "Matrices and Determinants", "Trigonometry", "Analytical Geometry (2D & 3D)", "Differential Calculus", "Integral Calculus and Differential Equations", "Vector Algebra", "Statistics and Probability"]
+            'Mathematics': ["Algebra", "Matrices and Determinants", "Trigonometry", "Analytical Geometry (2D &amp; 3D)", "Differential Calculus", "Integral Calculus and Differential Equations", "Vector Algebra", "Statistics and Probability"]
         },
         'Paper II': {
             'English': ["Spotting Errors", "Vocabulary", "Grammar and Usage", "Comprehension"],
             'Physics': ["Mechanics", "Properties of Matter", "Heat", "Sound", "Optics", "Electricity", "Magnetism"],
             'Chemistry': ["Physical and Chemical Changes", "Elements, Mixtures, Compounds", "Laws of Chemical Combination", "Atomic Structure", "Acids, Bases, Salts", "Carbon and its Compounds"],
             'General Science (Biology)': ["Cell Biology", "Human Body", "Health and Nutrition", "Plant and Animal Kingdom"],
-            'History & Freedom Movement': ["Indian History (Ancient, Medieval, Modern)", "Indian Freedom Struggle"],
+            'History &amp; Freedom Movement': ["Indian History (Ancient, Medieval, Modern)", "Indian Freedom Struggle"],
             'Geography': ["Earth and its Origin", "Weathering", "Atmosphere", "Indian Geography", "World Geography"],
             'Current Events': ["National and International Events", "Important Personalities", "Sports", "Awards"]
         }
@@ -250,8 +277,8 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Principles and Practice of Accounting': ["Theoretical Framework", "Accounting Process (Journals, Ledgers)", "Bank Reconciliation Statement", "Inventories", "Depreciation", "Bills of Exchange", "Final Accounts of Sole Proprietors", "Partnership Accounts", "Company Accounts"],
             'Business Laws': ["The Indian Contract Act, 1872", "The Sale of Goods Act, 1930", "The Indian Partnership Act, 1932", "The Limited Liability Partnership Act, 2008", "The Companies Act, 2013"],
             'Business Correspondence and Reporting': ["Communication", "Sentence Types", "Vocabulary", "Comprehension Passages", "Note Making", "Report Writing", "Email Writing"],
-            'Business Mathematics, Logical Reasoning & Statistics': ["Ratio and Proportion", "Equations", "Linear Inequalities", "Time Value of Money", "Permutations and Combinations", "Sequences and Series", "Number Series, Coding", "Direction Tests", "Seating Arrangements", "Statistical Description", "Measures of Central Tendency", "Probability", "Correlation and Regression"],
-            'Business Economics & Commercial Knowledge': ["Nature & Scope of Business Economics", "Theory of Demand and Supply", "Theory of Production and Cost", "Price Determination", "Business Cycles", "Business Environment", "Business Organizations", "Government Policies"]
+            'Business Mathematics, Logical Reasoning &amp; Statistics': ["Ratio and Proportion", "Equations", "Linear Inequalities", "Time Value of Money", "Permutations and Combinations", "Sequences and Series", "Number Series, Coding", "Direction Tests", "Seating Arrangements", "Statistical Description", "Measures of Central Tendency", "Probability", "Correlation and Regression"],
+            'Business Economics &amp; Commercial Knowledge': ["Nature &amp; Scope of Business Economics", "Theory of Demand and Supply", "Theory of Production and Cost", "Price Determination", "Business Cycles", "Business Environment", "Business Organizations", "Government Policies"]
         },
         'Intermediate': {
             'Accounting': ["Accounting Standards", "Company Accounts", "Partnership Accounts advanced", "Branch Accounts"],
@@ -263,8 +290,8 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Financial Reporting': ["Ind AS (Indian Accounting Standards)", "Business Combinations", "Consolidated Financial Statements"],
             'Strategic Financial Management': ["Financial Policy", "Portfolio Management", "Derivatives", "International Financial Management"],
             'Advanced Auditing and Professional Ethics': ["Auditing Standards", "Audit of Different Entities", "Professional Ethics"],
-            'Direct Tax Laws & International Taxation': ["Advanced topics in Direct Tax", "International Taxation treaties"],
-            'Indirect Tax Laws': ["Advanced topics in GST", "Customs & FTP (Foreign Trade Policy)"]
+            'Direct Tax Laws &amp; International Taxation': ["Advanced topics in Direct Tax", "International Taxation treaties"],
+            'Indirect Tax Laws': ["Advanced topics in GST", "Customs &amp; FTP (Foreign Trade Policy)"]
         }
     },
     'iti-polytechnic': {
@@ -275,7 +302,7 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Workshop Technology': ["Carpentry", "Fitting", "Welding", "Sheet Metal Work"],
         },
         'Year 2': {
-             'Trade Theory (Electrician)': ["Safety Practices", "Tools and Instruments", "Conductors and Insulators", "Ohm's Law & Kirchhoff's Law", "AC & DC Circuits", "Transformers", "Electrical Machines", "Wiring Systems"],
+             'Trade Theory (Electrician)': ["Safety Practices", "Tools and Instruments", "Conductors and Insulators", "Ohm's Law &amp; Kirchhoff's Law", "AC &amp; DC Circuits", "Transformers", "Electrical Machines", "Wiring Systems"],
             'Trade Theory (Fitter)': ["Safety and First Aid", "Hand Tools", "Measuring Instruments", "Cutting Tools", "Drilling", "Lathe Machine", "Gauges", "Welding"]
         }
     }
