@@ -1,7 +1,6 @@
-
 'use client';
 
-import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
+import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, AnyQuestionType } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useUser } from './user-context';
 import { db } from '@/lib/firebase';
@@ -50,17 +49,29 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     }
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
     
-    // Explicitly handle optional fields to avoid 'undefined' in Firestore
-    const { options, explanation, ...rest } = questionData;
+    const { options, explanation, streamId, ...rest } = questionData;
     const dataToSave: any = {
       ...rest,
       timestamp: Date.now(),
     };
     if (options) dataToSave.options = options;
     if (explanation) dataToSave.explanation = explanation;
+    if (streamId) dataToSave.streamId = streamId;
 
     await addDoc(questionsCol, dataToSave);
   }, [user, toast]);
+
+  const isSaved = useCallback((questionText: string, context: QuestionContext): boolean => {
+    return savedQuestions.some(
+      (q) =>
+        q.text === questionText &&
+        q.gradeLevel === context.gradeLevel &&
+        q.subject === context.subject &&
+        q.chapter === context.chapter &&
+        q.questionType === context.questionType &&
+        q.streamId === context.streamId
+    );
+  }, [savedQuestions]);
 
   const addMultipleQuestions = useCallback(async (questions: GeneratedQuestionAnswerPair[], context: QuestionContext) => {
     if (!user || !db) {
@@ -70,15 +81,7 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     const batch = writeBatch(db);
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
     
-    const uniqueNewQuestions = questions.filter(nq =>
-      !savedQuestions.some(pq =>
-        pq.text === nq.question &&
-        pq.subject === context.subject &&
-        pq.chapter === context.chapter &&
-        pq.gradeLevel === context.gradeLevel &&
-        pq.questionType === context.questionType
-      )
-    );
+    const uniqueNewQuestions = questions.filter(nq => !isSaved(nq.question, context));
 
     if (uniqueNewQuestions.length === 0) {
       toast({ title: "Already Saved", description: "All displayed questions are already in your saved list."});
@@ -87,7 +90,6 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     uniqueNewQuestions.forEach(qaPair => {
       const newDocRef = doc(questionsCol);
-      // Explicitly construct object to avoid sending `undefined` fields
       const dataToSet: any = {
         text: qaPair.question,
         answer: qaPair.answer,
@@ -96,27 +98,21 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
       };
       if (qaPair.options) dataToSet.options = qaPair.options;
       if (qaPair.explanation) dataToSet.explanation = qaPair.explanation;
+      if (context.streamId) dataToSet.streamId = context.streamId;
       
       batch.set(newDocRef, dataToSet);
     });
     await batch.commit();
-  }, [user, savedQuestions, toast]);
+    toast({
+      title: "Questions Saved!",
+      description: `${uniqueNewQuestions.length} unique question(s) have been saved.`
+    });
+  }, [user, toast, isSaved]);
 
   const removeQuestion = useCallback(async (id: string) => {
     if (!user || !db) return;
     await deleteDoc(doc(db, 'users', user.uid, 'savedQuestions', id));
   }, [user]);
-
-  const isSaved = useCallback((questionText: string, context: QuestionContext): boolean => {
-    return savedQuestions.some(
-      (q) =>
-        q.text === questionText &&
-        q.gradeLevel === context.gradeLevel &&
-        q.subject === context.subject &&
-        q.chapter === context.chapter &&
-        q.questionType === context.questionType
-    );
-  }, [savedQuestions]);
 
   const getQuestionsBySubjectAndChapter = useCallback((subject: string, chapter: string): SavedQuestion[] => {
     return savedQuestions.filter(q => q.subject === subject && q.chapter === chapter);

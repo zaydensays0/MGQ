@@ -14,7 +14,7 @@ import {
 } from '@/types';
 
 export async function generateStreamQuestions(input: GenerateStreamQuestionsInput): Promise<GenerateStreamQuestionsOutput> {
-  const flowInput = {
+  const flowInputWithFlags = {
     ...input,
     isJee: input.streamId === 'jee',
     isNeet: input.streamId === 'neet',
@@ -29,7 +29,7 @@ export async function generateStreamQuestions(input: GenerateStreamQuestionsInpu
     isBtech: input.streamId === 'btech',
     isItiPolytechnic: input.streamId === 'iti-polytechnic',
   };
-  return generateStreamQuestionsFlow(flowInput);
+  return generateStreamQuestionsFlow(flowInputWithFlags);
 }
 
 const prompt = ai.definePrompt({
@@ -38,13 +38,20 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateStreamQuestionsOutputSchema },
   prompt: `You are an expert paper setter for the {{streamName}} competitive exam.
 
-Your task is to generate exactly {{numberOfQuestions}} high-quality, exam-pattern questions for the subject "{{subject}}", covering the topic "{{chapter}}".
+Your task is to generate high-quality, exam-pattern questions for the subject "{{subject}}", covering the topic "{{chapter}}" from the academic level "{{level}}".
+
+{{#if isComprehensive}}
+This is a COMPREHENSIVE test. Generate a sufficient number of questions to thoroughly test all key aspects, definitions, applications, and nuances of the topic. The user's requested number of questions is a guideline; prioritize coverage over exact count.
+{{else}}
+Generate exactly {{numberOfQuestions}} questions.
+{{/if}}
+
 
 **General Instructions for all streams:**
 - For each question, you MUST provide: "type", "text", "answer", "explanation", and "difficulty" ('easy', 'medium', or 'hard').
 - The "text" should be the question.
 - The "answer" must be the single correct answer.
-- The "explanation" must be clear and concise.
+- The "explanation" must be clear and concise. For numerical problems, this should act as a step-by-step solution.
 - For all MCQ types, provide an "options" array of 4 distinct strings. The answer must match one option.
 - DO NOT generate image-based or diagram-based questions. Your output must be purely text-based.
 

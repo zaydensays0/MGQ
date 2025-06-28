@@ -1,7 +1,6 @@
-
 'use client';
 
-import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -571,7 +570,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addWrongQuestion = useCallback(async (questionData: Omit<WrongQuestion, 'id' | 'attemptedAt'>) => {
     if (!user || !db || isGuest) return;
     const wrongQuestionsCol = collection(db, 'users', user.uid, 'wrongQuestions');
-    const dataToSave = { ...questionData, attemptedAt: Date.now() };
+    const dataToSave: any = { ...questionData, attemptedAt: Date.now() };
+    if (!dataToSave.context.streamId) delete dataToSave.context.streamId;
+    
     await addDoc(wrongQuestionsCol, dataToSave);
   }, [user, isGuest, db]);
 
