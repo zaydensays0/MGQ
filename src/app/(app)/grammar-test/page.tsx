@@ -22,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SpellCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 type TestState = 'setup' | 'testing' | 'results';
 
@@ -192,6 +194,14 @@ const ResultsView = ({ userAnswers, testQuestions, restartTest, onSave, onRechec
                                 <p className="font-semibold">{index + 1}. {answer.question.text}</p>
                                 <p className="text-sm mt-2">Your answer: <span className="font-medium">{answer.userAnswer}</span></p>
                                 {!answer.isCorrect && <p className="text-sm">Correct answer: <span className="font-medium">{answer.question.answer}</span></p>}
+                                <Accordion type="single" collapsible className="w-full mt-2">
+                                  <AccordionItem value="explanation" className="border-none">
+                                    <AccordionTrigger className="text-xs p-2">View Explanation</AccordionTrigger>
+                                    <AccordionContent className="p-2">
+                                      {answer.question.explanation}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
                                 <div className="flex justify-end mt-2">
                                     <Button size="sm" variant="ghost" onClick={() => onRecheck(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
                                         {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
@@ -240,7 +250,7 @@ export default function GrammarTestPage() {
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const { handleCorrectAnswer, trackStats } = useUser();
+    const { handleCorrectAnswer, trackStats, addWrongQuestion } = useUser();
     const { addMultipleQuestions } = useSavedQuestions();
     const { toast } = useToast();
 
@@ -314,6 +324,20 @@ export default function GrammarTestPage() {
                 variant: "destructive"
             });
             new Audio('/sounds/incorrect.mp3').play();
+            const { gradeLevel, topic } = form.getValues();
+            addWrongQuestion({
+                questionText: currentQuestion.text,
+                userAnswer: userAnswer,
+                correctAnswer: currentQuestion.answer,
+                options: currentQuestion.options,
+                explanation: currentQuestion.explanation,
+                context: {
+                    gradeLevel: gradeLevel,
+                    subject: 'English Grammar',
+                    chapter: topic,
+                    questionType: questionType as QuestionTypeNCERT,
+                }
+            });
         }
 
         setUserAnswers(prev => [...prev, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }]);
@@ -343,6 +367,7 @@ export default function GrammarTestPage() {
                     question: question.text,
                     answer: question.answer,
                     options: question.options,
+                    explanation: question.explanation,
                 };
             });
         

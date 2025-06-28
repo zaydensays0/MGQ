@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { RotateCcw, Save, CheckCircle, Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { QuestionContext, RecheckAnswerOutput } from '@/types';
+import type { QuestionContext, RecheckAnswerOutput, GeneratedQuestionAnswerPair } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
@@ -18,14 +18,16 @@ interface QuestionCardProps {
   questionText: string;
   answerText: string;
   options?: string[];
+  explanation?: string;
   questionContext: QuestionContext;
-  onRegenerate: (originalQuestion: string, originalOptions?: string[]) => Promise<{ question: string; answer: string; options?: string[] } | null>;
+  onRegenerate: (originalQuestion: string, originalOptions?: string[]) => Promise<GeneratedQuestionAnswerPair | null>;
 }
 
-export function QuestionCard({ questionText, answerText, options, questionContext, onRegenerate }: QuestionCardProps) {
+export function QuestionCard({ questionText, answerText, options, explanation, questionContext, onRegenerate }: QuestionCardProps) {
   const [currentQuestionText, setCurrentQuestionText] = useState(questionText);
   const [currentAnswerText, setCurrentAnswerText] = useState(answerText);
   const [currentOptions, setCurrentOptions] = useState(options);
+  const [currentExplanation, setCurrentExplanation] = useState(explanation);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -37,19 +39,20 @@ export function QuestionCard({ questionText, answerText, options, questionContex
   const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
 
   const { addQuestion, isSaved } = useSavedQuestions();
-  const { handleCorrectAnswer, isGuest } = useUser();
+  const { handleCorrectAnswer, isGuest, addWrongQuestion } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
     setCurrentQuestionText(questionText);
     setCurrentAnswerText(answerText);
     setCurrentOptions(options);
+    setCurrentExplanation(explanation);
     setUserSelection(null);
     setIsAttempted(false);
     setShowAnswer(false);
     setIsRechecking(false);
     setRecheckResult(null);
-  }, [questionText, answerText, options]);
+  }, [questionText, answerText, options, explanation]);
 
   const isCurrentlySaved = isGuest ? false : isSaved(currentQuestionText, questionContext);
 
@@ -59,10 +62,14 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     setUserSelection(null);
     setIsAttempted(false);
     const result = await onRegenerate(currentQuestionText, currentOptions);
-    if (result && result.question && result.answer) {
-      toast({ title: "Question Regenerated", description: "A new version of the question and its answer has been generated." });
+    if (result) {
+        setCurrentQuestionText(result.question);
+        setCurrentAnswerText(result.answer);
+        setCurrentOptions(result.options);
+        setCurrentExplanation(result.explanation);
+        toast({ title: "Question Regenerated", description: "A new version of the question and its answer has been generated." });
     } else {
-      toast({ title: "Error", description: "Failed to regenerate question.", variant: "destructive" });
+        toast({ title: "Error", description: "Failed to regenerate question.", variant: "destructive" });
     }
     setIsRegenerating(false);
   };
@@ -104,6 +111,7 @@ export function QuestionCard({ questionText, answerText, options, questionContex
         text: currentQuestionText,
         answer: currentAnswerText,
         options: currentOptions,
+        explanation: currentExplanation,
         ...questionContext,
       });
       toast({ title: "Question Saved!", description: "The question and its answer have been saved." });
@@ -127,6 +135,14 @@ export function QuestionCard({ questionText, answerText, options, questionContex
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${currentAnswerText}`, variant: "destructive" });
       new Audio('/sounds/incorrect.mp3').play();
+      addWrongQuestion({
+          questionText: currentQuestionText,
+          userAnswer: selected,
+          correctAnswer: currentAnswerText,
+          options: currentOptions,
+          explanation: currentExplanation,
+          context: questionContext,
+      });
     }
   };
   
@@ -229,7 +245,13 @@ export function QuestionCard({ questionText, answerText, options, questionContex
                   {isRechecking ? 'Verifying...' : "Recheck Answer"}
               </Button>
             </div>
-            <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{currentAnswerText}</p>
+            <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed mb-2">{currentAnswerText}</p>
+            {currentExplanation && (
+                <div className="border-t pt-2 mt-2">
+                    <p className="text-sm font-semibold text-primary mb-1">Explanation:</p>
+                    <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{currentExplanation}</p>
+                </div>
+            )}
           </div>
         )}
 

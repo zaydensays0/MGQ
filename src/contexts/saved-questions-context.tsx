@@ -50,15 +50,14 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     }
     const questionsCol = collection(db, 'users', user.uid, 'savedQuestions');
     
-    // Explicitly handle optional 'options' field to avoid 'undefined' in Firestore
-    const { options, ...rest } = questionData;
+    // Explicitly handle optional fields to avoid 'undefined' in Firestore
+    const { options, explanation, ...rest } = questionData;
     const dataToSave: any = {
       ...rest,
       timestamp: Date.now(),
     };
-    if (options) {
-      dataToSave.options = options;
-    }
+    if (options) dataToSave.options = options;
+    if (explanation) dataToSave.explanation = explanation;
 
     await addDoc(questionsCol, dataToSave);
   }, [user, toast]);
@@ -88,16 +87,16 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     uniqueNewQuestions.forEach(qaPair => {
       const newDocRef = doc(questionsCol);
-      // Explicitly construct object to avoid sending `undefined` for options
+      // Explicitly construct object to avoid sending `undefined` fields
       const dataToSet: any = {
         text: qaPair.question,
         answer: qaPair.answer,
         ...context,
         timestamp: Date.now(),
       };
-      if (qaPair.options) {
-        dataToSet.options = qaPair.options;
-      }
+      if (qaPair.options) dataToSet.options = qaPair.options;
+      if (qaPair.explanation) dataToSet.explanation = qaPair.explanation;
+      
       batch.set(newDocRef, dataToSet);
     });
     await batch.commit();

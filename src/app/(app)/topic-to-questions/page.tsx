@@ -38,7 +38,7 @@ const QuestionDisplay = ({
   const [userAnswer, setUserAnswer] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
-  const { handleCorrectAnswer } = useUser();
+  const { handleCorrectAnswer, addWrongQuestion } = useUser();
   const { toast } = useToast();
 
   const [isRechecking, setIsRechecking] = useState(false);
@@ -62,6 +62,19 @@ const QuestionDisplay = ({
     } else {
       toast({ title: "Incorrect!", description: `The correct answer is: ${question.answer}`, variant: 'destructive' });
       new Audio('/sounds/incorrect.mp3').play();
+      addWrongQuestion({
+        questionText: question.question,
+        userAnswer: answer,
+        correctAnswer: question.answer,
+        options: question.options,
+        explanation: question.explanation,
+        context: {
+          gradeLevel: gradeLevel,
+          subject: 'Topic Practice',
+          chapter: topic,
+          questionType: question.type as QuestionTypeNCERT,
+        }
+      });
     }
   };
 
@@ -235,6 +248,7 @@ export default function TopicToQuestionsPage() {
     text: q.question,
     answer: q.answer,
     options: q.options,
+    explanation: q.explanation,
     questionType: q.type as QuestionTypeNCERT,
   });
 
@@ -261,8 +275,6 @@ export default function TopicToQuestionsPage() {
   const handleSaveAll = () => {
     if (generatedQuestions.length > 0) {
       const context = getContextForSaving(generatedQuestions[0]);
-      // The `generatedQuestions` array has a structure compatible with `GeneratedQuestionAnswerPair[]`
-      // because it contains `question`, `answer`, and `options` fields.
       addMultipleQuestions(generatedQuestions as GeneratedQuestionAnswerPair[], context);
       toast({ title: 'All Questions Saved', description: 'All generated questions have been added to your collection.' });
     }

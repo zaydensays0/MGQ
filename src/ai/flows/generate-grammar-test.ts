@@ -41,6 +41,7 @@ const prompt = ai.definePrompt({
     - The "text" field should contain a sentence where the word to be corrected or filled in is enclosed in brackets. For example: "He [go] to school every day."
     - The "options" field must be omitted or be an empty array.
     - The "answer" field must contain the single, correct word or phrase that replaces the bracketed part (e.g., "goes").
+  - For every question, you MUST provide a concise "explanation" for why the answer is correct.
 
   Return the questions in a JSON array. Ensure the questions are relevant and appropriate for the specified grade level and topic.
   `,

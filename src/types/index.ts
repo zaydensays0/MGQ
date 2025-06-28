@@ -18,6 +18,7 @@ export interface SavedQuestion {
   text: string;
   answer: string;
   options?: string[];
+  explanation?: string;
   questionType: QuestionTypeNCERT;
   gradeLevel: GradeLevelNCERT;
   subject: string;
@@ -36,6 +37,7 @@ export interface GeneratedQuestionAnswerPair {
   question: string;
   answer: string;
   options?: string[];
+  explanation?: string;
 }
 
 export interface GeneratedQuestionItem extends QuestionContext {
@@ -190,6 +192,7 @@ export const MockTestQuestionSchema = z.object({
   text: z.string().describe('The question text itself. For Assertion/Reason, it should contain both parts.'),
   options: z.array(z.string()).optional().describe('An array of 4 strings for "multiple_choice", the standard 4 for "assertion_reason", or 2 strings (["True", "False"]) for "true_false".'),
   answer: z.string().describe('The correct answer. For "multiple_choice" and "assertion_reason", it must match one of the options. For "true_false", it must be "True" or "False".'),
+  explanation: z.string().describe("A brief, clear explanation for why the provided answer is correct."),
 });
 export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
 
@@ -252,6 +255,7 @@ export const GrammarTestQuestionSchema = z.object({
   text: z.string().describe('The question text itself.'),
   options: z.array(z.string()).optional().describe('An array of 4 string options for "multiple_choice" questions. Omitted for other types.'),
   answer: z.string().describe('The correct answer. For "multiple_choice", it must match one of the options. For "true_false", it must be "True" or "False".'),
+  explanation: z.string().describe("A brief, clear explanation for why the provided answer is correct."),
 });
 export type GrammarTestQuestion = z.infer<typeof GrammarTestQuestionSchema>;
 

@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type TestState = 'setup' | 'testing' | 'results';
 
@@ -131,7 +132,7 @@ export default function MockTestPage() {
                 userAnswer: selectedOption,
                 correctAnswer: currentQuestion.answer,
                 options: currentQuestion.options,
-                explanation: `This question was part of a mock test on ${form.getValues('chapters')}.`,
+                explanation: currentQuestion.explanation,
                 context: {
                     gradeLevel: form.getValues('gradeLevel'),
                     subject: form.getValues('subject'),
@@ -171,7 +172,8 @@ export default function MockTestPage() {
                 return {
                     question: question.text,
                     answer: question.answer,
-                    options: question.options
+                    options: question.options,
+                    explanation: question.explanation,
                 };
             });
         
@@ -348,6 +350,14 @@ export default function MockTestPage() {
                                     <p className="font-semibold">{index + 1}. {answer.question.text}</p>
                                     <p className="text-sm mt-2">Your answer: <span className="font-medium">{answer.userAnswer}</span></p>
                                     {!answer.isCorrect && <p className="text-sm">Correct answer: <span className="font-medium">{answer.question.answer}</span></p>}
+                                    <Accordion type="single" collapsible className="w-full mt-2">
+                                      <AccordionItem value="explanation" className="border-none">
+                                        <AccordionTrigger className="text-xs p-2">View Explanation</AccordionTrigger>
+                                        <AccordionContent className="p-2">
+                                          {answer.question.explanation}
+                                        </AccordionContent>
+                                      </AccordionItem>
+                                    </Accordion>
                                     <div className="flex justify-end mt-2">
                                         <Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
                                             {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}

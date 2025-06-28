@@ -26,6 +26,7 @@ const QuestionAnswerPairSchema = z.object({
   question: z.string().describe('The generated question.'),
   options: z.array(z.string()).optional().describe('An array of 4 string options if the questionType is "multiple_choice". Otherwise, this field should be omitted or an empty array.'),
   answer: z.string().describe('The answer to the generated question. If questionType is "multiple_choice", this should be the exact text of one of the provided options.'),
+  explanation: z.string().describe("A brief, clear explanation for why the answer is correct."),
 });
 
 const GenerateQuestionsOutputSchema = z.object({
@@ -44,7 +45,9 @@ const prompt = ai.definePrompt({
   prompt: `You are a helpful AI that generates high-quality questions and their corresponding answers for students based on their syllabus.
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
-  For each question, provide a concise and accurate answer. Ensure the questions are distinct, cover various aspects of the topic, and are not repetitive.
+  For each question, provide a concise and accurate answer.
+  For each question, also provide a brief but clear "explanation" for why the answer is correct.
+  Ensure the questions are distinct, cover various aspects of the topic, and are not repetitive.
   
   **Crucially, for multiple-choice questions, there must be only ONE unambiguously correct answer.** If a question could have multiple technically correct options, rephrase the question or options to ensure there is a single best answer. For example, for a question like "Which is a real number?", options like "A rational number" and "An irrational number" are both correct, making the question flawed. A better question would be "Which of the following statements best describes real numbers?", with the correct answer being "They include both rational and irrational numbers".
 
@@ -74,7 +77,8 @@ const prompt = ai.definePrompt({
       { 
         "question": "What is the capital of France?", 
         "options": ["London", "Berlin", "Paris", "Madrid"],
-        "answer": "Paris" 
+        "answer": "Paris",
+        "explanation": "Paris is the capital and most populous city of France."
       }
     ]
   }
@@ -90,7 +94,8 @@ const prompt = ai.definePrompt({
           "A is true, but R is false",
           "A is false, but R is true"
         ],
-        "answer": "Both A and R are true, and R is the correct explanation of A"
+        "answer": "Both A and R are true, and R is the correct explanation of A",
+        "explanation": "The rotation of the Earth on its axis from west to east is the reason we observe the sun rising in the east."
       }
     ]
   }
@@ -100,7 +105,8 @@ const prompt = ai.definePrompt({
     "questions": [
       { 
         "question": "What is photosynthesis?",
-        "answer": "Photosynthesis is the process by which green plants use sunlight, water, and carbon dioxide to create their own food and release oxygen."
+        "answer": "Photosynthesis is the process by which green plants use sunlight, water, and carbon dioxide to create their own food and release oxygen.",
+        "explanation": "This process is vital for plant life and for producing oxygen in the Earth's atmosphere."
       }
     ]
   }

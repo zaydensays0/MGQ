@@ -50,6 +50,7 @@ const prompt = ai.definePrompt({
     - The "text" field MUST contain both an assertion and a reason, formatted with a newline separator: "Assertion (A): [Your assertion statement]\\nReason (R): [Your reason statement]".
     - The "options" field MUST be an array with the four standard options: ["Both A and R are true, and R is the correct explanation of A", "Both A and R are true, but R is not the correct explanation of A", "A is true, but R is false", "A is false, but R is true"].
     - The "answer" field MUST be the exact text of one of the four options.
+  - For every question, you MUST also provide a concise "explanation" for why the answer is correct.
 
   Return the questions in a JSON array. Ensure the questions are relevant and challenging for the specified grade level and difficulty.
   `,

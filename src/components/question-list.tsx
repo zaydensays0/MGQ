@@ -15,7 +15,7 @@ import { LoginPromptDialog } from './login-prompt-dialog';
 interface QuestionListProps {
   questions: GeneratedQuestionAnswerPair[];
   questionContext: QuestionContext;
-  onRegenerateQuestion: (originalQuestion: string, originalOptions?: string[], context?: QuestionContext) => Promise<{ question: string; answer: string; options?: string[] } | null>;
+  onRegenerateQuestion: (originalQuestion: string, originalOptions?: string[]) => Promise<GeneratedQuestionAnswerPair | null>;
 }
 
 export function QuestionList({ questions, questionContext, onRegenerateQuestion }: QuestionListProps) {
@@ -58,8 +58,9 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
             questionText={qaPair.question}
             answerText={qaPair.answer}
             options={qaPair.options}
+            explanation={qaPair.explanation}
             questionContext={questionContext}
-            onRegenerate={(originalQuestion, originalOptions) => onRegenerateQuestion(originalQuestion, originalOptions, questionContext)}
+            onRegenerateQuestion={onRegenerateQuestion}
           />
         ))}
       </div>

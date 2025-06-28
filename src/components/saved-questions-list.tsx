@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { SUBJECTS } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-
+import { useUser } from '@/contexts/user-context';
 
 const SavedQuestionItem: React.FC<{ 
   question: SavedQuestion, 
@@ -29,6 +29,7 @@ const SavedQuestionItem: React.FC<{
   const [isRechecking, setIsRechecking] = useState(false);
   const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
   const { toast } = useToast();
+  const { addWrongQuestion } = useUser();
 
   const isMCQ = question.questionType === 'multiple_choice';
   const isAssertionReason = question.questionType === 'assertion_reason';
@@ -53,6 +54,19 @@ const SavedQuestionItem: React.FC<{
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
       new Audio('/sounds/incorrect.mp3').play();
+      addWrongQuestion({
+          questionText: question.text,
+          userAnswer: selected,
+          correctAnswer: question.answer,
+          options: question.options,
+          explanation: question.explanation,
+          context: {
+              gradeLevel: question.gradeLevel,
+              subject: question.subject,
+              chapter: question.chapter,
+              questionType: question.questionType,
+          }
+      });
     }
   };
   
@@ -206,6 +220,12 @@ const SavedQuestionItem: React.FC<{
                     </p>
                     <p className="text-foreground/90 dark:text-foreground/80 leading-relaxed">{question.answer}</p>
                 </div>
+                {question.explanation && (
+                    <div className="mt-3 p-3 bg-secondary/30 rounded-md border border-input">
+                        <p className="text-sm font-semibold text-primary mb-1">Explanation:</p>
+                        <p className="text-foreground/90 leading-relaxed">{question.explanation}</p>
+                    </div>
+                )}
             </AccordionContent>
             </AccordionItem>
         </Accordion>
