@@ -12,6 +12,7 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
 import type { GradeLevelNCERT, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestInput, QuestionContext, QuestionTypeNCERT, RecheckAnswerOutput } from '@/types';
 import { GRADE_LEVELS } from '@/lib/constants';
+import { playSound } from '@/lib/sounds';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -316,14 +317,14 @@ export default function GrammarTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
-            new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
+            playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
         } else {
             toast({
                 title: "Incorrect",
                 description: `The correct answer was: "${currentQuestion.answer}"`,
                 variant: "destructive"
             });
-            new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
+            playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
             const { gradeLevel, topic } = form.getValues();
             addWrongQuestion({
                 questionText: currentQuestion.text,

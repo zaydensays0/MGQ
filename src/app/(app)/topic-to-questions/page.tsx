@@ -19,6 +19,7 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADE_LEVELS } from '@/lib/constants';
+import { playSound } from '@/lib/sounds';
 
 const QuestionDisplay = ({
   question,
@@ -57,11 +58,11 @@ const QuestionDisplay = ({
 
     if (answer.trim().toLowerCase() === question.answer.toLowerCase()) {
       handleCorrectAnswer(50);
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
+      playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
       toast({ title: 'Correct!', description: 'Great job!' });
     } else {
       toast({ title: "Incorrect!", description: `The correct answer is: ${question.answer}`, variant: 'destructive' });
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
+      playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
       addWrongQuestion({
         questionText: question.question,
         userAnswer: answer,

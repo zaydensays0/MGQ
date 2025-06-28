@@ -19,6 +19,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, increment, collection, query, onSnapshot, addDoc, deleteDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
+import { playSound } from '@/lib/sounds';
 
 // --- Gamification Constants ---
 const generateLevelThresholds = (maxLevel = 50) => {
@@ -240,7 +241,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
     setIsGuest(false);
-    new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3').play().catch(e => console.error("Error playing sound:", e));
+    playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3');
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 

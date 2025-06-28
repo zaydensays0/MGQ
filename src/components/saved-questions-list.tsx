@@ -18,6 +18,7 @@ import { SUBJECTS, BOARDS } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { useUser } from '@/contexts/user-context';
+import { playSound } from '@/lib/sounds';
 
 const SavedQuestionItem: React.FC<{ 
   question: SavedQuestion, 
@@ -48,10 +49,10 @@ const SavedQuestionItem: React.FC<{
 
     if (selected.trim().toLowerCase() === question.answer.trim().toLowerCase()) {
       toast({ title: "Correct!", description: "Well done!" });
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
+      playSound('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3');
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
-      new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
+      playSound('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3');
       addWrongQuestion({
           questionText: question.text,
           userAnswer: selected,
