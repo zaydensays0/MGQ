@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
 import type { WrongQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -106,7 +106,13 @@ export default function WrongQuestionsPage() {
 
     const [subjectFilter, setSubjectFilter] = useState('all');
     const [chapterFilter, setChapterFilter] = useState('all');
+    const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
     
+    // Reset chapter filter when subject changes
+    useEffect(() => {
+        setChapterFilter('all');
+    }, [subjectFilter]);
+
     const subjects = useMemo(() => [...new Set(wrongQuestions.map(q => q.context.subject))], [wrongQuestions]);
     const chapters = useMemo(() => {
         if (subjectFilter === 'all') return [];
@@ -120,8 +126,13 @@ export default function WrongQuestionsPage() {
                 const chapterMatch = chapterFilter === 'all' || q.context.chapter === chapterFilter;
                 return subjectMatch && chapterMatch;
             })
-            .sort((a, b) => b.attemptedAt - a.attemptedAt);
-    }, [wrongQuestions, subjectFilter, chapterFilter]);
+            .sort((a, b) => {
+                if (sortOrder === 'recent') {
+                    return b.attemptedAt - a.attemptedAt;
+                }
+                return a.attemptedAt - b.attemptedAt;
+            });
+    }, [wrongQuestions, subjectFilter, chapterFilter, sortOrder]);
 
     if (isGuest) {
       return <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />;
@@ -165,9 +176,9 @@ export default function WrongQuestionsPage() {
             {wrongQuestions.length > 0 && (
                 <Card className="mb-8">
                     <CardHeader>
-                        <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5"/> Filters</CardTitle>
+                        <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5"/> Filters & Sorting</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <Label>Filter by Subject</Label>
                             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
@@ -185,6 +196,16 @@ export default function WrongQuestionsPage() {
                                 <SelectContent>
                                     <SelectItem value="all">All Chapters</SelectItem>
                                     {chapters.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Sort By</Label>
+                             <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'recent' | 'oldest')}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="recent">Recent First</SelectItem>
+                                    <SelectItem value="oldest">Oldest First</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -210,4 +231,3 @@ export default function WrongQuestionsPage() {
         </div>
     );
 }
-
