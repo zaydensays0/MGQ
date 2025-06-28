@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -22,11 +22,11 @@ import { BADGE_DEFINITIONS } from '@/lib/constants';
 const mainFeatures = [
   { href: '/home', label: 'Dashboard', icon: LayoutGrid },
   { href: '/streams', label: 'Study Streams', icon: Target },
+  { href: '/board-exams', label: 'Board Exams', icon: Building },
   { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/wrong-questions', label: 'Wrong Questions', icon: RotateCw },
   { href: '/notes', label: 'Notes', icon: FileText },
-  { href: '/subject-expert', label: 'Ask an Expert', icon: Brain },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
@@ -34,11 +34,13 @@ const allToolsLinks = [
   { href: '/rewards/spin-wheel', label: 'Spin The Wheel', icon: Ticket },
   { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
+  { href: '/saved-board-questions', label: 'Saved Board Qs', icon: FileQuestion },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
   { href: '/grammar-test', label: 'Grammar Test', icon: SpellCheck },
   { href: '/topic-to-questions', label: 'Topic to Questions', icon: Lightbulb },
+  { href: '/subject-expert', label: 'Ask an Expert', icon: Brain },
   { href: '/subject-expert-saved', label: 'Expert Archive', icon: History },
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },

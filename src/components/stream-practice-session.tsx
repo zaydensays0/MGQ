@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -49,10 +50,10 @@ export const StreamPracticeSession = ({ questions, context }: {
         if (isCorrect) {
             toast({ title: "Correct!", description: "+500 XP", className: "bg-success text-success-foreground border-transparent" });
             handleCorrectAnswer(500);
-            new Audio('/sounds/correct.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${currentQuestion.answer}`, variant: "destructive" });
-            new Audio('/sounds/incorrect.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
             addWrongQuestion({
                 questionText: currentQuestion.text,
                 userAnswer: selectedAnswer,

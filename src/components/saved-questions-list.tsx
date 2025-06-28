@@ -2,7 +2,7 @@
 'use client';
 
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
-import type { SavedQuestion, RecheckAnswerOutput, BoardId } from '@/types';
+import type { SavedQuestion, RecheckAnswerOutput } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, NotebookText, Eye, EyeOff, Layers, ShieldCheck, Loader2, Building } from 'lucide-react';
@@ -48,10 +48,10 @@ const SavedQuestionItem: React.FC<{
 
     if (selected.trim().toLowerCase() === question.answer.trim().toLowerCase()) {
       toast({ title: "Correct!", description: "Well done!" });
-      new Audio('/sounds/correct.mp3').play();
+      new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
     } else {
       toast({ title: "Incorrect", description: `The correct answer is: ${question.answer}`, variant: "destructive" });
-      new Audio('/sounds/incorrect.mp3').play();
+      new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
       addWrongQuestion({
           questionText: question.text,
           userAnswer: selected,
@@ -268,34 +268,35 @@ const CreateDeckFromChapterDialog = ({ questions, context }: {
 };
 
 
-export function SavedQuestionsList() {
+export function SavedQuestionsList({ filterType }: { filterType: 'board' | 'general' }) {
   const { savedQuestions, removeQuestion } = useSavedQuestions();
 
-  const sortedSavedQuestions = [...savedQuestions].sort((a, b) => b.timestamp - a.timestamp);
+  const filteredQuestions = useMemo(() => {
+    return savedQuestions.filter(q => {
+      if (filterType === 'board') {
+        return !!q.board;
+      }
+      return !q.board;
+    });
+  }, [savedQuestions, filterType]);
 
-  if (sortedSavedQuestions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center">
-        <NotebookText className="w-24 h-24 text-muted-foreground mb-6" />
-        <h2 className="text-2xl font-headline font-semibold text-foreground mb-2">No Saved Questions Yet</h2>
-        <p className="text-muted-foreground mb-6 max-w-md">
-          Looks like you haven't saved any questions. Head over to the generation page to create and save some!
-        </p>
-        <Button asChild>
-          <Link href="/">Generate Questions</Link>
-        </Button>
-      </div>
-    );
-  }
+  const sortedSavedQuestions = [...filteredQuestions].sort((a, b) => b.timestamp - a.timestamp);
 
-  const groupedByBoard = useMemo(() => {
+  const groupedBySource = useMemo(() => {
     return sortedSavedQuestions.reduce((acc, q) => {
-      const boardName = q.board ? BOARDS.find(b => b.id === q.board)?.name || 'Other Boards' : 'General Practice';
-      if (!acc[boardName]) acc[boardName] = [];
-      acc[boardName].push(q);
+      let sourceName: string;
+      if (filterType === 'board') {
+          sourceName = q.board ? BOARDS.find(b => b.id === q.board)?.name || 'Other Boards' : 'Unknown Board';
+      } else {
+          sourceName = 'General Practice';
+      }
+      
+      if (!acc[sourceName]) acc[sourceName] = [];
+      acc[sourceName].push(q);
       return acc;
     }, {} as Record<string, SavedQuestion[]>);
-  }, [sortedSavedQuestions]);
+  }, [sortedSavedQuestions, filterType]);
+
 
   const groupedBySubjectAndChapter = (questions: SavedQuestion[]) => {
     return questions.reduce((acc, q) => {
@@ -307,13 +308,31 @@ export function SavedQuestionsList() {
     }, {} as Record<string, Record<string, SavedQuestion[]>>);
   };
 
+  if (sortedSavedQuestions.length === 0) {
+    const emptyStateTitle = filterType === 'board' ? "No Saved Board Questions Yet" : "No Saved General Questions Yet";
+    const emptyStateDescription = filterType === 'board' 
+        ? "Questions you save from the 'Board Exams' feature will appear here." 
+        : "Questions you save from features like 'Generate Questions' or 'Topic to Questions' will appear here.";
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center">
+        <NotebookText className="w-24 h-24 text-muted-foreground mb-6" />
+        <h2 className="text-2xl font-headline font-semibold text-foreground mb-2">{emptyStateTitle}</h2>
+        <p className="text-muted-foreground mb-6 max-w-md">{emptyStateDescription}</p>
+        <Button asChild>
+          <Link href={filterType === 'board' ? "/board-exams" : "/generate"}>Go to Generator</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {Object.entries(groupedByBoard).map(([boardName, questions]) => (
-        <Card key={boardName} className="shadow-lg">
+      {Object.entries(groupedBySource).map(([sourceName, questions]) => (
+        <Card key={sourceName} className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl font-headline flex items-center">
-              <Building className="mr-3 h-6 w-6 text-primary" /> {boardName}
+              <Building className="mr-3 h-6 w-6 text-primary" /> {sourceName}
             </CardTitle>
           </CardHeader>
           <CardContent>

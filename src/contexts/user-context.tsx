@@ -240,7 +240,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, pass);
     setIsGuest(false);
-    new Audio('/sounds/login-success.mp3').play().catch(e => console.error("Error playing sound:", e));
+    new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3').play().catch(e => console.error("Error playing sound:", e));
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 

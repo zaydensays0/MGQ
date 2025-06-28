@@ -22,7 +22,8 @@ import {
   Target,
   RotateCw,
   Ticket,
-  FileQuestion
+  FileQuestion,
+  Building
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { LucideIcon } from 'lucide-react';
@@ -32,7 +33,7 @@ const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</
 
 const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
   { title: 'Study Streams', href: '/streams', icon: <Target className="w-6 h-6 text-primary" />, description: 'Focused prep for competitive exams.' },
-  { title: 'Board Exams', href: '/board-exams', icon: <FileQuestion className="w-6 h-6 text-primary" />, description: 'Practice with board-specific questions.' },
+  { title: 'Board Exams', href: '/board-exams', icon: <Building className="w-6 h-6 text-primary" />, description: 'Practice with board-specific questions.' },
   { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
   { title: 'Wrong Questions', href: '/wrong-questions', icon: <RotateCw className="w-6 h-6 text-primary" />, description: 'Practice the questions you got wrong.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
@@ -45,7 +46,8 @@ const features: { title: string; href: string; icon: React.ReactNode; descriptio
   { title: 'Ask Jarvis', href: '/jarvis', icon: <Bot className="w-6 h-6 text-primary" />, description: 'A general-purpose AI assistant for any query.' },
   { title: 'Flashcards', href: '/flashcards', icon: <Layers className="w-6 h-6 text-primary" />, description: 'Study with smart, auto-generated flashcards.' },
   { title: 'Grammar Test', href: '/grammar-test', icon: <SpellCheck className="w-6 h-6 text-primary" />, description: 'Sharpen your grammar with targeted tests.' },
-  { title: 'Saved Questions', href: '/saved', icon: <BookMarked className="w-6 h-6 text-primary" />, description: 'Review and manage all your saved questions.' },
+  { title: 'Saved Questions', href: '/saved', icon: <BookMarked className="w-6 h-6 text-primary" />, description: 'Review your saved general practice questions.' },
+  { title: 'Saved Board Questions', href: '/saved-board-questions', icon: <FileQuestion className="w-6 h-6 text-primary" />, description: 'Review questions saved from board prep.' },
   { title: 'Expert Archive', href: '/subject-expert-saved', icon: <History className="w-6 h-6 text-primary" />, description: 'Revisit your saved chats with the Expert AI.' },
   { title: 'Jarvis Archive', href: '/jarvis-saved', icon: <Archive className="w-6 h-6 text-primary" />, description: 'Access your saved conversations with Jarvis.' },
   { title: 'Leaderboard', href: '/leaderboard', icon: <Trophy className="w-6 h-6 text-primary" />, description: 'See how you rank against other students.' },

@@ -251,12 +251,15 @@ export default function TopicToQuestionsPage() {
     }
   };
 
-  const transformToSavedQuestion = (q: GeneratedTopicQuestion) => ({
+  const transformToSavedQuestion = (q: GeneratedTopicQuestion): Omit<SavedQuestion, 'id' | 'timestamp'> => ({
     text: q.question,
     answer: q.answer,
     options: q.options,
     explanation: q.explanation,
     questionType: q.type as QuestionTypeNCERT,
+    gradeLevel: (isComprehensive && gradeLevel ? gradeLevel : '10'),
+    subject: 'Topic Practice',
+    chapter: topic,
   });
 
   const getContextForSaving = (q: GeneratedTopicQuestion) => ({
@@ -269,10 +272,7 @@ export default function TopicToQuestionsPage() {
   const handleSaveQuestion = (questionToSave: GeneratedTopicQuestion) => {
     const context = getContextForSaving(questionToSave);
     if (!isSaved(questionToSave.question, context)) {
-      addQuestion({
-        ...transformToSavedQuestion(questionToSave),
-        ...context,
-      });
+      addQuestion(transformToSavedQuestion(questionToSave));
       toast({ title: "Question Saved!", description: "This question has been added to your collection." });
     } else {
       toast({ title: "Already Saved", description: "This question is already in your saved list." });
@@ -281,8 +281,9 @@ export default function TopicToQuestionsPage() {
   
   const handleSaveAll = () => {
     if (generatedQuestions.length > 0) {
+      const questionsToSave = generatedQuestions.map(transformToSavedQuestion);
       const context = getContextForSaving(generatedQuestions[0]);
-      addMultipleQuestions(generatedQuestions as GeneratedQuestionAnswerPair[], context);
+      addMultipleQuestions(questionsToSave as GeneratedQuestionAnswerPair[], context);
       toast({ title: 'All Questions Saved', description: 'All generated questions have been added to your collection.' });
     }
   };
