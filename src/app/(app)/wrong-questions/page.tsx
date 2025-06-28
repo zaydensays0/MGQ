@@ -114,11 +114,13 @@ export default function WrongQuestionsPage() {
     }, [wrongQuestions, subjectFilter]);
 
     const filteredQuestions = useMemo(() => {
-        return wrongQuestions.filter(q => {
-            const subjectMatch = subjectFilter === 'all' || q.context.subject === subjectFilter;
-            const chapterMatch = chapterFilter === 'all' || q.context.chapter === chapterFilter;
-            return subjectMatch && chapterMatch;
-        });
+        return wrongQuestions
+            .filter(q => {
+                const subjectMatch = subjectFilter === 'all' || q.context.subject === subjectFilter;
+                const chapterMatch = chapterFilter === 'all' || q.context.chapter === chapterFilter;
+                return subjectMatch && chapterMatch;
+            })
+            .sort((a, b) => b.attemptedAt - a.attemptedAt);
     }, [wrongQuestions, subjectFilter, chapterFilter]);
 
     if (isGuest) {
