@@ -4,7 +4,7 @@ import {
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
     TrendingUp, Moon, Coins, Database, Award, Crown, Star, Flame, Unlock, Leaf,
-    Stethoscope, Atom, HeartPulse, Code, Landmark, Users, Banknote, GraduationCap, Gavel, Wrench
+    Stethoscope, Atom, HeartPulse, Code, Landmark, Users, Banknote, GraduationCap, Gavel, Wrench, Ticket
 } from 'lucide-react';
 
 export const GRADE_LEVELS: GradeLevelNCERT[] = ['5', '6', '7', '8', '9', '10', '11', '12'];
@@ -139,7 +139,8 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
   note_ninja: { name: 'Note Ninja', description: "Save {goal} notes.", icon: BookMarked, goal: 50, stat: 'notesSaved' },
   accuracy_ace: { name: 'Accuracy Ace', description: "Maintain 90%+ accuracy in {goal} mock tests.", icon: Target, goal: 5, stat: 'highAccuracyMockTests' },
   grammar_genius: { name: 'Grammar Genius', description: "Complete {goal} grammar test questions.", icon: Puzzle, goal: 20, stat: 'grammarQuestionsCompleted' },
-  
+  lucky_spinner: { name: 'Lucky Spinner', description: "Spin the wheel {goal} times.", icon: Ticket, goal: 10, stat: 'spinsCompleted' },
+
   // Streak-based
   streak_master: { name: 'Streak Master', description: "Maintain a {goal}-day study streak.", icon: Flame, goal: 7, stat: 'streak' },
   

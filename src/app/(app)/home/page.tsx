@@ -20,7 +20,8 @@ import {
   CheckSquare,
   Lightbulb,
   Target,
-  RotateCw
+  RotateCw,
+  Ticket
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { LucideIcon } from 'lucide-react';
@@ -33,6 +34,7 @@ const features: { title: string; href: string; icon: React.ReactNode; descriptio
   { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
   { title: 'Wrong Questions', href: '/wrong-questions', icon: <RotateCw className="w-6 h-6 text-primary" />, description: 'Practice the questions you got wrong.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
+  { title: 'Spin The Wheel', href: '/rewards/spin-wheel', icon: <Ticket className="w-6 h-6 text-primary" />, description: 'Spin for daily XP rewards and bonuses.' },
   { title: 'Topic to Questions', href: '/topic-to-questions', icon: <Lightbulb className="w-6 h-6 text-primary" />, description: 'Turn any topic into a quick practice quiz.' },
   { title: 'Notes', href: '/notes', icon: <FileText className="w-6 h-6 text-primary" />, description: 'Create and organize your personal study notes.' },
   { title: 'Grammar', href: '/grammar', icon: <GrammarIcon />, description: 'Your personal grammar checking tool.' },

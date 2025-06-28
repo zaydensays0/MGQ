@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion } from '@/types';
+import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInCalendarDays, parseISO, format } from 'date-fns';
@@ -72,9 +72,24 @@ interface UserContextType {
   addWrongQuestion: (questionData: Omit<WrongQuestion, 'id' | 'attemptedAt'>) => Promise<void>;
   removeWrongQuestion: (id: string) => Promise<void>;
   clearAllWrongQuestions: () => Promise<void>;
+  claimSpinAndGetPrize: (spinType: SpinMissionType) => Promise<{prize: number, index: number} | null>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
+const getDefaultSpinWheelState = (): SpinWheelState => ({
+    lastFreeSpinDate: '',
+    missionsCompletedToday: {
+        practice_session: false,
+        mock_test: false,
+    },
+    spinsClaimedToday: {
+        free: false,
+        practice_session: false,
+        mock_test: false,
+        login_streak: false,
+    }
+});
 
 const getDefaultUserStats = (): UserStats => ({
     questionsGenerated: 0,
@@ -86,6 +101,8 @@ const getDefaultUserStats = (): UserStats => ({
     lowScoreStreak: 0,
     mockTestsToday: 0,
     lastMockTestDate: '',
+    spinsCompleted: 0,
+    practiceSessionsCompleted: 0,
 });
 
 // --- Provider Component ---
@@ -164,6 +181,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             ...data,
             lastActivityTimestamp: data.lastActivityTimestamp || (data.lastCorrectAnswerDate ? new Date(data.lastCorrectAnswerDate).getTime() : 0),
             stats: { ...getDefaultUserStats(), ...(data.stats || {}) },
+            spinWheel: { ...getDefaultSpinWheelState(), ...(data.spinWheel || {}) },
             unclaimedBadges: data.unclaimedBadges || [],
             badges: data.badges || [],
             equippedBadge: data.equippedBadge || null,
@@ -246,6 +264,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       gender,
       stream,
       stats: getDefaultUserStats(),
+      spinWheel: getDefaultSpinWheelState(),
       equippedBadge: null,
       createdAt: Date.now(),
     };
@@ -330,36 +349,54 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { accuracy, isFirstTest, ...statsToIncrement } = statsToUpdate;
     const increments: { [key: string]: any } = {};
     const newStats: UserStats = { ...user.stats };
+    
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const updates: Partial<User> = {};
+    let spinWheelData = user.spinWheel;
+
+    // Daily reset for spin wheel missions if necessary
+    if (spinWheelData.lastFreeSpinDate !== todayStr) {
+        spinWheelData = {
+            lastFreeSpinDate: todayStr,
+            missionsCompletedToday: { practice_session: false, mock_test: false },
+            spinsClaimedToday: { free: false, practice_session: false, mock_test: false, login_streak: false }
+        };
+        updates.spinWheel = spinWheelData;
+    }
 
     for (const key in statsToIncrement) {
       const statKey = key as keyof UserStats;
       const value = statsToIncrement[statKey]!;
       increments[`stats.${statKey}`] = increment(value);
-      newStats[statKey] += value;
+      newStats[statKey] = (newStats[statKey] || 0) + value;
     }
     
-    // Handle complex badge logic
+    // Check for mission completion
+    if (statsToIncrement.practiceSessionsCompleted) {
+        updates['spinWheel.missionsCompletedToday.practice_session'] = true;
+    }
+    if (statsToIncrement.mockTestsCompleted) {
+        updates['spinWheel.missionsCompletedToday.mock_test'] = true;
+    }
+
     if (accuracy !== undefined) {
-        // Accuracy Ace
         if (accuracy >= 0.9) {
             increments['stats.highAccuracyMockTests'] = increment(1);
             newStats.highAccuracyMockTests++;
         }
-        // Comeback Kid
         if (accuracy < 0.6) {
             increments['stats.lowScoreStreak'] = increment(1);
             newStats.lowScoreStreak++;
         } else {
             if (user.stats.lowScoreStreak >= 2 && !user.badges.includes('comeback_kid')) {
-                // Award comeback_kid, no increment needed as we just need to check this condition
+                 // Awarded by checkAndAwardBadges
             }
-            increments['stats.lowScoreStreak'] = 0; // Reset on a good score
+            increments['stats.lowScoreStreak'] = 0;
             newStats.lowScoreStreak = 0;
         }
     }
-    // Silent Slayer
+
     if (statsToIncrement.mockTestsCompleted) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
         if (user.stats.lastMockTestDate === todayStr) {
             increments['stats.mockTestsToday'] = increment(1);
             newStats.mockTestsToday++;
@@ -372,11 +409,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     const userDocRef = doc(db, 'users', firebaseUser.uid);
-    if (Object.keys(increments).length > 0) {
-        await updateDoc(userDocRef, increments);
-    }
+    await updateDoc(userDocRef, { ...increments, ...updates });
 
-    let updatedUser = { ...user, stats: newStats };
+    let updatedUser = { ...user, stats: newStats, ...updates };
     updatedUser = await checkAndAwardBadges(updatedUser);
     setUser(updatedUser);
   }, [user, firebaseUser, isGuest, db, checkAndAwardBadges]);
@@ -429,6 +464,74 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       toast({ title: `+${xpGained.toLocaleString()} XP!`, description: 'Keep up the great work!' });
     }
   }, [user, firebaseUser, toast, isGuest, db, checkAndAwardBadges]);
+  
+  const claimSpinAndGetPrize = useCallback(async (spinType: SpinMissionType): Promise<{prize: number, index: number} | null> => {
+    if (!user || !firebaseUser || !db || isGuest) {
+      toast({ title: "Spin Failed", description: "You must be logged in to spin.", variant: "destructive" });
+      return null;
+    }
+    
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    let currentUserData = user;
+
+    // Perform daily reset if it's the first spin-related action of the day
+    if (currentUserData.spinWheel.lastFreeSpinDate !== todayStr) {
+      const resetSpinState: SpinWheelState = {
+        lastFreeSpinDate: todayStr,
+        missionsCompletedToday: { practice_session: false, mock_test: false }, // Reset missions
+        spinsClaimedToday: { free: false, practice_session: false, mock_test: false, login_streak: false }
+      };
+      await updateDoc(doc(db, 'users', firebaseUser.uid), { spinWheel: resetSpinState });
+      currentUserData = { ...currentUserData, spinWheel: resetSpinState };
+      setUser(currentUserData); // Update local state immediately
+    }
+    
+    // Check spin availability
+    const { spinsClaimedToday, missionsCompletedToday } = currentUserData.spinWheel;
+    let canSpin = false;
+    switch(spinType) {
+        case 'free': canSpin = !spinsClaimedToday.free; break;
+        case 'practice_session': canSpin = missionsCompletedToday.practice_session && !spinsClaimedToday.practice_session; break;
+        case 'mock_test': canSpin = missionsCompletedToday.mock_test && !spinsClaimedToday.mock_test; break;
+        case 'login_streak': canSpin = currentUserData.streak >= 3 && !spinsClaimedToday.login_streak; break;
+    }
+
+    if (!canSpin) {
+      toast({ title: "No Spin Available", description: "You've either already claimed this spin today or haven't completed the mission.", variant: "destructive" });
+      return null;
+    }
+
+    // Determine prize
+    const segments = [700, 50, 150, 0, 100, 300, 25, 50]; // 0 is "Try Again"
+    const prizeIndex = Math.floor(Math.random() * segments.length);
+    const prize = segments[prizeIndex];
+
+    // Update state
+    const newSpinsClaimedToday = { ...spinsClaimedToday, [spinType]: true };
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    await updateDoc(userDocRef, {
+      [`spinWheel.spinsClaimedToday.${spinType}`]: true,
+      'stats.spinsCompleted': increment(1),
+      xp: increment(prize)
+    });
+    
+    // Optimistically update local user state
+    let updatedUser = { 
+        ...currentUserData,
+        xp: currentUserData.xp + prize,
+        stats: { ...currentUserData.stats, spinsCompleted: currentUserData.stats.spinsCompleted + 1 },
+        spinWheel: { ...currentUserData.spinWheel, spinsClaimedToday: newSpinsClaimedToday }
+    };
+    updatedUser = await checkAndAwardBadges(updatedUser);
+    setUser(updatedUser);
+
+    if (prize > 0) {
+        toast({ title: `You won ${prize} XP!`, description: "Your XP has been updated." });
+    }
+
+    return { prize, index: prizeIndex };
+  }, [user, firebaseUser, isGuest, db, toast, checkAndAwardBadges]);
+
 
   const sendPasswordReset = async (email: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
@@ -496,7 +599,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, isGuest, db, toast]);
 
   return (
-    <UserContext.Provider value={{ user, firebaseUser, wrongQuestions, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, claimBadge, equipBadge, sendPasswordReset, changeUserPassword, addWrongQuestion, removeWrongQuestion, clearAllWrongQuestions }}>
+    <UserContext.Provider value={{ user, firebaseUser, wrongQuestions, isInitialized, isGuest, login, signup, logout, continueAsGuest, handleCorrectAnswer, trackStats, updateUserProfile, claimBadge, equipBadge, sendPasswordReset, changeUserPassword, addWrongQuestion, removeWrongQuestion, clearAllWrongQuestions, claimSpinAndGetPrize }}>
       {children}
     </UserContext.Provider>
   );

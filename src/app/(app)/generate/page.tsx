@@ -76,7 +76,10 @@ export default function GeneratePage() {
 
       if (result && result.questions.length > 0) {
         setGeneratedQuestions(result.questions);
-        trackStats({ questionsGenerated: result.questions.length });
+        trackStats({ 
+            questionsGenerated: result.questions.length,
+            practiceSessionsCompleted: 1, // Track for spin wheel mission
+        });
         toast({
           title: 'Questions Generated!',
           description: `Successfully generated ${result.questions.length} questions.`,

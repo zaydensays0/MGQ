@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -31,6 +31,7 @@ const mainFeatures = [
 ];
 
 const allToolsLinks = [
+  { href: '/rewards/spin-wheel', label: 'Spin The Wheel', icon: Ticket },
   { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },

@@ -122,13 +122,30 @@ export interface NeetSyllabus {
     biology: { class11: string[], class12: string[] };
 }
 
+// --- Spin Wheel Types ---
+export type SpinMissionType = 'free' | 'practice_session' | 'mock_test' | 'login_streak';
+
+export interface SpinWheelState {
+  lastFreeSpinDate: string; // YYYY-MM-DD
+  missionsCompletedToday: {
+    practice_session: boolean;
+    mock_test: boolean;
+  }
+  spinsClaimedToday: {
+    free: boolean;
+    practice_session: boolean;
+    mock_test: boolean;
+    login_streak: boolean;
+  }
+}
+
 // --- Badge Types ---
 export type BadgeKey = 
   | 'legend' | 'the_goat' | 'streak_master' | 'mock_warrior'
   | 'note_ninja' | 'accuracy_ace' | 'grammar_genius' | 'elite_learner'
   | 'quick_starter' | 'comeback_kid' | 'silent_slayer' | 'xp_hunter'
   | 'xp_prodigy' | 'xp_master' | 'xp_king_queen' | 'xp_legend'
-  | 'xp_god_mode' | 'welcome_rookie';
+  | 'xp_god_mode' | 'welcome_rookie' | 'lucky_spinner';
 
 export interface UserStats {
   questionsGenerated: number;
@@ -140,6 +157,8 @@ export interface UserStats {
   lowScoreStreak: number;
   mockTestsToday: number;
   lastMockTestDate: string; // YYYY-MM-DD
+  spinsCompleted: number;
+  practiceSessionsCompleted: number;
 }
 
 export interface BadgeInfo {
@@ -171,6 +190,7 @@ export interface User {
   equippedBadge: BadgeKey | null;
   createdAt: number;
   stream?: StreamId;
+  spinWheel: SpinWheelState;
 }
 
 // AI Notes Generator Flow Types
