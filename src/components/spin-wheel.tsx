@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -29,8 +30,7 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
       {/* Wheel container */}
       <div
         className={cn(
-          "relative w-full h-full rounded-full border-8 border-primary shadow-2xl transition-transform duration-[6000ms] ease-out",
-          isSpinning && "animate-spin-ease-out"
+          "relative w-full h-full rounded-full border-8 border-primary shadow-2xl transition-transform duration-[6000ms] ease-out"
         )}
         style={{
           transform: `rotate(${targetRotation}deg)`,
@@ -63,17 +63,17 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
                 }}
               >
                 <div 
-                  className="flex flex-col items-center justify-center text-background font-bold text-lg md:text-xl"
+                  className="flex flex-col items-center justify-center text-background font-bold text-base md:text-lg"
                   style={{ 
-                    transform: `rotate(${anglePerSegment / 2 + additionalRotation}deg) translate(0px, 30px)`,
+                    transform: `rotate(${anglePerSegment / 2 + additionalRotation}deg) translate(0px, 45px)`,
                    }}
                 >
                   {isJackpot ? (
-                    <Gem className="w-7 h-7 mb-1" />
+                    <Gem className="w-6 h-6" />
                   ) : segment.xp === 0 ? null : (
-                    <Star className="w-5 h-5 mb-1" />
+                    <Star className="w-4 h-4" />
                   )}
-                  <span>{segment.xp === 0 ? 'Again!' : segment.xp}</span>
+                  <span className="mt-1">{segment.xp === 0 ? 'Again!' : segment.xp}</span>
                   <span className="text-xs -mt-1">{segment.xp > 0 ? 'XP' : ''}</span>
                 </div>
               </div>
