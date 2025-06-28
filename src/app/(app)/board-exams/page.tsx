@@ -2,15 +2,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { generateBoardQuestions } from '@/ai/flows/generate-board-questions';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion } from '@/types';
+import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput } from '@/types';
 import { BOARDS, SUBJECTS, BOARD_CLASSES, BOARD_QUESTION_TYPES } from '@/lib/constants';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileQuestion, Loader2, Sparkles, Terminal, Save, CheckCircle, Flame, Badge } from 'lucide-react';
+import { FileQuestion, Loader2, Sparkles, Terminal, Save, CheckCircle, Flame, Badge, ShieldCheck, Eye, EyeOff, SaveAll } from 'lucide-react';
 
 const setupSchema = z.object({
     className: z.enum(BOARD_CLASSES),
@@ -38,61 +39,172 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
-const GeneratedQuestionCard = ({ question, context, onSave, isSaved }: { 
-    question: BoardQuestion;
-    context: { boardId: BoardId, className: '9' | '10', subject: string, chapter: string };
-    onSave: (q: BoardQuestion) => void;
-    isSaved: boolean;
+const GeneratedQuestionCard = ({
+  question,
+  context,
+  onSave,
+  isSaved,
+}: {
+  question: BoardQuestion;
+  context: SetupFormValues;
+  onSave: (q: BoardQuestion) => void;
+  isSaved: boolean;
 }) => {
-    const [showAnswer, setShowAnswer] = useState(false);
-    return (
-        <Card className="shadow-md">
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg flex-1">{question.question}</CardTitle>
-                    <div className="flex items-center gap-2 ml-4">
-                        {question.isLikelyToAppear && <Badge variant="destructive"><Flame className="w-4 h-4 mr-1"/>Likely</Badge>}
-                        <Badge variant="outline">{question.marks} Marks</Badge>
-                    </div>
-                </div>
-                <CardDescription>Type: <span className="capitalize">{question.type.replace(/_/g, ' ')}</span></CardDescription>
-            </CardHeader>
-            <CardContent>
-                {showAnswer && (
-                    <div className="prose prose-sm dark:prose-invert max-w-none bg-muted p-3 rounded-md">
-                        <h4 className="font-semibold">Answer:</h4>
-                        <p>{question.answer}</p>
-                        {question.explanation && (
-                            <>
-                                <h4 className="font-semibold mt-2">Explanation:</h4>
-                                <p>{question.explanation}</p>
-                            </>
-                        )}
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-                <Button variant="outline" onClick={() => setShowAnswer(prev => !prev)}>
-                    {showAnswer ? 'Hide Answer' : 'Show Answer'}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onSave(question)} disabled={isSaved}>
-                    {isSaved ? <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> : <Save className="mr-2 h-4 w-4" />}
-                    {isSaved ? 'Saved' : 'Save'}
-                </Button>
-            </CardFooter>
-        </Card>
-    )
-}
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isAttempted, setIsAttempted] = useState(false);
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
 
+  const { addWrongQuestion, handleCorrectAnswer } = useUser();
+  const { toast } = useToast();
+
+  const isMCQ = question.type === 'mcq' || question.type === 'assertion_reason';
+
+  const handleSelectOption = (option: string) => {
+    if (isAttempted) return;
+    setIsAttempted(true);
+    setSelectedOption(option);
+    setShowAnswer(true);
+
+    const isCorrect = option.trim().toLowerCase() === question.answer.trim().toLowerCase();
+    if (isCorrect) {
+      toast({ title: 'Correct!', description: '+200 XP' });
+      handleCorrectAnswer(200);
+      new Audio('/sounds/correct.mp3').play();
+    } else {
+      toast({ title: 'Incorrect', description: `The correct answer was: ${question.answer}`, variant: 'destructive' });
+      new Audio('/sounds/incorrect.mp3').play();
+      addWrongQuestion({
+        questionText: question.question,
+        userAnswer: option,
+        correctAnswer: question.answer,
+        options: question.options,
+        explanation: question.explanation,
+        marks: question.marks,
+        context: {
+          gradeLevel: context.className,
+          subject: context.subject,
+          chapter: context.chapters,
+          questionType: question.type,
+          board: context.boardId,
+        },
+      });
+    }
+  };
+  
+  const handleRecheck = async () => {
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+        const result = await recheckAnswer({
+            question: question.question,
+            originalAnswer: question.answer,
+            options: question.options,
+            gradeLevel: context.className,
+            subject: context.subject,
+            chapter: context.chapters,
+        });
+        setRecheckResult(result);
+        toast({ title: "Recheck Complete" });
+    } catch (error) {
+        toast({ title: "Recheck Failed", variant: "destructive" });
+    } finally {
+        setIsRechecking(false);
+    }
+  };
+
+  const renderQuestionText = () => {
+    if (question.type === 'assertion_reason' && question.question.includes('\\n')) {
+      const parts = question.question.split('\\n');
+      return <div className="space-y-1"><p>{parts[0]}</p><p>{parts[1]}</p></div>;
+    }
+    return <p>{question.question}</p>;
+  };
+  
+  const getOptionStyle = (option: string) => {
+      if (!isAttempted) return 'outline';
+      const isCorrect = option.trim().toLowerCase() === question.answer.trim().toLowerCase();
+      if (isCorrect) return 'default';
+      if (selectedOption === option && !isCorrect) return 'destructive';
+      return 'outline';
+  };
+
+  return (
+    <Card className="shadow-md">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg flex-1 pr-4">{renderQuestionText()}</CardTitle>
+          <div className="flex items-center gap-2 ml-4">
+            {question.isLikelyToAppear && (
+              <Badge variant="destructive"><Flame className="w-4 h-4 mr-1" />Likely</Badge>
+            )}
+            <Badge variant="outline">{question.marks} Marks</Badge>
+          </div>
+        </div>
+        <CardDescription>Type: <span className="capitalize">{question.type.replace(/_/g, ' ')}</span></CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {isMCQ && question.options && (
+            question.options.map((option, index) => (
+                <Button key={index} variant={getOptionStyle(option)} className="w-full justify-start text-left h-auto p-3" onClick={() => handleSelectOption(option)} disabled={isAttempted}>
+                    {option}
+                </Button>
+            ))
+        )}
+        {showAnswer && !isMCQ && (
+          <div className="prose prose-sm dark:prose-invert max-w-none bg-muted p-3 rounded-md">
+            <h4 className="font-semibold">Answer:</h4>
+            <p>{question.answer}</p>
+          </div>
+        )}
+        {showAnswer && question.explanation && (
+          <Accordion type="single" collapsible>
+              <AccordionItem value="explanation">
+                  <AccordionTrigger>View Explanation</AccordionTrigger>
+                  <AccordionContent>{question.explanation}</AccordionContent>
+              </AccordionItem>
+          </Accordion>
+        )}
+        {recheckResult && (
+            <Alert className="mt-2" variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                <AlertDescription className="space-y-1">
+                    <p>{recheckResult.explanation}</p>
+                    {!recheckResult.isCorrect && <p><b>Corrected:</b> {recheckResult.correctAnswer}</p>}
+                </AlertDescription>
+            </Alert>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-between items-center flex-wrap gap-2">
+        <div className="flex gap-2">
+            {!isMCQ && (
+                <Button variant="outline" size="sm" onClick={() => setShowAnswer(prev => !prev)}>
+                    {showAnswer ? <EyeOff /> : <Eye />} {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                </Button>
+            )}
+             <Button variant="outline" size="sm" onClick={handleRecheck} disabled={isRechecking || !!recheckResult}>
+                {isRechecking ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Recheck
+            </Button>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => onSave(question)} disabled={isSaved}>
+          {isSaved ? <CheckCircle className="text-green-500" /> : <Save />} {isSaved ? 'Saved' : 'Save'}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
 
 export default function BoardExamsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [generatedQuestions, setGeneratedQuestions] = useState<BoardQuestion[]>([]);
-    const [lastContext, setLastContext] = useState<any>(null);
+    const [lastContext, setLastContext] = useState<SetupFormValues | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const { toast } = useToast();
-    const { addQuestion, isSaved } = useSavedQuestions();
+    const { addQuestion, addMultipleQuestions, isSaved } = useSavedQuestions();
+    const { addWrongQuestion } = useUser();
 
     const form = useForm<SetupFormValues>({
         resolver: zodResolver(setupSchema),
@@ -120,7 +232,7 @@ export default function BoardExamsPage() {
                 boardName,
                 chapters: data.chapters.split(',').map(c => c.trim()),
                 questionTypes: data.questionTypes as BoardQuestionType[],
-                numberOfQuestions: data.isComprehensive ? 20 : data.numberOfQuestions!, // AI needs a number even for comprehensive
+                numberOfQuestions: data.isComprehensive ? 20 : data.numberOfQuestions!, // AI needs a number
             });
             if (result && result.questions.length > 0) {
                 setGeneratedQuestions(result.questions);
@@ -136,6 +248,14 @@ export default function BoardExamsPage() {
         }
     };
     
+    const getQuestionContext = (q: BoardQuestion): QuestionContext => ({
+        gradeLevel: lastContext!.className,
+        subject: lastContext!.subject,
+        chapter: lastContext!.chapters,
+        questionType: q.type,
+        board: lastContext!.boardId,
+    });
+
     const handleSaveQuestion = (q: BoardQuestion) => {
         const questionToSave: Omit<SavedQuestion, 'id' | 'timestamp'> = {
             text: q.question,
@@ -144,22 +264,25 @@ export default function BoardExamsPage() {
             explanation: q.explanation,
             questionType: q.type,
             marks: q.marks,
-            board: lastContext.boardId,
-            gradeLevel: lastContext.className,
-            subject: lastContext.subject,
-            chapter: lastContext.chapters, // Saving all chapters context
+            ...getQuestionContext(q)
         };
         addQuestion(questionToSave);
     }
     
+    const handleSaveAll = () => {
+        if (!lastContext) return;
+        const questionsToSave = generatedQuestions.map(q => ({
+            text: q.question,
+            answer: q.answer,
+            options: q.options,
+            explanation: q.explanation,
+            marks: q.marks,
+        }));
+        addMultipleQuestions(questionsToSave, getQuestionContext(generatedQuestions[0]));
+    }
+    
     const checkIsSaved = (q: BoardQuestion) => {
-        return isSaved(q.question, {
-             board: lastContext.boardId,
-             gradeLevel: lastContext.className,
-             subject: lastContext.subject,
-             chapter: lastContext.chapters,
-             questionType: q.type,
-        });
+        return isSaved(q.question, getQuestionContext(q));
     }
 
     return (
@@ -233,9 +356,10 @@ export default function BoardExamsPage() {
                                             type="number"
                                             {...field}
                                             onChange={e => {
-                                                const num = parseInt(e.target.value, 10);
-                                                field.onChange(isNaN(num) ? '' : num);
+                                                const val = e.target.value;
+                                                field.onChange(val === '' ? '' : parseInt(val, 10));
                                             }}
+                                            value={field.value ?? ''}
                                         />
                                         {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                                     </div>
@@ -256,13 +380,16 @@ export default function BoardExamsPage() {
                 <Alert variant="destructive" className="mt-6 w-full max-w-4xl mx-auto"><Terminal className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
             )}
 
-            {generatedQuestions.length > 0 && !isLoading && (
+            {generatedQuestions.length > 0 && !isLoading && lastContext && (
                 <div className="mt-8">
-                    <h2 className="text-2xl font-headline font-semibold text-center mb-6">Generated Board Questions</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-headline font-semibold">Generated Board Questions</h2>
+                        <Button onClick={handleSaveAll} variant="outline"><SaveAll className="mr-2 h-4 w-4" /> Save All</Button>
+                    </div>
                     <div className="space-y-4">
                         {generatedQuestions.map((q, i) => (
                            <GeneratedQuestionCard 
-                             key={i} 
+                             key={`${q.question}-${i}`} 
                              question={q} 
                              context={lastContext}
                              onSave={handleSaveQuestion}

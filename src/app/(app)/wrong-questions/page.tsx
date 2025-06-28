@@ -3,11 +3,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
-import type { WrongQuestion } from '@/types';
+import type { WrongQuestion, BoardId } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { RotateCcw, Check, X, ClipboardX, Trash, Award, Filter, FileQuestion, TestTube, ChevronsRight, Trophy } from 'lucide-react';
+import { RotateCcw, Check, X, ClipboardX, Trash, Award, Filter, FileQuestion, TestTube, ChevronsRight, Trophy, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { LoginPromptDialog } from '@/components/login-prompt-dialog';
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
+import { BOARDS } from '@/lib/constants';
 
 const WrongQuestionCard = ({ question }: { question: WrongQuestion }) => {
   return (
@@ -134,6 +135,7 @@ export default function WrongQuestionsPage() {
     const { user, wrongQuestions, removeWrongQuestion, clearAllWrongQuestions, isGuest } = useUser();
     const [showLoginPrompt, setShowLoginPrompt] = useState(isGuest);
 
+    const [boardFilter, setBoardFilter] = useState('all');
     const [subjectFilter, setSubjectFilter] = useState('all');
     const [chapterFilter, setChapterFilter] = useState('all');
     const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
@@ -147,23 +149,31 @@ export default function WrongQuestionsPage() {
 
     const { toast } = useToast();
 
-    // Reset chapter filter when subject changes
-    useEffect(() => {
-        setChapterFilter('all');
-    }, [subjectFilter]);
+    // Reset filters when a higher-level filter changes
+    useEffect(() => { setSubjectFilter('all'); }, [boardFilter]);
+    useEffect(() => { setChapterFilter('all'); }, [subjectFilter]);
 
-    const subjects = useMemo(() => [...new Set(wrongQuestions.map(q => q.context.subject))], [wrongQuestions]);
+    const boards = useMemo(() => {
+        const boardIds = [...new Set(wrongQuestions.map(q => q.context.board).filter(Boolean))];
+        return BOARDS.filter(b => boardIds.includes(b.id));
+    }, [wrongQuestions]);
+    
+    const subjects = useMemo(() => {
+        return [...new Set(wrongQuestions.filter(q => boardFilter === 'all' || q.context.board === boardFilter).map(q => q.context.subject))];
+    }, [wrongQuestions, boardFilter]);
+    
     const chapters = useMemo(() => {
         if (subjectFilter === 'all') return [];
-        return [...new Set(wrongQuestions.filter(q => q.context.subject === subjectFilter).map(q => q.context.chapter))];
-    }, [wrongQuestions, subjectFilter]);
+        return [...new Set(wrongQuestions.filter(q => q.context.subject === subjectFilter && (boardFilter === 'all' || q.context.board === boardFilter)).map(q => q.context.chapter))];
+    }, [wrongQuestions, subjectFilter, boardFilter]);
 
     const filteredQuestions = useMemo(() => {
         return wrongQuestions
             .filter(q => {
+                const boardMatch = boardFilter === 'all' || q.context.board === boardFilter;
                 const subjectMatch = subjectFilter === 'all' || q.context.subject === subjectFilter;
                 const chapterMatch = chapterFilter === 'all' || q.context.chapter === chapterFilter;
-                return subjectMatch && chapterMatch;
+                return boardMatch && subjectMatch && chapterMatch;
             })
             .sort((a, b) => {
                 if (sortOrder === 'recent') {
@@ -171,7 +181,7 @@ export default function WrongQuestionsPage() {
                 }
                 return a.attemptedAt - b.attemptedAt;
             });
-    }, [wrongQuestions, subjectFilter, chapterFilter, sortOrder]);
+    }, [wrongQuestions, boardFilter, subjectFilter, chapterFilter, sortOrder]);
 
     if (isGuest) {
       return <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />;
@@ -216,10 +226,10 @@ export default function WrongQuestionsPage() {
         if (wasCorrect) {
             removeWrongQuestion(questionId);
             toast({ title: "Correct!", description: "This question has been mastered and removed." });
-            new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
+            new Audio('/sounds/correct.mp3').play();
         } else {
             toast({ title: "Incorrect", description: "This question will remain in your list for now." , variant: 'destructive'});
-            new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
+            new Audio('/sounds/incorrect.mp3').play();
         }
         setTestSession(prev => prev ? ({
             ...prev,
@@ -274,7 +284,18 @@ export default function WrongQuestionsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5"/> Filters, Sorting & Re-attempt</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                         <div className="space-y-1.5">
+                            <Label>Filter by Board</Label>
+                            <Select value={boardFilter} onValueChange={setBoardFilter}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Boards</SelectItem>
+                                    {boards.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                                    <SelectItem value="general">General Practice</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-1.5">
                             <Label>Filter by Subject</Label>
                             <Select value={subjectFilter} onValueChange={setSubjectFilter}>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType, BoardId } from '@/types';
@@ -587,6 +588,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (questionData.options) dataToSave.options = questionData.options;
     if (questionData.explanation) dataToSave.explanation = questionData.explanation;
+    if (questionData.marks) dataToSave.marks = questionData.marks;
     if (questionData.context.streamId) dataToSave.context.streamId = questionData.context.streamId;
     if (questionData.context.board) dataToSave.context.board = questionData.context.board;
 
