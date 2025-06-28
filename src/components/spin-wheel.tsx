@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -42,6 +41,11 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
         {segments.map((segment, i) => {
           const rotation = i * anglePerSegment;
           const isJackpot = segment.xp === 700;
+
+          // Determine if the text should be flipped 180 degrees to remain readable
+          const textAngle = rotation + anglePerSegment / 2;
+          const additionalRotation = (textAngle > 90 && textAngle < 270) ? 180 : 0;
+
           return (
             <div
               key={i}
@@ -55,13 +59,14 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
                 className="absolute w-full h-full flex items-start justify-center"
                 style={{
                   backgroundColor: segment.color,
-                  transform: 'skewY(0deg)',
                   transformOrigin: 'top left',
                 }}
               >
                 <div 
                   className="flex flex-col items-center justify-center text-background font-bold text-lg md:text-xl"
-                  style={{ transform: `rotate(${anglePerSegment / 2}deg) translate(0px, 30px)` }}
+                  style={{ 
+                    transform: `rotate(${anglePerSegment / 2 + additionalRotation}deg) translate(0px, 30px)`,
+                   }}
                 >
                   {isJackpot ? (
                     <Gem className="w-7 h-7 mb-1" />
