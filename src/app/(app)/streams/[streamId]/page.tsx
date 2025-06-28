@@ -70,7 +70,7 @@ export default function StreamDetailPage() {
     }
     
     const levels = Object.keys(syllabus);
-    const hasLevels = !Object.keys(syllabus[levels[0]]).some(key => Array.isArray(syllabus[levels[0]][key]));
+    const hasLevels = levels.length > 1;
 
     return (
         <div className="container mx-auto p-4 md:p-8">

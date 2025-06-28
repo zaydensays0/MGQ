@@ -45,14 +45,14 @@ export const STREAMS: Stream[] = [
     },
     {
         id: 'mbbs',
-        name: 'MBBS (First-Year Subjects)',
-        description: 'Resources and questions for first-year medical college coursework.',
+        name: 'MBBS Coursework',
+        description: 'Resources and questions for all professional years of medical college.',
         icon: HeartPulse,
     },
     {
         id: 'btech',
-        name: 'B.Tech (General 1st-Year)',
-        description: 'Subject-wise preparation for first-year engineering coursework.',
+        name: 'B.Tech Coursework',
+        description: 'Subject-wise preparation for yearly engineering coursework.',
         icon: Code,
     },
     {
@@ -93,14 +93,14 @@ export const STREAMS: Stream[] = [
     },
     {
         id: 'ca-foundation',
-        name: 'CA Foundation',
-        description: 'Preparation for the Chartered Accountancy Foundation exam.',
+        name: 'CA Exams',
+        description: 'Preparation for all levels of the Chartered Accountancy exams.',
         icon: Calculator,
     },
     {
         id: 'iti-polytechnic',
         name: 'ITI & Polytechnic',
-        description: 'Vocational and technical course preparation.',
+        description: 'Vocational and technical course preparation for all years.',
         icon: Wrench,
     }
 ];
@@ -143,15 +143,39 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Anatomy': ["General Anatomy", "Gross Anatomy (Upper Limb, Lower Limb, Thorax, Abdomen, Head & Neck)", "Histology (Microanatomy)", "Embryology", "Neuroanatomy"],
             'Physiology': ["General Physiology", "Nerve-Muscle Physiology", "Blood", "Cardiovascular System", "Respiratory System", "Gastrointestinal System", "Renal Physiology", "Endocrine System", "Reproductive System", "Central Nervous System", "Special Senses"],
             'Biochemistry': ["Chemistry of Biomolecules", "Enzymes", "Metabolism of Carbohydrates", "Metabolism of Lipids", "Metabolism of Amino Acids & Proteins", "Nucleotide Metabolism", "Molecular Biology", "Hormones", "Nutrition", "Organ Function Tests"]
+        },
+        '2nd Year': {
+            'Pathology': ["General Pathology (Cell Injury, Inflammation)", "Systemic Pathology (CVS, RS, GIT, etc.)", "Hematology"],
+            'Pharmacology': ["General Pharmacology", "Autonomic Nervous System", "Cardiovascular Drugs", "Antimicrobial Agents", "CNS Pharmacology"],
+            'Microbiology': ["General Microbiology", "Immunology", "Bacteriology", "Virology", "Parasitology", "Mycology"],
+            'Forensic Medicine': ["Medical Jurisprudence & Ethics", "Thanatology (Death)", "Asphyxial Deaths", "Injuries", "Toxicology"]
+        },
+        '3rd Year': {
+            'Community Medicine (PSM)': ["Epidemiology", "Biostatistics", "Health Programs in India", "Nutrition", "Environmental Health"],
+            'ENT (Otorhinolaryngology)': ["Anatomy of Ear, Nose, Throat", "Common Diseases of the Ear", "Common Diseases of the Nose and Sinuses", "Common Throat Conditions"],
+            'Ophthalmology': ["Anatomy of the Eye", "Refractive Errors", "Cataract", "Glaucoma", "Common Retinal Diseases"]
+        },
+        'Final Year': {
+            'Medicine': ["Cardiology", "Neurology", "Gastroenterology", "Endocrinology", "Infectious Diseases"],
+            'Surgery': ["General Surgery Principles", "Trauma", "Common Abdominal Surgeries", "Surgical Oncology"],
+            'Obstetrics & Gynecology': ["Antenatal Care", "Normal Labor", "Common Gynecological Problems", "Contraception"],
+            'Pediatrics': ["Normal Newborn", "Growth and Development", "Common Childhood Infections", "Vaccination"]
         }
     },
     btech: {
         '1st Year': {
-            'Engineering Mathematics': ["Calculus (Differential & Integral)", "Matrices", "Vector Calculus", "Differential Equations", "Complex Variables", "Laplace Transforms", "Fourier Series"],
-            'Physics': ["Mechanics", "Optics", "Electromagnetism", "Quantum Mechanics", "Thermodynamics", "Solid State Physics"],
-            'Basic Electrical Engineering': ["DC Circuits", "AC Circuits", "Transformers", "Electrical Machines (DC/AC Motors)", "Power Systems Introduction"],
-            'Programming in C': ["Introduction to C", "Operators and Expressions", "Control Structures", "Functions", "Arrays and Strings", "Pointers", "Structures and Unions", "File Handling"],
-            'Environmental Studies': ["Ecosystems", "Biodiversity", "Pollution (Air, Water, Soil)", "Solid Waste Management", "Social Issues and the Environment"]
+            'Engineering Mathematics': ["Calculus (Differential & Integral)", "Matrices", "Vector Calculus", "Differential Equations"],
+            'Physics': ["Mechanics", "Optics", "Electromagnetism", "Quantum Mechanics", "Thermodynamics"],
+            'Basic Electrical Engineering': ["DC Circuits", "AC Circuits", "Transformers", "Electrical Machines (DC/AC Motors)"],
+            'Programming in C': ["Introduction to C", "Operators and Expressions", "Control Structures", "Functions", "Arrays", "Pointers", "Structures"],
+            'Engineering Drawing (Theory)': ["Drawing Instruments", "Lines and Lettering", "Dimensioning", "Projections of Points and Lines", "Orthographic Projections"]
+        },
+        '2nd Year': {
+            'Advanced Engineering Mathematics': ["Complex Variables", "Laplace Transforms", "Fourier Series", "Probability and Statistics"],
+            'Data Structures': ["Arrays, Stacks, Queues", "Linked Lists", "Trees", "Graphs", "Sorting and Searching Algorithms"],
+            'Digital Logic Design': ["Number Systems", "Boolean Algebra", "Combinational Circuits", "Sequential Circuits", "Memory and PLDs"],
+            'Object Oriented Programming': ["Concepts of OOP", "Classes and Objects", "Inheritance", "Polymorphism", "Exception Handling"],
+            'Thermodynamics': ["First Law", "Second Law", "Properties of Pure Substances", "Power Cycles", "Refrigeration Cycles"]
         }
     },
     upsc: {
@@ -222,26 +246,37 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
         }
     },
     'ca-foundation': {
-        'All Topics': {
+        'Foundation': {
             'Principles and Practice of Accounting': ["Theoretical Framework", "Accounting Process (Journals, Ledgers)", "Bank Reconciliation Statement", "Inventories", "Depreciation", "Bills of Exchange", "Final Accounts of Sole Proprietors", "Partnership Accounts", "Company Accounts"],
             'Business Laws': ["The Indian Contract Act, 1872", "The Sale of Goods Act, 1930", "The Indian Partnership Act, 1932", "The Limited Liability Partnership Act, 2008", "The Companies Act, 2013"],
             'Business Correspondence and Reporting': ["Communication", "Sentence Types", "Vocabulary", "Comprehension Passages", "Note Making", "Report Writing", "Email Writing"],
-            'Business Mathematics': ["Ratio and Proportion, Indices, Logarithms", "Equations and Matrices", "Linear Inequalities", "Time Value of Money", "Permutations and Combinations", "Sequences and Series", "Calculus Basics"],
-            'Logical Reasoning': ["Number Series, Coding, Decoding", "Direction Tests", "Seating Arrangements", "Blood Relations", "Syllogism"],
-            'Statistics': ["Statistical Description of Data", "Measures of Central Tendency and Dispersion", "Probability", "Correlation and Regression", "Index Numbers"],
-            'Business Economics': ["Nature & Scope of Business Economics", "Theory of Demand and Supply", "Theory of Production and Cost", "Price Determination in Different Markets", "Business Cycles"],
-            'Business and Commercial Knowledge': ["Introduction to BCK", "Business Environment", "Business Organizations", "Government Policies for Business Growth", "Organizations Facilitating Business", "Common Business Terminologies"]
+            'Business Mathematics, Logical Reasoning & Statistics': ["Ratio and Proportion", "Equations", "Linear Inequalities", "Time Value of Money", "Permutations and Combinations", "Sequences and Series", "Number Series, Coding", "Direction Tests", "Seating Arrangements", "Statistical Description", "Measures of Central Tendency", "Probability", "Correlation and Regression"],
+            'Business Economics & Commercial Knowledge': ["Nature & Scope of Business Economics", "Theory of Demand and Supply", "Theory of Production and Cost", "Price Determination", "Business Cycles", "Business Environment", "Business Organizations", "Government Policies"]
+        },
+        'Intermediate': {
+            'Accounting': ["Accounting Standards", "Company Accounts", "Partnership Accounts advanced", "Branch Accounts"],
+            'Corporate and Other Laws': ["The Companies Act, 2013 (Advanced)", "Negotiable Instruments Act, 1881", "General Clauses Act, 1897"],
+            'Taxation': ["Income-tax Law", "Goods and Services Tax (GST)"],
+            'Cost and Management Accounting': ["Cost Ascertainment", "Budgeting", "Standard Costing", "Marginal Costing"]
+        },
+        'Final': {
+            'Financial Reporting': ["Ind AS (Indian Accounting Standards)", "Business Combinations", "Consolidated Financial Statements"],
+            'Strategic Financial Management': ["Financial Policy", "Portfolio Management", "Derivatives", "International Financial Management"],
+            'Advanced Auditing and Professional Ethics': ["Auditing Standards", "Audit of Different Entities", "Professional Ethics"],
+            'Direct Tax Laws & International Taxation': ["Advanced topics in Direct Tax", "International Taxation treaties"],
+            'Indirect Tax Laws': ["Advanced topics in GST", "Customs & FTP (Foreign Trade Policy)"]
         }
     },
     'iti-polytechnic': {
-        'Common Subjects': {
+        'Year 1': {
             'Applied Mathematics': ["Algebra", "Trigonometry", "Coordinate Geometry", "Calculus Basics", "Vectors"],
             'Applied Science': ["Units and Measurements", "Laws of Motion", "Work, Power, Energy", "Heat and Thermodynamics", "Basic Electricity", "Chemical Bonding", "Acids, Bases, Salts", "Metals and Non-metals"],
             'Engineering Drawing (Theory)': ["Drawing Instruments", "Lines and Lettering", "Dimensioning", "Scales", "Geometric Constructions", "Projections of Points and Lines", "Orthographic Projections", "Isometric Projections"],
+            'Workshop Technology': ["Carpentry", "Fitting", "Welding", "Sheet Metal Work"],
         },
-        'Trade Specific': {
-            'Electrician Trade': ["Safety Practices", "Tools and Instruments", "Conductors and Insulators", "Ohm's Law & Kirchhoff's Law", "AC & DC Circuits", "Transformers", "Electrical Machines", "Wiring Systems"],
-            'Fitter Trade': ["Safety and First Aid", "Hand Tools", "Measuring Instruments", "Cutting Tools", "Drilling", "Lathe Machine", "Gauges", "Welding"]
+        'Year 2': {
+             'Trade Theory (Electrician)': ["Safety Practices", "Tools and Instruments", "Conductors and Insulators", "Ohm's Law & Kirchhoff's Law", "AC & DC Circuits", "Transformers", "Electrical Machines", "Wiring Systems"],
+            'Trade Theory (Fitter)': ["Safety and First Aid", "Hand Tools", "Measuring Instruments", "Cutting Tools", "Drilling", "Lathe Machine", "Gauges", "Welding"]
         }
     }
 };
