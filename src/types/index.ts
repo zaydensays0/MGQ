@@ -264,7 +264,7 @@ export const GenerateStreamQuestionsInputSchema = z.object({
   level: z.string().describe("The level within the stream (e.g., 'Class 11', '1st Year', 'Paper I')."),
   subject: z.string().describe('The subject for the questions.'),
   chapter: z.string().describe('The specific chapter/topic to generate questions from.'),
-  numberOfQuestions: z.number().int().positive().describe("The number of questions to generate."),
+  numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
   isComprehensive: z.boolean().optional().describe("If true, generate a wide variety of questions covering the whole topic thoroughly."),
 });
 export type GenerateStreamQuestionsInput = z.infer<typeof GenerateStreamQuestionsInputSchema>;
@@ -314,7 +314,7 @@ export const GenerateBoardQuestionInputSchema = z.object({
     subject: z.string().describe('The subject for the questions.'),
     chapters: z.array(z.string()).describe('The specific chapters/topics to generate questions from. Can be ["Full Syllabus"].'),
     questionTypes: z.array(BoardQuestionTypeSchema).describe("The types of questions to generate."),
-    numberOfQuestions: z.number().int().positive().describe("The number of questions to generate."),
+    numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
     isComprehensive: z.boolean().optional().describe("If true, generate all possible high-probability questions for the given chapters."),
 });
 export type GenerateBoardQuestionInput = z.infer<typeof GenerateBoardQuestionInputSchema>;
@@ -324,7 +324,7 @@ export const BoardQuestionSchema = z.object({
     answer: z.string().describe("The correct answer, which should be detailed for long-answer types."),
     options: z.array(z.string()).optional().describe("Array of options for MCQ/Assertion-Reason type questions."),
     type: BoardQuestionTypeSchema.describe("The type of exam question."),
-    marks: z.number().int().positive().describe("The marks allocated for this question as per the board pattern."),
+    marks: z.number().int().min(1).describe("The marks allocated for this question as per the board pattern."),
     explanation: z.string().optional().describe("A clear explanation of the correct answer or marking scheme."),
     isLikelyToAppear: z.boolean().describe("True if the AI predicts this is a high-probability question for the exam."),
 });

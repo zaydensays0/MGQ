@@ -18,7 +18,7 @@ const GenerateQuestionsInputSchema = z.object({
   subject: z.string().describe('The subject of the syllabus.'),
   chapter: z.string().describe('The chapter of the syllabus.'),
   questionType: z.custom<QuestionTypeNCERT>().describe('The type of questions to generate (e.g., MCQ, short answer, long answer).'),
-  numberOfQuestions: z.number().int().positive().describe('The number of questions to generate.'),
+  numberOfQuestions: z.number().int().min(1).describe('The number of questions to generate.'),
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
