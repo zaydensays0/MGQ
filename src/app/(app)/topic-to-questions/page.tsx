@@ -191,7 +191,7 @@ const QuestionDisplay = ({
 
 export default function TopicToQuestionsPage() {
   const [topic, setTopic] = useState('');
-  const [numberOfQuestions, setNumberOfQuestions] = useState(5);
+  const [numberOfQuestions, setNumberOfQuestions] = useState<string>('5');
   const [isComprehensive, setIsComprehensive] = useState(false);
   const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedTopicQuestion[]>([]);
@@ -219,11 +219,18 @@ export default function TopicToQuestionsPage() {
         topic,
         isComprehensive,
     };
+    
+    const num = parseInt(numberOfQuestions, 10);
 
     if (isComprehensive) {
         input.gradeLevel = gradeLevel as GradeLevelNCERT;
     } else {
-        input.numberOfQuestions = numberOfQuestions;
+        if(isNaN(num) || num < 1) {
+            toast({ title: 'Invalid Number', description: 'Please enter a valid number of questions.', variant: 'destructive' });
+            setIsLoading(false);
+            return;
+        }
+        input.numberOfQuestions = num;
     }
 
     try {
@@ -327,7 +334,7 @@ export default function TopicToQuestionsPage() {
             ) : (
                 <div className="space-y-2">
                     <Label htmlFor="num-questions">Number of Questions</Label>
-                    <Input id="num-questions" type="number" min="1" value={numberOfQuestions} onChange={(e) => setNumberOfQuestions(parseInt(e.target.value))} disabled={isLoading} />
+                    <Input id="num-questions" type="number" min="1" value={numberOfQuestions} onChange={(e) => setNumberOfQuestions(e.target.value)} disabled={isLoading} />
                 </div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -226,7 +227,18 @@ export default function BoardExamsPage() {
                             </div>
                             {!isComprehensive && (
                                 <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
-                                    <div className="space-y-1.5 flex-1"><Label>Number of Questions</Label><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
+                                    <div className="space-y-1.5 flex-1">
+                                        <Label>Number of Questions</Label>
+                                        <Input
+                                            type="number"
+                                            {...field}
+                                            onChange={e => {
+                                                const num = parseInt(e.target.value, 10);
+                                                field.onChange(isNaN(num) ? '' : num);
+                                            }}
+                                        />
+                                        {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                                    </div>
                                 )} />
                             )}
                         </div>

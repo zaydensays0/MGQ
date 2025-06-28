@@ -262,7 +262,16 @@ export default function MockTestPage() {
                         <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
                             <div className="space-y-1.5">
                                 <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-                                <Input id="numberOfQuestions" type="number" min="5" {...field} />
+                                <Input
+                                    id="numberOfQuestions"
+                                    type="number"
+                                    min="5"
+                                    {...field}
+                                    onChange={e => {
+                                        const num = parseInt(e.target.value, 10);
+                                        field.onChange(isNaN(num) ? '' : num);
+                                    }}
+                                />
                                 {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                             </div>
                         )} />
