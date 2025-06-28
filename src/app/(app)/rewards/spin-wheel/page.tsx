@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useUser } from '@/contexts/user-context';
 import type { SpinMissionType } from '@/types';
 import { SpinWheel } from '@/components/spin-wheel';
@@ -65,6 +64,8 @@ export default function SpinWheelPage() {
     const [showConfetti, setShowConfetti] = useState(false);
     const [currentPrize, setCurrentPrize] = useState(0);
     
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const availableSpins = useMemo(() => {
         if (!user) return { free: false, practice_session: false, mock_test: false, login_streak: false };
         const { spinWheel, streak } = user;
@@ -75,6 +76,21 @@ export default function SpinWheelPage() {
             login_streak: streak >= 3 && !spinWheel.spinsClaimedToday.login_streak
         };
     }, [user]);
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        if (audioElement) {
+          if (isSpinning) {
+            audioElement.play().catch(error => {
+              console.error("Audio play failed.", error);
+            });
+          } else {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+          }
+        }
+    }, [isSpinning]);
+
 
     const handleSpin = async (spinType: SpinMissionType) => {
         if (isSpinning) return;
@@ -154,6 +170,7 @@ export default function SpinWheelPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8">
+            <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
             {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={currentPrize >= 300 ? 500 : 200} />}
             <div className="mb-8">
                 <h1 className="text-3xl font-headline font-bold flex items-center">
