@@ -15,6 +15,7 @@ import { differenceInMilliseconds, formatDuration, intervalToDuration } from 'da
 import { useToast } from '@/hooks/use-toast';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
+import { playSound } from '@/lib/sounds';
 
 
 const WHEEL_SEGMENTS = [
@@ -97,8 +98,11 @@ export default function SpinWheelPage() {
         if (currentPrize > 0) {
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 5000);
-            if (currentPrize >= 300) new Audio('/sounds/jackpot.mp3').play();
-            else new Audio('/sounds/win.mp3').play();
+            if (currentPrize >= 300) {
+                playSound('/sounds/jackpot.mp3');
+            } else {
+                playSound('/sounds/win.mp3');
+            }
         } else {
             toast({ title: 'Tough luck!', description: 'Better luck next time!' });
         }
@@ -150,7 +154,7 @@ export default function SpinWheelPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8">
-            {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={currentPrize >= 700 ? 500 : 200} />}
+            {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={currentPrize >= 300 ? 500 : 200} />}
             <div className="mb-8">
                 <h1 className="text-3xl font-headline font-bold flex items-center">
                     <Ticket className="w-8 h-8 mr-3 text-primary" />
