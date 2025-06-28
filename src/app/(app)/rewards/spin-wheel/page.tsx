@@ -99,9 +99,9 @@ export default function SpinWheelPage() {
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 5000);
             if (currentPrize >= 300) {
-                playSound('/sounds/jackpot.mp3');
+                playSound('https://cdn.pixabay.com/download/audio/2022/10/26/audio_415f067d5e.mp3');
             } else {
-                playSound('/sounds/win.mp3');
+                playSound('https://cdn.pixabay.com/download/audio/2022/04/22/audio_107954938d.mp3');
             }
         } else {
             toast({ title: 'Tough luck!', description: 'Better luck next time!' });

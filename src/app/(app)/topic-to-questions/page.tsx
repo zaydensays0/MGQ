@@ -57,11 +57,11 @@ const QuestionDisplay = ({
 
     if (answer.trim().toLowerCase() === question.answer.toLowerCase()) {
       handleCorrectAnswer(50);
-      new Audio('/sounds/correct.mp3').play();
+      new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
       toast({ title: 'Correct!', description: 'Great job!' });
     } else {
       toast({ title: "Incorrect!", description: `The correct answer is: ${question.answer}`, variant: 'destructive' });
-      new Audio('/sounds/incorrect.mp3').play();
+      new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
       addWrongQuestion({
         questionText: question.question,
         userAnswer: answer,

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -34,10 +35,10 @@ const McqDisplayCard = ({ mcq, index, topic }: { mcq: Mcq, index: number, topic:
         
         if (option === mcq.answer) {
             handleCorrectAnswer(50); // Give some XP for this
-            new Audio('/sounds/correct.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
         } else {
             toast({ title: "Incorrect!", description: `The correct answer is: ${mcq.answer}`, variant: 'destructive' });
-            new Audio('/sounds/incorrect.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
         }
     };
 

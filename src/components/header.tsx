@@ -76,7 +76,7 @@ export function Header() {
         
         {/* LEFT SECTION */}
         <div className="flex items-center">
-          <Link href="/home" className="mr-6 flex items-center space-x-2" onClick={() => playSound('/sounds/click.mp3', 0.5)}>
+          <Link href="/home" className="mr-6 flex items-center space-x-2" onClick={() => playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5)}>
             <GraduationCap className="h-7 w-7 text-primary" />
             <div>
               <span className="font-bold sm:inline-block text-xl font-headline">
@@ -93,7 +93,7 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                    onClick={() => playSound('/sounds/click.mp3', 0.5)}
+                    onClick={() => playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5)}
                 >
                     {link.label}
                 </Link>
@@ -121,16 +121,16 @@ export function Header() {
                         <UserProgress user={user} />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link href="/account" className="w-full flex" onClick={() => playSound('/sounds/click.mp3', 0.5)}>
+                          <Link href="/account" className="w-full flex" onClick={() => playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5)}>
                             <User className="mr-2 h-4 w-4" />Profile
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { playSound('/sounds/click.mp3', 0.5); handleLogout(); }}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); handleLogout(); }}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
                 <Button asChild variant="default" className="font-bold">
-                    <Link href="/login" onClick={() => playSound('/sounds/click.mp3', 0.5)}><LogIn className="mr-2 h-4 w-4"/> Sign In</Link>
+                    <Link href="/login" onClick={() => playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5)}><LogIn className="mr-2 h-4 w-4"/> Sign In</Link>
                 </Button>
               )}
           </div>
@@ -146,7 +146,7 @@ export function Header() {
               <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-card">
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
-                    <Link href="/home" className="flex items-center space-x-2" onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}>
+                    <Link href="/home" className="flex items-center space-x-2" onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); setIsMobileMenuOpen(false); }}>
                         <GraduationCap className="h-7 w-7 text-primary" />
                         <div>
                           <span className="font-bold text-lg font-headline text-foreground">MGQ</span>
@@ -160,7 +160,7 @@ export function Header() {
                   <>
                     <div className="p-4 border-b">
                         <div>
-                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}>
+                          <Link href="/account" className="flex items-center p-2 rounded-md hover:bg-muted" onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); setIsMobileMenuOpen(false); }}>
                               <Avatar className="h-9 w-9 mr-3">
                                   <AvatarImage src={user.avatarUrl} alt={user.fullName} />
                                   <AvatarFallback>{user.fullName.charAt(0).toUpperCase()}</AvatarFallback>
@@ -193,7 +193,7 @@ export function Header() {
                           className={cn(
                             "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md text-foreground/80 hover:bg-muted"
                           )}
-                          onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}
+                          onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); setIsMobileMenuOpen(false); }}
                         >
                           {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                           {link.label}
@@ -207,7 +207,7 @@ export function Header() {
                           className={cn(
                             "flex items-center text-base font-medium transition-colors hover:text-primary py-2 px-2 rounded-md text-foreground/80 hover:bg-muted"
                           )}
-                          onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}
+                          onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); setIsMobileMenuOpen(false); }}
                         >
                           {link.icon && <link.icon className="mr-3 h-5 w-5 flex-shrink-0" />}
                           {link.label}
@@ -215,14 +215,14 @@ export function Header() {
                       ))}
                     </nav>
                     <div className="p-4 border-t">
-                        <Button variant="ghost" className="w-full justify-start text-foreground/80" onClick={() => { playSound('/sounds/click.mp3', 0.5); handleLogout(); }}>
+                        <Button variant="ghost" className="w-full justify-start text-foreground/80" onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); handleLogout(); }}>
                             <LogOut className="mr-3 h-5 w-5"/> Logout
                         </Button>
                     </div>
                   </>
                 ) : (
                   <div className="p-4 flex flex-col gap-4">
-                     <Button asChild className="w-full" variant="accent" onClick={() => { playSound('/sounds/click.mp3', 0.5); setIsMobileMenuOpen(false); }}>
+                     <Button asChild className="w-full" variant="accent" onClick={() => { playSound('https://cdn.pixabay.com/download/audio/2022/03/15/audio_282a569567.mp3', 0.5); setIsMobileMenuOpen(false); }}>
                         <Link href="/login"><LogIn className="mr-2 h-4 w-4"/> Login / Sign Up</Link>
                     </Button>
                   </div>

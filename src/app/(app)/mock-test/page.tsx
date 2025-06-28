@@ -118,14 +118,14 @@ export default function MockTestPage() {
         
         if (isCorrect) {
             handleCorrectAnswer(earnedXp);
-            new Audio('/sounds/correct.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b93f1aby.mp3').play();
         } else {
             toast({
                 title: "Incorrect",
                 description: `The correct answer was: "${currentQuestion.answer}"`,
                 variant: "destructive"
             });
-            new Audio('/sounds/incorrect.mp3').play();
+            new Audio('https://cdn.pixabay.com/download/audio/2022/03/07/audio_c898c8c882.mp3').play();
             // Save the wrong question
             addWrongQuestion({
                 questionText: currentQuestion.text,
@@ -402,7 +402,7 @@ export default function MockTestPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-8">
-            <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
+            <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
             {renderContent()}
         </div>
     );

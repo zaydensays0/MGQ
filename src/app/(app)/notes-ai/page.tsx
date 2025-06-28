@@ -198,7 +198,7 @@ export default function NotesAIPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
+      <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
           <PenSquare className="w-8 h-8 mr-3 text-primary" />

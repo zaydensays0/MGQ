@@ -104,7 +104,7 @@ const AIGenerationDialog = () => {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <audio ref={audioRef} src="/sounds/generating-music.mp3" loop />
+            <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
             <DialogTrigger asChild>
                 <Button size="icon" aria-label="Generate with AI">
                     <Sparkles className="h-4 w-4" />
