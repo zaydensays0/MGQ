@@ -38,11 +38,11 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
       {/* Wheel container */}
       <div
         className={cn(
-          "relative w-full h-full rounded-full border-8 border-primary shadow-2xl transition-transform duration-[6000ms] ease-out"
+          "relative w-full h-full rounded-full border-8 border-primary shadow-2xl",
+          isSpinning && "transition-transform duration-[6000ms] ease-out"
         )}
         style={{
           transform: `rotate(${targetRotation}deg)`,
-          transitionProperty: 'transform',
         }}
         onTransitionEnd={onTransitionEnd}
       >
@@ -53,7 +53,6 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({ segments, targetRotation, 
         <div className="absolute inset-0">
           {segments.map((segment, i) => {
             const angle = i * anglePerSegment;
-            const labelRadius = 0.6; // Position labels at 60% of the radius
             
             return (
               <div
