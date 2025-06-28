@@ -1,4 +1,3 @@
-
 import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 
@@ -105,22 +104,16 @@ export interface SavedSubjectExpertExchange {
 }
 
 // --- Study Stream Types ---
-export type StreamId = 'neet' | 'jee' | 'mbbs' | 'btech' | 'upsc' | 'ssc' | 'banking' | 'cuet' | 'clat' | 'nda' | 'ca' | 'iti';
+export type StreamId = 'neet' | 'jee' | 'mbbs' | 'btech' | 'upsc' | 'ssc' | 'banking' | 'cuet' | 'clat' | 'nda' | 'ca-foundation' | 'iti-polytechnic';
 
 export interface Stream {
   id: StreamId;
   name: string;
   description: string;
   icon: LucideIcon;
-  subjects: string[];
-  questionTypes: string[];
 }
 
-export interface NeetSyllabus {
-    physics: { class11: string[], class12: string[] };
-    chemistry: { class11: string[], class12: string[] };
-    biology: { class11: string[], class12: string[] };
-}
+export type StreamSyllabus = Record<StreamId, Record<string, Record<string, string[]>>>;
 
 // --- Spin Wheel Types ---
 export type SpinMissionType = 'free' | 'practice_session' | 'mock_test' | 'login_streak';
@@ -326,37 +319,39 @@ export const TopicToQuestionsOutputSchema = z.object({
 });
 export type TopicToQuestionsOutput = z.infer<typeof TopicToQuestionsOutputSchema>;
 
-
-// NEET Question Generation Types
-export const NeetQuestionTypeSchema = z.enum(['mcq', 'assertion_reason', 'numerical']);
-export type NeetQuestionType = z.infer<typeof NeetQuestionTypeSchema>;
+// Stream Question Generation Types
+export const StreamQuestionTypeSchema = z.enum([
+    'mcq', 'numerical', 'integer', 'assertion_reason', 'case_based_mcq', 
+    'passage_based_mcq', 'theory_mcq', 'logical_reasoning'
+]);
+export type StreamQuestionType = z.infer<typeof StreamQuestionTypeSchema>;
 
 export const DifficultySchema = z.enum(['easy', 'medium', 'hard']);
 export type Difficulty = z.infer<typeof DifficultySchema>;
 
-export const GenerateNeetQuestionsInputSchema = z.object({
-  subject: z.string().describe('The subject for the questions (e.g., physics).'),
-  classLevel: z.string().describe('The class level for the questions (e.g., 11 or 12).'),
-  chapter: z.string().describe('The specific chapter to generate questions from.'),
-  isComprehensive: z.boolean().optional().describe("Whether to generate a comprehensive set of questions to master the chapter."),
-  numberOfQuestions: z.number().int().min(1).optional().describe("The number of questions to generate if not in comprehensive mode."),
+export const GenerateStreamQuestionsInputSchema = z.object({
+  streamId: z.string().describe("The ID of the exam stream (e.g., 'jee', 'upsc')."),
+  streamName: z.string().describe("The full name of the exam stream (e.g., 'JEE (Main & Advanced)')."),
+  subject: z.string().describe('The subject for the questions.'),
+  chapter: z.string().describe('The specific chapter/topic to generate questions from.'),
+  numberOfQuestions: z.number().int().positive().describe("The number of questions to generate."),
 });
-export type GenerateNeetQuestionsInput = z.infer<typeof GenerateNeetQuestionsInputSchema>;
+export type GenerateStreamQuestionsInput = z.infer<typeof GenerateStreamQuestionsInputSchema>;
 
-export const NeetQuestionSchema = z.object({
-  type: NeetQuestionTypeSchema.describe("The type of NEET question."),
-  text: z.string().describe("The full question text. For Assertion/Reason, it must contain both parts separated by a newline."),
-  options: z.array(z.string()).optional().describe("Array of 4 options for MCQ and Assertion/Reason types."),
+export const StreamQuestionSchema = z.object({
+  type: StreamQuestionTypeSchema.describe("The type of exam question."),
+  text: z.string().describe("The full question text. For passage-based questions, this includes the passage."),
+  options: z.array(z.string()).optional().describe("Array of options for MCQ-type questions."),
   answer: z.string().describe("The correct answer. Must match an option if options are provided."),
-  explanation: z.string().describe("A clear explanation of the correct answer, which serves as a step-by-step solution for numerical problems."),
+  explanation: z.string().describe("A clear explanation of the correct answer, which can serve as a step-by-step solution for numerical problems."),
   difficulty: DifficultySchema.describe("The difficulty level of the question."),
 });
-export type NeetQuestion = z.infer<typeof NeetQuestionSchema>;
+export type StreamQuestion = z.infer<typeof StreamQuestionSchema>;
 
-export const GenerateNeetQuestionsOutputSchema = z.object({
-  questions: z.array(NeetQuestionSchema).describe('An array of generated NEET questions.'),
+export const GenerateStreamQuestionsOutputSchema = z.object({
+  questions: z.array(StreamQuestionSchema).describe('An array of generated stream-specific questions.'),
 });
-export type GenerateNeetQuestionsOutput = z.infer<typeof GenerateNeetQuestionsOutputSchema>;
+export type GenerateStreamQuestionsOutput = z.infer<typeof GenerateStreamQuestionsOutputSchema>;
 
 export interface WrongQuestion {
   id: string;
@@ -366,10 +361,11 @@ export interface WrongQuestion {
   options?: string[];
   explanation?: string;
   context: {
-    gradeLevel: GradeLevelNCERT;
+    gradeLevel: GradeLevelNCERT | string; // Allow string for streams
     subject: string;
     chapter: string;
-    questionType: QuestionTypeNCERT;
+    questionType: QuestionTypeNCERT | StreamQuestionType;
+    streamId?: StreamId; // Optional field for stream context
   };
   attemptedAt: number;
 }

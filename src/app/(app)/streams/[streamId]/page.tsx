@@ -1,24 +1,26 @@
-
 'use client';
 
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { STREAMS } from '@/lib/constants';
+import { STREAMS, STREAM_SYLLABUS } from '@/lib/constants';
+import type { StreamId } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookCheck, ChevronsRight, FileQuestion, PencilRuler } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ArrowLeft, BookCheck } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function StreamDetailPage() {
     const params = useParams();
-    const streamId = params.streamId as string;
+    const streamId = params.streamId as StreamId;
 
     const stream = STREAMS.find(s => s.id === streamId);
+    const syllabus = STREAM_SYLLABUS[streamId];
 
-    if (!stream) {
-        notFound();
+    if (!stream || !syllabus) {
+        return notFound();
     }
+    
+    const subjects = Object.keys(syllabus);
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -39,69 +41,44 @@ export default function StreamDetailPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                     <Card className="shadow-lg">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <PencilRuler className="mr-3 text-primary"/>
-                                Question Generation
-                            </CardTitle>
-                            <CardDescription>
-                                Generate questions tailored to the {stream.name} exam pattern.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Alert>
-                                <AlertTitle>Feature Coming Soon!</AlertTitle>
-                                <AlertDescription>
-                                    Our team is hard at work creating a dedicated question generation experience for the {stream.name} stream. Check back soon!
-                                </AlertDescription>
-                            </Alert>
-                             {/* Placeholder for future form */}
-                            <div className="mt-6 p-8 border-2 border-dashed rounded-lg text-center text-muted-foreground">
-                                Question generation form and filters will appear here.
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center text-xl">
-                                <BookCheck className="mr-2 text-primary" />
-                                Subjects
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {stream.subjects.map(subject => (
-                                    <li key={subject} className="flex items-center">
-                                        <ChevronsRight className="h-4 w-4 mr-2 text-primary/70" /> {subject}
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center text-xl">
-                                <FileQuestion className="mr-2 text-primary" />
-                                Question Types
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-2">
-                                {stream.questionTypes.map(qt => (
-                                    <Badge key={qt} variant="secondary">{qt}</Badge>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <BookCheck className="mr-3 text-primary"/>
+                        Select a Chapter to Practice
+                    </CardTitle>
+                    <CardDescription>
+                        Choose a subject and chapter to start generating questions tailored for the {stream.name} exam.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="multiple" className="w-full space-y-4">
+                        {subjects.map(subject => (
+                            <AccordionItem key={subject} value={subject} className="border rounded-lg overflow-hidden">
+                                <AccordionTrigger className="px-6 py-4 text-xl font-semibold hover:no-underline bg-muted/30">
+                                    {subject}
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4">
+                                    {Object.entries(syllabus[subject]).map(([category, chapters]) => (
+                                        <div key={category} className="mb-4 last:mb-0">
+                                            <h4 className="font-bold text-primary mb-2">{category}</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {chapters.map(chapter => (
+                                                    <Button key={chapter} variant="outline" asChild className="h-auto justify-start text-left whitespace-normal">
+                                                         <Link href={`/streams/${streamId}/practice?subject=${encodeURIComponent(subject)}&chapter=${encodeURIComponent(chapter)}&category=${encodeURIComponent(category)}`}>
+                                                            {chapter}
+                                                        </Link>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </CardContent>
+            </Card>
         </div>
     );
 }
