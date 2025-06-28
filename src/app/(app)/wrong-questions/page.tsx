@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -15,33 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 
-const WrongQuestionCard = ({ question, onMastered }: { question: WrongQuestion, onMastered: (id: string) => void }) => {
-  const [userAnswer, setUserAnswer] = useState<string>('');
-  const [isAttempted, setIsAttempted] = useState(false);
-  const [isCorrectOnRetry, setIsCorrectOnRetry] = useState(false);
-  const { toast } = useToast();
-
-  const handleRetry = () => {
-    if (!userAnswer.trim()) {
-      toast({ title: 'Please enter an answer.', variant: 'destructive' });
-      return;
-    }
-    setIsAttempted(true);
-    if (userAnswer.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase()) {
-      setIsCorrectOnRetry(true);
-      toast({ title: "Correct!", description: "You've mastered this question. It will be removed from this list." });
-      new Audio('/sounds/correct.mp3').play();
-      setTimeout(() => onMastered(question.id), 2000);
-    } else {
-      toast({ title: "Not quite", description: `That's not the correct answer. Try again or review the explanation.`, variant: 'destructive' });
-      new Audio('/sounds/incorrect.mp3').play();
-    }
-  };
-
-  const isMCQ = question.context.questionType === 'multiple_choice' || question.context.questionType === 'true_false' || question.context.questionType === 'assertion_reason';
-
+const WrongQuestionCard = ({ question }: { question: WrongQuestion }) => {
   return (
-    <Card className={`transition-all duration-500 ${isCorrectOnRetry ? 'bg-green-100 dark:bg-green-900/50 border-green-500' : ''}`}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-base font-semibold leading-relaxed whitespace-pre-wrap">{question.questionText}</CardTitle>
         <CardDescription className="text-xs">
@@ -66,37 +43,10 @@ const WrongQuestionCard = ({ question, onMastered }: { question: WrongQuestion, 
             </details>
         )}
       </CardContent>
-      <CardFooter>
-        {isCorrectOnRetry ? (
-          <div className="w-full text-center font-bold text-green-600 flex items-center justify-center">
-            <Award className="mr-2 h-5 w-5" /> Mastered!
-          </div>
-        ) : (
-          <div className="w-full space-y-2">
-            <Label className="text-sm font-medium">Retry Question</Label>
-            {isMCQ && question.options ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {question.options.map((opt) => (
-                  <Button 
-                    key={opt} 
-                    variant={userAnswer === opt ? 'default' : 'outline'}
-                    onClick={() => setUserAnswer(opt)}
-                    className="h-auto whitespace-normal justify-start text-left"
-                  >
-                    {opt}
-                  </Button>
-                ))}
-              </div>
-            ) : (
-                <input type="text" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} className="w-full p-2 border rounded-md bg-background" placeholder="Type your answer..."/>
-            )}
-            <Button onClick={handleRetry} className="w-full mt-2" disabled={isAttempted && !isCorrectOnRetry}>Retry</Button>
-          </div>
-        )}
-      </CardFooter>
     </Card>
   );
 };
+
 
 // --- New Test Session Components ---
 const TestSessionView = ({ 
@@ -376,7 +326,7 @@ export default function WrongQuestionsPage() {
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {filteredQuestions.map(q => (
-                        <WrongQuestionCard key={q.id} question={q} onMastered={removeWrongQuestion} />
+                        <WrongQuestionCard key={q.id} question={q} />
                     ))}
                 </div>
             )}
