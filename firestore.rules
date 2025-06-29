@@ -1,19 +1,17 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profile documents are publicly readable to allow for the leaderboard and public profile pages.
-    // However, they can only be written to by the authenticated user who owns the document.
+    
+    // Public user profiles: Allow anyone to read, but only the owner to write.
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
-
-      // All subcollections under a user (e.g., savedQuestions, notes, wrongQuestions)
-      // are private and can only be accessed by the user who owns them.
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // User-specific subcollections: Only the owner can read/write.
+    match /users/{userId}/{collectionId}/{docId} {
+      allow read, write: if request.auth.uid == userId;
     }
   }
 }
