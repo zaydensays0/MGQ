@@ -184,6 +184,7 @@ export interface User {
   fullName: string;
   email: string;
   avatarUrl: string;
+  bio?: string;
   xp: number;
   level: number;
   streak: number;

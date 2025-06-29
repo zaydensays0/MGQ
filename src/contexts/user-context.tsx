@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, GradeLevelNCERT, Gender, UserStats, BadgeKey, StreamId, WrongQuestion, SpinWheelState, SpinMissionType, AnyQuestionType, BoardId } from '@/types';
@@ -252,6 +253,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fullName,
       email,
       avatarUrl: `https://placehold.co/100x100.png?text=${fullName.charAt(0).toUpperCase()}`,
+      bio: '',
       xp: 0,
       level: 1,
       streak: 0,

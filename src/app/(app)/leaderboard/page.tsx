@@ -190,9 +190,14 @@ export default function LeaderboardPage() {
                                         const badgeInfo = equippedBadgeKey ? BADGE_DEFINITIONS[equippedBadgeKey] : null;
 
                                         return (
-                                            <TableRow key={user.uid} className={cn(
-                                                currentUser?.uid === user.uid && "bg-primary/10 hover:bg-primary/20"
-                                            )}>
+                                            <TableRow
+                                              key={user.uid}
+                                              className={cn(
+                                                  "cursor-pointer",
+                                                  currentUser?.uid === user.uid && "bg-primary/10 hover:bg-primary/20"
+                                              )}
+                                              onClick={() => router.push(`/profile/${user.uid}`)}
+                                            >
                                                 <TableCell>
                                                     <div className="flex items-center justify-center h-full">
                                                         {getRankIcon(index + 1)}

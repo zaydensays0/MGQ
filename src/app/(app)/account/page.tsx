@@ -18,6 +18,7 @@ import { GRADE_LEVELS, BADGE_DEFINITIONS, STREAMS } from '@/lib/constants';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { generateAvatar } from '@/ai/flows/generate-avatar';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 
 export default function AccountPage() {
@@ -27,6 +28,7 @@ export default function AccountPage() {
     const [selectedClass, setSelectedClass] = useState<GradeLevelNCERT | undefined>(undefined);
     const [selectedGender, setSelectedGender] = useState<Gender | undefined>(undefined);
     const [selectedStream, setSelectedStream] = useState<StreamId | undefined>(undefined);
+    const [bio, setBio] = useState('');
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
     
@@ -49,6 +51,7 @@ export default function AccountPage() {
             setSelectedClass(user.class);
             setSelectedGender(user.gender);
             setSelectedStream(user.stream);
+            setBio(user.bio || '');
         }
     }, [isInitialized, user]);
 
@@ -61,6 +64,7 @@ export default function AccountPage() {
         if (selectedClass && selectedClass !== user.class) updates.class = selectedClass;
         if (selectedGender !== user.gender) updates.gender = selectedGender;
         if (selectedStream !== user.stream) updates.stream = selectedStream;
+        if (bio !== user.bio) updates.bio = bio;
 
         if (Object.keys(updates).length > 0) {
             try {
@@ -134,7 +138,7 @@ export default function AccountPage() {
         }
     };
 
-    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender || selectedStream !== user.stream) && !isUpdatingProfile;
+    const canUpdateProfile = user && (fullName !== user.fullName || (selectedClass && selectedClass !== user.class) || selectedGender !== user.gender || selectedStream !== user.stream || bio !== user.bio) && !isUpdatingProfile;
     const canChangePassword = currentPassword && newPassword.length >= 6 && confirmNewPassword && newPassword === confirmNewPassword && !isChangingPassword;
 
 
@@ -234,6 +238,18 @@ export default function AccountPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bio">Your Bio</Label>
+                                <Textarea
+                                    id="bio"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    placeholder="Tell everyone a little about yourself..."
+                                    rows={3}
+                                    maxLength={150}
+                                />
+                                <p className="text-xs text-muted-foreground">This will be displayed on your public profile. Max 150 characters.</p>
                             </div>
                         </div>
                     </CardContent>
