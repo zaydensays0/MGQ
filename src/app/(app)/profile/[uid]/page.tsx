@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Award, Edit, Flame, Loader2, User as UserIcon, XCircle, ArrowLeft, Trophy } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 const ProfilePageSkeleton = () => (
     <div className="container mx-auto p-4 md:p-8">
