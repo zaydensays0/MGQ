@@ -1,17 +1,17 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Allow public read for user profiles, but only the user can write to their own profile.
     match /users/{userId} {
-      // Allow any authenticated user to read public profile data.
-      allow read: if request.auth != null;
+      allow read: if true;
+      allow write: if request.auth.uid == userId;
 
-      // Only allow the owner to write to their own document.
-      allow write: if request.auth != null && request.auth.uid == userId;
-
-      // Secure all subcollections (notes, savedQuestions, etc.).
-      // Only the owner can read/write their own subcollection documents.
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // All sub-collections (notes, savedQuestions, etc.) are private to the user.
+      match /{document=**} {
+        allow read, write: if request.auth.uid == userId;
       }
     }
   }
