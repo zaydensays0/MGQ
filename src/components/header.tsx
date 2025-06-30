@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -22,7 +23,6 @@ const mainFeatures = [
   { href: '/streams', label: 'Study Streams', icon: Target },
   { href: '/board-exams', label: 'Board Exams', icon: Building },
   { href: '/generate', label: 'Generate Questions', icon: Sparkles },
-  { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/wrong-questions', label: 'Wrong Questions', icon: RotateCw },
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },

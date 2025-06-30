@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
-import type { WrongQuestion, BoardId } from '@/types';
+import type { WrongQuestion, BoardId, AnyQuestionType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -71,7 +72,12 @@ const TestSessionView = ({
         setSelectedOption('');
     };
 
-    const isMCQ = question.context.questionType === 'multiple_choice' || question.context.questionType === 'true_false' || question.context.questionType === 'assertion_reason';
+    const interactiveTypesWithOptions: AnyQuestionType[] = [
+        'multiple_choice', 'true_false', 'assertion_reason', 
+        'mcq', 'case_based_mcq', 'passage_based_mcq', 'theory_mcq',
+        'case_based'
+    ];
+    const isInteractiveWithOptions = interactiveTypesWithOptions.includes(question.context.questionType);
     const progress = ((session.currentIndex + 1) / session.questions.length) * 100;
 
     return (
@@ -85,7 +91,7 @@ const TestSessionView = ({
                 <CardTitle className="pt-4 text-xl">{question.questionText}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-                {isMCQ && question.options ? (
+                {isInteractiveWithOptions && question.options ? (
                     question.options.map((option, index) => (
                         <Button
                             key={index}

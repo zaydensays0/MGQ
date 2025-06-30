@@ -63,7 +63,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   handleCorrectAnswer: (baseXp: number) => void;
-  trackStats: (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => Promise<void>;
+  trackStats: (statsToUpdate: Partial<UserStats>) => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   claimBadge: (badgeKey: BadgeKey) => Promise<void>;
   equipBadge: (badgeKey: BadgeKey | null) => Promise<void>;
@@ -81,26 +81,18 @@ const getDefaultSpinWheelState = (): SpinWheelState => ({
     lastFreeSpinDate: '',
     missionsCompletedToday: {
         practice_session: false,
-        mock_test: false,
     },
     spinsClaimedToday: {
         free: false,
         practice_session: false,
-        mock_test: false,
         login_streak: false,
     }
 });
 
 const getDefaultUserStats = (): UserStats => ({
     questionsGenerated: 0,
-    mockTestsCompleted: 0,
-    perfectMockTests: 0,
     notesSaved: 0,
     grammarQuestionsCompleted: 0,
-    highAccuracyMockTests: 0,
-    lowScoreStreak: 0,
-    mockTestsToday: 0,
-    lastMockTestDate: '',
     spinsCompleted: 0,
     practiceSessionsCompleted: 0,
 });
@@ -138,15 +130,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else if (userObject.stats && statName in userObject.stats) {
             const userStatValue = userObject.stats[statName as keyof UserStats];
             if (userStatValue >= badge.goal) {
-                // Special handling for situational badges
-                if (badgeKey === 'quick_starter') {
-                    const twentyFourHours = 24 * 60 * 60 * 1000;
-                    if ((Date.now() - userObject.createdAt) < twentyFourHours) {
-                        conditionMet = true;
-                    }
-                } else {
-                    conditionMet = true;
-                }
+                conditionMet = true;
             }
         }
         
@@ -343,10 +327,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, firebaseUser, isGuest, updateUserProfile, toast]);
 
-  const trackStats = useCallback(async (statsToUpdate: Partial<UserStats & { accuracy: number; isFirstTest: boolean }>) => {
+  const trackStats = useCallback(async (statsToUpdate: Partial<UserStats>) => {
     if (!user || !firebaseUser || !db || isGuest) return;
 
-    const { accuracy, isFirstTest, ...statsToIncrement } = statsToUpdate;
     const increments: { [key: string]: any } = {};
     const newStats: UserStats = { ...user.stats };
     
@@ -358,54 +341,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (spinWheelData.lastFreeSpinDate !== todayStr) {
         spinWheelData = {
             lastFreeSpinDate: todayStr,
-            missionsCompletedToday: { practice_session: false, mock_test: false }, // Reset missions
-            spinsClaimedToday: { free: false, practice_session: false, mock_test: false, login_streak: false }
+            missionsCompletedToday: { practice_session: false }, // Reset missions
+            spinsClaimedToday: { free: false, practice_session: false, login_streak: false }
         };
         updates.spinWheel = spinWheelData;
     }
 
-    for (const key in statsToIncrement) {
+    for (const key in statsToUpdate) {
       const statKey = key as keyof UserStats;
-      const value = statsToIncrement[statKey]!;
+      const value = statsToUpdate[statKey]!;
       increments[`stats.${statKey}`] = increment(value);
       newStats[statKey] = (newStats[statKey] || 0) + value;
     }
     
     // Check for mission completion
-    if (statsToIncrement.practiceSessionsCompleted) {
+    if (statsToUpdate.practiceSessionsCompleted) {
         updates['spinWheel.missionsCompletedToday.practice_session'] = true;
-    }
-    if (statsToIncrement.mockTestsCompleted) {
-        updates['spinWheel.missionsCompletedToday.mock_test'] = true;
-        }
-
-    if (accuracy !== undefined) {
-        if (accuracy >= 0.9) {
-            increments['stats.highAccuracyMockTests'] = increment(1);
-            newStats.highAccuracyMockTests++;
-        }
-        if (accuracy < 0.6) {
-            increments['stats.lowScoreStreak'] = increment(1);
-            newStats.lowScoreStreak++;
-        } else {
-            if (user.stats.lowScoreStreak >= 2 && !user.badges.includes('comeback_kid')) {
-                 // Awarded by checkAndAwardBadges
-            }
-            increments['stats.lowScoreStreak'] = 0;
-            newStats.lowScoreStreak = 0;
-        }
-    }
-
-    if (statsToIncrement.mockTestsCompleted) {
-        if (user.stats.lastMockTestDate === todayStr) {
-            increments['stats.mockTestsToday'] = increment(1);
-            newStats.mockTestsToday++;
-        } else {
-            increments['stats.mockTestsToday'] = 1;
-            increments['stats.lastMockTestDate'] = todayStr;
-            newStats.mockTestsToday = 1;
-            newStats.lastMockTestDate = todayStr;
-        }
     }
 
     const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -478,8 +429,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (currentUserData.spinWheel.lastFreeSpinDate !== todayStr) {
       const resetSpinState: SpinWheelState = {
         lastFreeSpinDate: todayStr,
-        missionsCompletedToday: { practice_session: false, mock_test: false }, // Reset missions
-        spinsClaimedToday: { free: false, practice_session: false, mock_test: false, login_streak: false }
+        missionsCompletedToday: { practice_session: false }, // Reset missions
+        spinsClaimedToday: { free: false, practice_session: false, login_streak: false }
       };
       await updateDoc(doc(db, 'users', firebaseUser.uid), { spinWheel: resetSpinState });
       currentUserData = { ...currentUserData, spinWheel: resetSpinState };
@@ -492,7 +443,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     switch(spinType) {
         case 'free': canSpin = !spinsClaimedToday.free; break;
         case 'practice_session': canSpin = missionsCompletedToday.practice_session && !spinsClaimedToday.practice_session; break;
-        case 'mock_test': canSpin = missionsCompletedToday.mock_test && !spinsClaimedToday.practice_session; break;
         case 'login_streak': canSpin = currentUserData.streak >= 3 && !spinsClaimedToday.login_streak; break;
     }
 

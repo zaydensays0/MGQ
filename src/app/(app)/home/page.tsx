@@ -34,7 +34,6 @@ const GrammarIcon = () => (<span className="text-2xl font-bold text-primary">G</
 const features: { title: string; href: string; icon: React.ReactNode; description: string; }[] = [
   { title: 'Study Streams', href: '/streams', icon: <Target className="w-6 h-6 text-primary" />, description: 'Focused prep for competitive exams.' },
   { title: 'Board Exams', href: '/board-exams', icon: <Building className="w-6 h-6 text-primary" />, description: 'Practice with board-specific questions.' },
-  { title: 'Mock Tests', href: '/mock-test', icon: <CheckSquare className="w-6 h-6 text-primary" />, description: 'AI-generated practice tests.' },
   { title: 'Wrong Questions', href: '/wrong-questions', icon: <RotateCw className="w-6 h-6 text-primary" />, description: 'Practice the questions you got wrong.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
   { title: 'Spin The Wheel', href: '/rewards/spin-wheel', icon: <Ticket className="w-6 h-6 text-primary" />, description: 'Spin for daily XP rewards and bonuses.' },

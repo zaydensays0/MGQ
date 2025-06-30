@@ -132,39 +132,31 @@ export type StreamSyllabus = Record<StreamId, Record<string, Record<string, stri
 
 
 // --- User, Auth, and Gamification Types ---
-export type SpinMissionType = 'free' | 'practice_session' | 'mock_test' | 'login_streak';
+export type SpinMissionType = 'free' | 'practice_session' | 'login_streak';
 
 export interface SpinWheelState {
   lastFreeSpinDate: string; // YYYY-MM-DD
   missionsCompletedToday: {
     practice_session: boolean;
-    mock_test: boolean;
   }
   spinsClaimedToday: {
     free: boolean;
     practice_session: boolean;
-    mock_test: boolean;
     login_streak: boolean;
   }
 }
 
 export type BadgeKey = 
-  | 'legend' | 'the_goat' | 'streak_master' | 'mock_warrior'
-  | 'note_ninja' | 'accuracy_ace' | 'grammar_genius' | 'elite_learner'
-  | 'quick_starter' | 'comeback_kid' | 'silent_slayer' | 'xp_hunter'
+  | 'legend' | 'streak_master'
+  | 'note_ninja' | 'grammar_genius' | 'elite_learner'
+  | 'xp_hunter'
   | 'xp_prodigy' | 'xp_master' | 'xp_king_queen' | 'xp_legend'
   | 'xp_god_mode' | 'welcome_rookie' | 'lucky_spinner';
 
 export interface UserStats {
   questionsGenerated: number;
-  mockTestsCompleted: number;
-  perfectMockTests: number;
   notesSaved: number;
   grammarQuestionsCompleted: number;
-  highAccuracyMockTests: number;
-  lowScoreStreak: number;
-  mockTestsToday: number;
-  lastMockTestDate: string; // YYYY-MM-DD
   spinsCompleted: number;
   practiceSessionsCompleted: number;
 }
@@ -343,7 +335,6 @@ export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';
-export type { GenerateMockTestInput, MockTestQuestion, GenerateMockTestOutput } from '@/ai/flows/generate-mock-test';
 // TODO: Find a way to export these types without circular dependencies
 // export type { GenerateFlashcardsInput, GenerateFlashcardsOutput, FlashcardSchema } from '@/ai/flows/generate-flashcards';
 // export type { GenerateGrammarTestInput, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestOutput } from '@/ai/flows/generate-grammar-test';

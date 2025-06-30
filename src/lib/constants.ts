@@ -1,3 +1,4 @@
+
 import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId } from '@/types';
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
@@ -311,10 +312,7 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
 export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
   // Stat-based
   legend: { name: 'Legend', description: "Generate {goal} questions.", icon: Brain, goal: 100, stat: 'questionsGenerated' },
-  the_goat: { name: 'The GOAT', description: "Score 100% in any mock test.", icon: Trophy, goal: 1, stat: 'perfectMockTests' },
-  mock_warrior: { name: 'Mock Warrior', description: "Complete {goal} mock tests.", icon: Shield, goal: 10, stat: 'mockTestsCompleted' },
   note_ninja: { name: 'Note Ninja', description: "Save {goal} notes.", icon: BookMarked, goal: 50, stat: 'notesSaved' },
-  accuracy_ace: { name: 'Accuracy Ace', description: "Maintain 90%+ accuracy in {goal} mock tests.", icon: Target, goal: 5, stat: 'highAccuracyMockTests' },
   grammar_genius: { name: 'Grammar Genius', description: "Complete {goal} grammar test questions.", icon: Puzzle, goal: 20, stat: 'grammarQuestionsCompleted' },
   lucky_spinner: { name: 'Lucky Spinner', description: "Spin the wheel {goal} times.", icon: Ticket, goal: 10, stat: 'spinsCompleted' },
 
@@ -323,9 +321,6 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeInfo> = {
   
   // Complex / situational
   elite_learner: { name: 'Elite Learner', description: "Unlock any {goal} badges.", icon: Gem, goal: 5, stat: 'badges' },
-  quick_starter: { name: 'Quick Starter', description: "Take your first mock test within 24 hours of joining.", icon: Rocket, goal: 1, stat: 'mockTestsCompleted' },
-  comeback_kid: { name: 'Comeback Kid', description: "Score higher after two low-score tests.", icon: TrendingUp, goal: 1, stat: 'mockTestsCompleted' },
-  silent_slayer: { name: 'Silent Slayer', description: "Complete {goal} full mock tests in a single day.", icon: Moon, goal: 3, stat: 'mockTestsCompleted' },
   welcome_rookie: { name: 'Welcome Rookie', description: "Earned by successfully logging in for the first time.", icon: Unlock, goal: 1, stat: 'xp' },
 
   // XP-based

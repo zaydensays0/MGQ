@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -64,12 +65,11 @@ export default function SpinWheelPage() {
     const [currentPrize, setCurrentPrize] = useState(0);
     
     const availableSpins = useMemo(() => {
-        if (!user) return { free: false, practice_session: false, mock_test: false, login_streak: false };
+        if (!user) return { free: false, practice_session: false, login_streak: false };
         const { spinWheel, streak } = user;
         return {
             free: !spinWheel.spinsClaimedToday.free,
             practice_session: spinWheel.missionsCompletedToday.practice_session && !spinWheel.spinsClaimedToday.practice_session,
-            mock_test: spinWheel.missionsCompletedToday.mock_test && !spinWheel.spinsClaimedToday.mock_test,
             login_streak: streak >= 3 && !spinWheel.spinsClaimedToday.login_streak
         };
     }, [user]);
@@ -128,13 +128,6 @@ export default function SpinWheelPage() {
             isComplete: user.spinWheel.missionsCompletedToday.practice_session, 
             isClaimed: user.spinWheel.spinsClaimedToday.practice_session,
             isAvailable: availableSpins.practice_session
-        },
-        { 
-            type: 'mock_test' as SpinMissionType, 
-            title: 'Complete a Mock Test', 
-            isComplete: user.spinWheel.missionsCompletedToday.mock_test, 
-            isClaimed: user.spinWheel.spinsClaimedToday.mock_test,
-            isAvailable: availableSpins.mock_test
         },
         { 
             type: 'login_streak' as SpinMissionType, 
