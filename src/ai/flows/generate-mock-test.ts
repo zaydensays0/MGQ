@@ -65,7 +65,7 @@ const generateMockTestFlow = ai.defineFlow(
   async (input) => {
     const {output} = await prompt(input);
     if (!output) {
-      throw new Error('Failed to generate mock test for the specified criteria.');
+      return { questions: [] };
     }
     return output;
   }
