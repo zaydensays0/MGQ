@@ -23,17 +23,29 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 
 type TestState = 'setup' | 'testing' | 'results';
 
 interface TestAnswer {
     question: MockTestQuestion;
     userAnswer: string;
-    isCorrect: boolean;
+    isCorrect: boolean | null; // null for subjective questions
     earnedXp: number;
 }
 
 const difficultyLevels = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', 'label': 'Hard' }] as const;
+
+const questionTypes = [
+    { value: 'multiple_choice', label: 'Multiple Choice' },
+    { value: 'true_false', label: 'True/False' },
+    { value: 'assertion_reason', label: 'Assertion-Reason' },
+    { value: 'short_answer', label: 'Short Answer' },
+    { value: 'long_answer', label: 'Long Answer' },
+    { value: 'fill_in_the_blanks', label: 'Fill in the Blanks' },
+] as const;
+
 
 const setupSchema = z.object({
     gradeLevel: z.enum(GRADE_LEVELS),
@@ -42,6 +54,7 @@ const setupSchema = z.object({
     numberOfQuestions: z.coerce.number().min(5, "Minimum 5 questions.").optional(),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     isComprehensive: z.boolean().optional(),
+    questionTypes: z.array(z.string()).optional(),
 }).refine(data => data.isComprehensive || (data.numberOfQuestions && data.numberOfQuestions > 0), {
     message: "Number of questions is required unless Comprehensive Mode is on.",
     path: ["numberOfQuestions"],
@@ -62,6 +75,7 @@ export default function MockTestPage() {
     const [userAnswers, setUserAnswers] = useState<TestAnswer[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [subjectiveAnswer, setSubjectiveAnswer] = useState('');
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const [time, setTime] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -77,6 +91,7 @@ export default function MockTestPage() {
             numberOfQuestions: 10,
             difficulty: 'medium',
             isComprehensive: false,
+            questionTypes: [],
         },
     });
     
@@ -124,53 +139,66 @@ export default function MockTestPage() {
     };
 
     const handleNextQuestion = () => {
-        if (selectedOption === null) {
-            toast({ title: 'No Answer', description: 'Please select an answer before proceeding.', variant: 'destructive' });
+        const currentQuestion = testQuestions[currentQuestionIndex];
+        const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
+        
+        let userAnswer: string | null = isObjective ? selectedOption : subjectiveAnswer;
+
+        if (userAnswer === null || userAnswer.trim() === '') {
+            toast({ title: 'No Answer', description: 'Please provide an answer before proceeding.', variant: 'destructive' });
             return;
         }
 
-        const currentQuestion = testQuestions[currentQuestionIndex];
-        const isCorrect = selectedOption.toLowerCase() === currentQuestion.answer.toLowerCase();
-        const earnedXp = isCorrect ? (currentQuestion.difficulty === 'hard' ? 400 : currentQuestion.difficulty === 'medium' ? 300 : 200) : 0;
-        
-        if (isCorrect) {
-            handleCorrectAnswer(earnedXp);
+        let isCorrect: boolean | null = null;
+        let earnedXp = 0;
+
+        if (isObjective) {
+            isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.answer.trim().toLowerCase();
+            earnedXp = isCorrect ? (currentQuestion.difficulty === 'hard' ? 400 : currentQuestion.difficulty === 'medium' ? 300 : 200) : 0;
+            
+            if (isCorrect) {
+                handleCorrectAnswer(earnedXp);
+            } else {
+                toast({ title: "Incorrect", description: `The correct answer was: "${currentQuestion.answer}"`, variant: "destructive" });
+                addWrongQuestion({
+                    questionText: currentQuestion.text,
+                    userAnswer: userAnswer,
+                    correctAnswer: currentQuestion.answer,
+                    options: currentQuestion.options,
+                    explanation: currentQuestion.explanation,
+                    context: {
+                        gradeLevel: form.getValues('gradeLevel'),
+                        subject: form.getValues('subject'),
+                        chapter: form.getValues('chapters'),
+                        questionType: currentQuestion.type as QuestionTypeNCERT,
+                    }
+                });
+            }
         } else {
-            toast({
-                title: "Incorrect",
-                description: `The correct answer was: "${currentQuestion.answer}"`,
-                variant: "destructive"
-            });
-            addWrongQuestion({
-                questionText: currentQuestion.text,
-                userAnswer: selectedOption,
-                correctAnswer: currentQuestion.answer,
-                options: currentQuestion.options,
-                explanation: currentQuestion.explanation,
-                context: {
-                    gradeLevel: form.getValues('gradeLevel'),
-                    subject: form.getValues('subject'),
-                    chapter: form.getValues('chapters'),
-                    questionType: currentQuestion.type as QuestionTypeNCERT,
-                }
-            });
+            // Subjective question is not graded, but give XP for effort
+            isCorrect = null;
+            earnedXp = 50; 
+            handleCorrectAnswer(earnedXp); 
+            toast({ title: "Answer Recorded", description: "Compare your answer with the correct one." });
         }
 
-        const newAnswers = [...userAnswers, { question: currentQuestion, userAnswer: selectedOption, isCorrect, earnedXp }];
+        const newAnswers = [...userAnswers, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }];
         setUserAnswers(newAnswers);
         setSelectedOption(null);
+        setSubjectiveAnswer('');
 
         if (currentQuestionIndex < testQuestions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
             setTestState('results');
             if (timerRef.current) clearInterval(timerRef.current);
-            const correctCount = newAnswers.filter(a => a.isCorrect).length;
-            const accuracy = correctCount / testQuestions.length;
+            const objectiveAnswers = newAnswers.filter(a => a.isCorrect !== null);
+            const correctCount = objectiveAnswers.filter(a => a.isCorrect).length;
+            const accuracy = objectiveAnswers.length > 0 ? correctCount / objectiveAnswers.length : 1;
             
             trackStats({ 
                 mockTestsCompleted: 1, 
-                perfectMockTests: accuracy === 1 ? 1 : 0,
+                perfectMockTests: accuracy === 1 && objectiveAnswers.length > 0 ? 1 : 0,
             });
         }
     };
@@ -179,6 +207,7 @@ export default function MockTestPage() {
         const questionsToSave = userAnswers
             .filter(answer => {
                 if (type === 'all') return true;
+                if (answer.isCorrect === null) return false; // Don't save subjective for correct/incorrect filters
                 return type === 'correct' ? answer.isCorrect : !answer.isCorrect;
             })
             .map(answer => {
@@ -265,6 +294,35 @@ export default function MockTestPage() {
                         <div className="space-y-2 rounded-md border p-4 flex-1"><div className="flex items-center space-x-2"><Controller name="isComprehensive" control={form.control} render={({ field }) => (<Switch id="comprehensive-mode" checked={field.value} onCheckedChange={field.onChange} />)} /><Label htmlFor="comprehensive-mode" className="text-base">Comprehensive Mode</Label></div><p className="text-xs text-muted-foreground">Generate all high-probability questions for the topic(s). (Sets question count to 25)</p></div>
                         {!isComprehensive && (<Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (<div className="space-y-1.5 flex-1"><Label>Number of Questions</Label><Input type="number" min="5" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>)} />)}
                     </div>
+                    <div className="space-y-2">
+                        <Label>Question Types (optional)</Label>
+                        <p className="text-xs text-muted-foreground">Select specific types, or leave blank for a random mix.</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+                            {questionTypes.map((type) => (
+                                <Controller
+                                    key={type.value}
+                                    name="questionTypes"
+                                    control={form.control}
+                                    render={({ field }) => {
+                                        return (
+                                        <div className="flex items-center space-x-2 rounded-md border p-2 bg-muted/50">
+                                            <Checkbox
+                                                id={type.value}
+                                                checked={field.value?.includes(type.value)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                    ? field.onChange([...(field.value || []), type.value])
+                                                    : field.onChange(field.value?.filter((value) => value !== type.value));
+                                                }}
+                                            />
+                                            <Label htmlFor={type.value} className="text-sm font-normal">{type.label}</Label>
+                                        </div>
+                                        );
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </CardContent>
                 <CardFooter>
                     <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Test...</> : <><Sparkles className="mr-2 h-4 w-4" /> Start Mock Test</>}</Button>
@@ -276,12 +334,14 @@ export default function MockTestPage() {
     const TestingView = () => {
         const currentQuestion = testQuestions[currentQuestionIndex];
         const progress = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
+        const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
+
         const renderQuestionText = () => {
             if (currentQuestion.type === 'assertion_reason' && currentQuestion.text.includes('\\n')) {
               const parts = currentQuestion.text.split('\\n');
               return <div className="space-y-1"><p>{parts[0]}</p><p>{parts[1]}</p></div>;
             }
-            return <p>{currentQuestion.text}</p>;
+            return <p className="font-semibold">{currentQuestion.text.replace('[BLANK]', '__________')}</p>;
         };
 
         return (
@@ -296,12 +356,19 @@ export default function MockTestPage() {
                     <CardDescription>Difficulty: <span className="capitalize">{currentQuestion.difficulty}</span> | Type: <span className="capitalize">{currentQuestion.type.replace(/_/g, " ")}</span></CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {currentQuestion.options?.map((option, index) => (
-                         <Button key={index} variant="outline" className={`w-full justify-start text-left h-auto p-3 whitespace-normal ${selectedOption === option ? 'border-primary ring-2 ring-primary' : ''}`} onClick={() => setSelectedOption(option)}>
-                           {currentQuestion.type === 'multiple_choice' && <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>}
-                           {option}
-                        </Button>
-                    ))}
+                    {isObjective ? (
+                        currentQuestion.options?.map((option, index) => (
+                             <Button key={index} variant="outline" className={`w-full justify-start text-left h-auto p-3 whitespace-normal ${selectedOption === option ? 'border-primary ring-2 ring-primary' : ''}`} onClick={() => setSelectedOption(option)}>
+                               <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
+                               {option}
+                            </Button>
+                        ))
+                    ) : (
+                        <div className="space-y-2">
+                            <Label htmlFor="subjective-answer">Your Answer</Label>
+                            <Textarea id="subjective-answer" rows={5} value={subjectiveAnswer} onChange={e => setSubjectiveAnswer(e.target.value)} />
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter>
                     <Button onClick={handleNextQuestion} className="w-full">{currentQuestionIndex < testQuestions.length - 1 ? 'Next Question' : 'Finish Test'}</Button>
@@ -311,7 +378,8 @@ export default function MockTestPage() {
     };
 
     const ResultsView = () => {
-        const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+        const objectiveAnswers = userAnswers.filter(a => a.isCorrect !== null);
+        const correctAnswers = objectiveAnswers.filter(a => a.isCorrect).length;
         const totalXp = userAnswers.reduce((sum, a) => sum + a.earnedXp, 0);
 
         return (
@@ -322,23 +390,70 @@ export default function MockTestPage() {
                     <CardDescription className="text-lg">Great job! Here are your results.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                     <Alert><div className="flex justify-between items-center"><div className="space-y-1"><AlertTitle className="text-xl font-bold text-primary">Score: {correctAnswers}/{testQuestions.length}</AlertTitle><AlertDescription>You earned {totalXp.toLocaleString()} XP in {formatTime(time)}!</AlertDescription></div><Trophy className="w-8 h-8 text-primary"/></div></Alert>
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2"><h3 className="text-xl font-semibold text-center">Review Your Answers</h3>
+                     <Alert>
+                        <div className="flex justify-between items-center">
+                            <div className="space-y-1">
+                                <AlertTitle className="text-xl font-bold text-primary">Score: {correctAnswers}/{objectiveAnswers.length} correct</AlertTitle>
+                                <AlertDescription>You earned {totalXp.toLocaleString()} XP in {formatTime(time)}! Subjective questions are not scored.</AlertDescription>
+                            </div>
+                            <Trophy className="w-8 h-8 text-primary"/>
+                        </div>
+                    </Alert>
+                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        <h3 className="text-xl font-semibold text-center">Review Your Answers</h3>
                         {userAnswers.map((answer, index) => {
                             const recheckState = recheckStates[index] || { loading: false, result: null };
+                            const resultVariant = answer.isCorrect === true ? 'default' : answer.isCorrect === false ? 'destructive' : 'default';
+
                             return (
-                                <div key={index} className={`p-4 rounded-lg border ${answer.isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950' : 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950'}`}>
-                                    <p className="font-semibold">{index + 1}. {answer.question.text}</p>
-                                    <p className="text-sm mt-2">Your answer: <span className="font-medium">{answer.userAnswer}</span></p>
-                                    {!answer.isCorrect && <p className="text-sm">Correct answer: <span className="font-medium">{answer.question.answer}</span></p>}
-                                    <Accordion type="single" collapsible className="w-full mt-2"><AccordionItem value="explanation" className="border-none"><AccordionTrigger className="text-xs p-2">View Explanation</AccordionTrigger><AccordionContent className="p-2">{answer.question.explanation}</AccordionContent></AccordionItem></Accordion>
-                                    <div className="flex justify-end mt-2"><Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>{recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}{recheckState.loading ? 'Verifying...' : 'Recheck AI Answer'}</Button></div>
-                                    {recheckState.result && (<Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}><ShieldCheck className="h-4 w-4" /><AlertTitle>{recheckState.result.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle><AlertDescription className="space-y-1"><p>{recheckState.result.explanation}</p>{!recheckState.result.isCorrect && <p><b>Corrected:</b> {recheckState.result.correctAnswer}</p>}</AlertDescription></Alert>)}
-                                </div>
+                                <Card key={index} className="overflow-hidden">
+                                    <CardHeader className="pb-2">
+                                        <p className="font-semibold">{index + 1}. {answer.question.text}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <Alert className="border-blue-500/50 bg-blue-500/10 text-blue-800 dark:text-blue-300">
+                                            <AlertTitle>Your Answer</AlertTitle>
+                                            <AlertDescription>{answer.userAnswer}</AlertDescription>
+                                        </Alert>
+                                        <Alert variant={resultVariant}>
+                                            <AlertTitle>Correct Answer</AlertTitle>
+                                            <AlertDescription>{answer.question.answer}</AlertDescription>
+                                        </Alert>
+                                        <Accordion type="single" collapsible className="w-full">
+                                            <AccordionItem value="explanation" className="border-none">
+                                                <AccordionTrigger className="text-xs p-2">View Explanation</AccordionTrigger>
+                                                <AccordionContent className="p-2 pt-0">{answer.question.explanation}</AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                        {recheckState.result && (
+                                            <Alert className="mt-2" variant={recheckState.result.isCorrect ? 'default' : 'destructive'}>
+                                                <ShieldCheck className="h-4 w-4" />
+                                                <AlertTitle>{recheckState.result.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                                                <AlertDescription className="space-y-1">
+                                                    <p>{recheckState.result.explanation}</p>
+                                                    {!recheckState.result.isCorrect && <p><b>Corrected:</b> {recheckState.result.correctAnswer}</p>}
+                                                </AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </CardContent>
+                                    <CardFooter className="p-2 bg-muted/50 justify-end">
+                                        <Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
+                                            {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
+                                            {recheckState.loading ? 'Verifying...' : 'Recheck AI Answer'}
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
                             );
                         })}
                     </div>
-                    <div className="space-y-2 pt-4 border-t"><Label className="text-muted-foreground text-center block">Save Questions for Revision</Label><div className="flex flex-col sm:flex-row justify-center gap-2"><Button onClick={() => handleSaveQuestions('incorrect')} variant="destructive" size="sm"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button><Button onClick={() => handleSaveQuestions('correct')} variant="outline" size="sm"><Save className="mr-2 h-4 w-4" /> Save Correct</Button><Button onClick={() => handleSaveQuestions('all')} variant="secondary" size="sm"><Save className="mr-2 h-4 w-4" /> Save All</Button></div></div>
+                    <div className="space-y-2 pt-4 border-t">
+                        <Label className="text-muted-foreground text-center block">Save Questions for Revision</Label>
+                        <div className="flex flex-col sm:flex-row justify-center gap-2">
+                            <Button onClick={() => handleSaveQuestions('incorrect')} variant="destructive" size="sm"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button>
+                            <Button onClick={() => handleSaveQuestions('correct')} variant="outline" size="sm"><Save className="mr-2 h-4 w-4" /> Save Correct</Button>
+                            <Button onClick={() => handleSaveQuestions('all')} variant="secondary" size="sm"><Save className="mr-2 h-4 w-4" /> Save All</Button>
+                        </div>
+                    </div>
                 </CardContent>
                 <CardFooter><Button onClick={restartTest} className="w-full">Take Another Test</Button></CardFooter>
             </Card>

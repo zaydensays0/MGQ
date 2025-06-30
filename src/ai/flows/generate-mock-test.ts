@@ -32,10 +32,11 @@ const prompt = ai.definePrompt({
   The test should cover the following subject: "{{subject}}" and chapter(s): "{{chapters}}".
   Ensure the questions are unique, cover a broad range of topics from the chapter(s), and are not repetitive.
   
-  Create a random mix of the following three question types:
-  1. 'multiple_choice' (MCQ)
-  2. 'true_false' (T/F)
-  3. 'assertion_reason' (A/R)
+  {{#if questionTypes.length}}
+  Generate only questions of the following types: {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+  {{else}}
+  Create a random mix of the following types: 'multiple_choice', 'true_false', 'assertion_reason', 'short_answer', 'long_answer', 'fill_in_the_blanks'.
+  {{/if}}
 
   For each question, you MUST adhere to the following rules:
   - For 'multiple_choice' questions:
@@ -50,6 +51,10 @@ const prompt = ai.definePrompt({
     - The "text" field MUST contain both an assertion and a reason, formatted with a newline separator: "Assertion (A): [Your assertion statement]\\nReason (R): [Your reason statement]".
     - The "options" field MUST be an array with the four standard options: ["Both A and R are true, and R is the correct explanation of A", "Both A and R are true, but R is not the correct explanation of A", "A is true, but R is false", "A is false, but R is true"].
     - The "answer" field MUST be the exact text of one of the four options.
+  - For 'short_answer', 'long_answer', and 'fill_in_the_blanks' questions:
+    - The "text" field should contain the question. For 'fill_in_the_blanks', use [BLANK] for the missing part.
+    - The "options" field should be omitted or be an empty array.
+    - The "answer" field should contain the correct, complete answer.
   - For every question, you MUST also provide a concise "explanation" for why the answer is correct.
 
   Return the questions in a JSON array. Ensure the questions are relevant and challenging for the specified grade level and difficulty.

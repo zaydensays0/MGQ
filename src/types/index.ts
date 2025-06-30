@@ -340,14 +340,15 @@ export const GenerateMockTestInputSchema = z.object({
   numberOfQuestions: z.number().int().min(1).describe('The number of questions to generate.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the test.'),
   isComprehensive: z.boolean().optional().describe('Whether the test should be comprehensive.'),
+  questionTypes: z.array(z.string()).optional().describe('An optional list of specific question types to generate.'),
 });
 export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
 
 export const MockTestQuestionSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false', 'assertion_reason']).describe('The type of question.'),
+  type: z.enum(['multiple_choice', 'true_false', 'assertion_reason', 'short_answer', 'long_answer', 'fill_in_the_blanks']).describe('The type of question.'),
   text: z.string().describe("The full question text. For assertion/reason, must be formatted as 'Assertion (A): ...\\nReason (R): ...'"),
-  options: z.array(z.string()).optional().describe('An array of 4 options for multiple_choice, or the standard 4 for assertion_reason.'),
-  answer: z.string().describe('The correct answer. Must match one of the options.'),
+  options: z.array(z.string()).optional().describe('An array of options for multiple_choice, true_false, or assertion_reason questions.'),
+  answer: z.string().describe('The correct answer. Must match one of the options if options are provided.'),
   explanation: z.string().describe('A clear explanation for why the answer is correct.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the question.'),
 });
