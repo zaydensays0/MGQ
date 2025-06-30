@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer, Eye } from 'lucide-react';
+import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer, Eye, EyeOff } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -75,7 +75,6 @@ export default function MockTestPage() {
     const [userAnswers, setUserAnswers] = useState<TestAnswer[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
-    const [subjectiveAnswer, setSubjectiveAnswer] = useState('');
     const [showSubjectiveAnswer, setShowSubjectiveAnswer] = useState(false);
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const [time, setTime] = useState(0);
@@ -148,17 +147,16 @@ export default function MockTestPage() {
         const currentQuestion = testQuestions[currentQuestionIndex];
         const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
         
-        let userAnswer: string | null = isObjective ? selectedOption : subjectiveAnswer;
-
-        if (userAnswer === null || userAnswer.trim() === '') {
-            toast({ title: 'No Answer', description: 'Please provide an answer before proceeding.', variant: 'destructive' });
-            return;
-        }
-
+        let userAnswer: string | null = null;
         let isCorrect: boolean | null = null;
         let earnedXp = 0;
 
         if (isObjective) {
+            userAnswer = selectedOption;
+            if (userAnswer === null || userAnswer.trim() === '') {
+                toast({ title: 'No Answer', description: 'Please provide an answer before proceeding.', variant: 'destructive' });
+                return;
+            }
             isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.answer.trim().toLowerCase();
             earnedXp = isCorrect ? (currentQuestion.difficulty === 'hard' ? 400 : currentQuestion.difficulty === 'medium' ? 300 : 200) : 0;
             
@@ -181,17 +179,16 @@ export default function MockTestPage() {
                 });
             }
         } else {
-            // Subjective question is not graded, but give XP for effort
+            // Subjective question, user just proceeds.
+            userAnswer = "[viewed]"; // A placeholder to mark as attempted
             isCorrect = null;
-            earnedXp = 50; 
-            handleCorrectAnswer(earnedXp); 
-            toast({ title: "Answer Recorded", description: "Compare your answer with the correct one." });
+            earnedXp = 50; // XP for reviewing the answer
+            handleCorrectAnswer(earnedXp);
         }
 
         const newAnswers = [...userAnswers, { question: currentQuestion, userAnswer: userAnswer, isCorrect, earnedXp }];
         setUserAnswers(newAnswers);
         setSelectedOption(null);
-        setSubjectiveAnswer('');
 
         if (currentQuestionIndex < testQuestions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
@@ -371,10 +368,6 @@ export default function MockTestPage() {
                         ))
                     ) : (
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="subjective-answer">Your Answer</Label>
-                                <Textarea id="subjective-answer" rows={5} value={subjectiveAnswer} onChange={e => setSubjectiveAnswer(e.target.value)} />
-                            </div>
                             {!showSubjectiveAnswer && (
                                 <Button variant="outline" type="button" onClick={() => setShowSubjectiveAnswer(true)} className="w-full">
                                     <Eye className="mr-2 h-4 w-4" /> Show Answer
