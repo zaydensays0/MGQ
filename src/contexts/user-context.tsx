@@ -236,7 +236,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const { uid } = userCredential.user;
 
-    const newUser: User = {
+    const userData: Omit<User, 'stream'> & { stream?: StreamId } = {
       uid,
       fullName,
       email,
@@ -250,15 +250,18 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       badges: ['welcome_rookie'],
       class: userClass,
       gender,
-      stream,
       stats: getDefaultUserStats(),
       spinWheel: getDefaultSpinWheelState(),
       equippedBadge: null,
       createdAt: Date.now(),
     };
+
+    if (stream) {
+      userData.stream = stream;
+    }
     
-    await setDoc(doc(db, 'users', uid), newUser);
-    setUser(newUser);
+    await setDoc(doc(db, 'users', uid), userData);
+    setUser(userData as User);
     setIsGuest(false);
     toast({ title: 'Account Created!', description: 'Welcome! You have been logged in.' });
     toast({ title: '🏆 Badge Unlocked!', description: 'You earned the "Welcome Rookie" badge!' });
