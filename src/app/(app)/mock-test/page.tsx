@@ -10,7 +10,7 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer } from 'lucide-react';
+import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer, Eye } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -76,6 +76,7 @@ export default function MockTestPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [subjectiveAnswer, setSubjectiveAnswer] = useState('');
+    const [showSubjectiveAnswer, setShowSubjectiveAnswer] = useState(false);
     const [recheckStates, setRecheckStates] = useState<Record<number, {loading: boolean, result: RecheckAnswerOutput | null}>>({});
     const [time, setTime] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -110,6 +111,10 @@ export default function MockTestPage() {
             if (timerRef.current) clearInterval(timerRef.current);
         };
     }, [testState]);
+    
+    useEffect(() => {
+        setShowSubjectiveAnswer(false);
+    }, [currentQuestionIndex]);
 
     const handleStartTest = async (data: SetupFormValues) => {
         setIsLoading(true);
@@ -118,6 +123,7 @@ export default function MockTestPage() {
             gradeLevel: parseInt(data.gradeLevel, 10),
             chapters: data.chapters.split(',').map(c => c.trim()),
             numberOfQuestions: data.isComprehensive ? 25 : data.numberOfQuestions!,
+            questionTypes: data.questionTypes as QuestionTypeNCERT[] | undefined
         };
 
         try {
@@ -232,7 +238,7 @@ export default function MockTestPage() {
             questionType: 'multiple_choice' as QuestionTypeNCERT,
         };
 
-        addMultipleQuestions(questionsToSave, context);
+        addMultipleQuestions(questionsToSave as GeneratedQuestionAnswerPair[], context);
     };
 
     const handleRecheckAnswer = async (index: number, answer: TestAnswer) => {
@@ -364,9 +370,22 @@ export default function MockTestPage() {
                             </Button>
                         ))
                     ) : (
-                        <div className="space-y-2">
-                            <Label htmlFor="subjective-answer">Your Answer</Label>
-                            <Textarea id="subjective-answer" rows={5} value={subjectiveAnswer} onChange={e => setSubjectiveAnswer(e.target.value)} />
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="subjective-answer">Your Answer</Label>
+                                <Textarea id="subjective-answer" rows={5} value={subjectiveAnswer} onChange={e => setSubjectiveAnswer(e.target.value)} />
+                            </div>
+                            {!showSubjectiveAnswer && (
+                                <Button variant="outline" type="button" onClick={() => setShowSubjectiveAnswer(true)} className="w-full">
+                                    <Eye className="mr-2 h-4 w-4" /> Show Answer
+                                </Button>
+                            )}
+                            {showSubjectiveAnswer && (
+                                <Alert>
+                                    <AlertTitle>Correct Answer</AlertTitle>
+                                    <AlertDescription>{currentQuestion.answer}</AlertDescription>
+                                </Alert>
+                            )}
                         </div>
                     )}
                 </CardContent>
