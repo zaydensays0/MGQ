@@ -100,8 +100,9 @@ export default function MockTestPage() {
         setIsLoading(true);
         const input: GenerateMockTestInput = {
             ...data,
+            gradeLevel: parseInt(data.gradeLevel, 10),
             chapters: data.chapters.split(',').map(c => c.trim()),
-            numberOfQuestions: data.isComprehensive ? 25 : data.numberOfQuestions!, // AI needs a number
+            numberOfQuestions: data.isComprehensive ? 25 : data.numberOfQuestions!,
         };
 
         try {
