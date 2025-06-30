@@ -95,6 +95,8 @@ const getDefaultUserStats = (): UserStats => ({
     grammarQuestionsCompleted: 0,
     spinsCompleted: 0,
     practiceSessionsCompleted: 0,
+    mockTestsCompleted: 0,
+    perfectMockTests: 0,
 });
 
 // --- Provider Component ---
@@ -225,7 +227,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     setIsGuest(false);
     if (userCredential.user) {
-      // Manually trigger user data fetching to ensure state is set before redirect logic runs
       await fetchUserData(userCredential.user.uid, userCredential.user);
     }
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });

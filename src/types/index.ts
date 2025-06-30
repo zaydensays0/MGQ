@@ -159,6 +159,8 @@ export interface UserStats {
   grammarQuestionsCompleted: number;
   spinsCompleted: number;
   practiceSessionsCompleted: number;
+  mockTestsCompleted: number;
+  perfectMockTests: number;
 }
 
 export interface BadgeInfo {
@@ -329,6 +331,33 @@ export const GenerateBoardQuestionOutputSchema = z.object({
     questions: z.array(BoardQuestionSchema).describe('An array of generated board exam style questions.'),
 });
 export type GenerateBoardQuestionOutput = z.infer<typeof GenerateBoardQuestionOutputSchema>;
+
+// Mock Test Generation
+export const GenerateMockTestInputSchema = z.object({
+  gradeLevel: z.number().describe('The grade level for the test.'),
+  subject: z.string().describe('The subject of the test.'),
+  chapters: z.array(z.string()).describe('A list of chapters to include in the test.'),
+  numberOfQuestions: z.number().int().min(1).describe('The number of questions to generate.'),
+  difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the test.'),
+  isComprehensive: z.boolean().optional().describe('Whether the test should be comprehensive.'),
+});
+export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
+
+export const MockTestQuestionSchema = z.object({
+  type: z.enum(['multiple_choice', 'true_false', 'assertion_reason']).describe('The type of question.'),
+  text: z.string().describe("The full question text. For assertion/reason, must be formatted as 'Assertion (A): ...\\nReason (R): ...'"),
+  options: z.array(z.string()).optional().describe('An array of 4 options for multiple_choice, or the standard 4 for assertion_reason.'),
+  answer: z.string().describe('The correct answer. Must match one of the options.'),
+  explanation: z.string().describe('A clear explanation for why the answer is correct.'),
+  difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the question.'),
+});
+export type MockTestQuestion = z.infer<typeof MockTestQuestionSchema>;
+
+export const GenerateMockTestOutputSchema = z.object({
+  questions: z.array(MockTestQuestionSchema).describe('An array of generated mock test questions.'),
+});
+export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;
+
 
 // All other flow types can be inferred from their respective files.
 export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';

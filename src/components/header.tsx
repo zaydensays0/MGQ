@@ -22,6 +22,7 @@ const mainFeatures = [
   { href: '/home', label: 'Dashboard', icon: LayoutGrid },
   { href: '/streams', label: 'Study Streams', icon: Target },
   { href: '/board-exams', label: 'Board Exams', icon: Building },
+  { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
   { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/wrong-questions', label: 'Wrong Questions', icon: RotateCw },
   { href: '/notes', label: 'Notes', icon: FileText },
