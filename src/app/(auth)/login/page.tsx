@@ -79,16 +79,6 @@ export default function LoginPage() {
   const { user, isInitialized, login, signup, sendPasswordReset, continueAsGuest } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (isInitialized && user) {
-      router.replace('/home');
-    }
-  }, [user, isInitialized, router]);
-
-  if (!isFirebaseConfigured) {
-      return <FirebaseNotConfigured />;
-  }
-
   const handleGuestLogin = () => {
     continueAsGuest();
     router.push('/home');
@@ -108,6 +98,7 @@ export default function LoginPage() {
         }
         await signup(fullName, email, password, userClass, gender || 'prefer_not_to_say', stream || undefined);
       }
+      router.replace('/home');
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError('Invalid email or password. Please try again.');
@@ -145,6 +136,17 @@ export default function LoginPage() {
     setGender('');
     setStream('');
   };
+
+  if (!isFirebaseConfigured) {
+      return <FirebaseNotConfigured />;
+  }
+
+  // Prevent flash of login page if user is already logged in and context is initializing
+  if (isInitialized && user) {
+      // router.replace('/home') should be handled by the AppLayout now,
+      // but we can add a simple loading state here to be safe.
+      return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+  }
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-green-50 via-slate-50 to-purple-100 dark:from-slate-900 dark:to-purple-950 p-4 transition-all duration-500">
