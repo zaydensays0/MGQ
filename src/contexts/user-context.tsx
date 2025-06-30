@@ -222,8 +222,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const login = async (email: string, pass: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
-    await signInWithEmailAndPassword(auth, email, pass);
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     setIsGuest(false);
+    if (userCredential.user) {
+      // Manually trigger user data fetching to ensure state is set before redirect logic runs
+      await fetchUserData(userCredential.user.uid, userCredential.user);
+    }
     toast({ title: 'Logged In Successfully', description: "Welcome back!" });
   };
 
