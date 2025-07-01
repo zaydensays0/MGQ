@@ -10,7 +10,11 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
+<<<<<<< HEAD
 import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, AnyQuestionType } from '@/types';
+=======
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, SavedQuestion } from '@/types';
+>>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer, Eye, EyeOff } from 'lucide-react';
+import { ClipboardCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck, Timer, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -206,6 +210,7 @@ export default function MockTestPage() {
         }
     };
     
+<<<<<<< HEAD
     const handleSaveQuestions = (type: 'correct' | 'incorrect' | 'all') => {
         const questionsToSave = userAnswers
             .filter(answer => {
@@ -247,6 +252,27 @@ export default function MockTestPage() {
             toast({ title: 'Questions Saved!', description: `${savedCount} unique question(s) have been added to your saved list.` });
         } else {
             toast({ title: "Already Saved", description: "All selected questions were already in your saved list." });
+=======
+    const handleSaveQuestion = (questionToSave: MockTestQuestion) => {
+        const context = {
+            gradeLevel: form.getValues('gradeLevel'),
+            subject: form.getValues('subject'),
+            chapter: `[Test] ${form.getValues('chapters')}`,
+            questionType: questionToSave.type as QuestionTypeNCERT,
+        };
+
+        if (!isSaved(questionToSave.text, context)) {
+            addQuestion({
+                text: questionToSave.text,
+                answer: questionToSave.answer,
+                options: questionToSave.options,
+                explanation: questionToSave.explanation,
+                ...context
+            });
+            toast({ title: "Question Saved" });
+        } else {
+            toast({ title: "Already Saved" });
+>>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
         }
     };
 
@@ -351,7 +377,10 @@ export default function MockTestPage() {
         const progress = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
         const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
         const isSubjective = ['short_answer', 'long_answer', 'fill_in_the_blanks'].includes(currentQuestion.type);
+<<<<<<< HEAD
 
+=======
+>>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
 
         const renderQuestionText = () => {
             if (currentQuestion.type === 'assertion_reason' && currentQuestion.text.includes('\\n')) {
@@ -380,7 +409,8 @@ export default function MockTestPage() {
                                {option}
                             </Button>
                         ))
-                    ) : (
+                    ) : null}
+                    {isSubjective && (
                         <div className="space-y-4">
                             {!showSubjectiveAnswer && (
                                 <Button variant="outline" type="button" onClick={() => setShowSubjectiveAnswer(true)} className="w-full">
@@ -430,6 +460,13 @@ export default function MockTestPage() {
                         {userAnswers.map((answer, index) => {
                             const recheckState = recheckStates[index] || { loading: false, result: null };
                             const resultVariant = answer.isCorrect === true ? 'default' : answer.isCorrect === false ? 'destructive' : 'default';
+                            const isQuestionSaved = isSaved(answer.question.text, {
+                                gradeLevel: form.getValues('gradeLevel'),
+                                subject: form.getValues('subject'),
+                                chapter: `[Test] ${form.getValues('chapters')}`,
+                                questionType: answer.question.type as QuestionTypeNCERT,
+                            });
+
 
                             return (
                                 <Card key={index} className="overflow-hidden">
@@ -462,23 +499,19 @@ export default function MockTestPage() {
                                             </Alert>
                                         )}
                                     </CardContent>
-                                    <CardFooter className="p-2 bg-muted/50 justify-end">
+                                    <CardFooter className="p-2 bg-muted/50 justify-between items-center">
                                         <Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
                                             {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
-                                            {recheckState.loading ? 'Verifying...' : 'Recheck AI Answer'}
+                                            {recheckState.loading ? 'Verifying...' : 'Recheck Answer'}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => handleSaveQuestion(answer.question)} disabled={isQuestionSaved}>
+                                            {isQuestionSaved ? <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> : <Save className="mr-2 h-4 w-4" />}
+                                            {isQuestionSaved ? 'Saved' : 'Save'}
                                         </Button>
                                     </CardFooter>
                                 </Card>
                             );
                         })}
-                    </div>
-                    <div className="space-y-2 pt-4 border-t">
-                        <Label className="text-muted-foreground text-center block">Save Questions for Revision</Label>
-                        <div className="flex flex-col sm:flex-row justify-center gap-2">
-                            <Button onClick={() => handleSaveQuestions('incorrect')} variant="destructive" size="sm"><Save className="mr-2 h-4 w-4" /> Save Incorrect</Button>
-                            <Button onClick={() => handleSaveQuestions('correct')} variant="outline" size="sm"><Save className="mr-2 h-4 w-4" /> Save Correct</Button>
-                            <Button onClick={() => handleSaveQuestions('all')} variant="secondary" size="sm"><Save className="mr-2 h-4 w-4" /> Save All</Button>
-                        </div>
                     </div>
                 </CardContent>
                 <CardFooter><Button onClick={restartTest} className="w-full">Take Another Test</Button></CardFooter>

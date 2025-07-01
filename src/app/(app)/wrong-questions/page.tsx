@@ -272,22 +272,29 @@ export default function WrongQuestionsPage() {
     }
 
     const handleSaveAndRemove = (question: WrongQuestion) => {
-      const questionToSave: Omit<SavedQuestion, 'id' | 'timestamp'> = {
-        text: question.questionText,
-        answer: question.correctAnswer,
-        options: question.options,
-        explanation: question.explanation,
-        marks: question.marks,
-        ...question.context,
-      };
+        const newContext = {
+            gradeLevel: question.context.gradeLevel,
+            subject: question.context.subject,
+            chapter: 'Wrongly Attempted Questions', // Categorize under a new chapter
+            questionType: question.context.questionType,
+        };
 
-      if (!isSaved(questionToSave.text, question.context)) {
-        addQuestion(questionToSave);
-        toast({ title: "Question Saved", description: "Moved to your main revision list." });
-      } else {
-        toast({ title: "Already Saved", description: "This question was already in your main list." });
-      }
-      removeWrongQuestion(question.id);
+        const questionToSave: Omit<SavedQuestion, 'id' | 'timestamp'> = {
+            text: question.questionText,
+            answer: question.correctAnswer,
+            options: question.options,
+            explanation: question.explanation,
+            marks: question.marks,
+            ...newContext,
+        };
+
+        if (!isSaved(questionToSave.text, newContext)) {
+            addQuestion(questionToSave);
+            toast({ title: "Question Saved", description: "Moved to your main revision list." });
+        } else {
+            toast({ title: "Already Saved", description: "This question was already in your main list." });
+        }
+        removeWrongQuestion(question.id);
     };
 
     const handleClearAll = () => {

@@ -41,7 +41,7 @@ export default function SavedBoardQuestionsPage() {
           Board Saver
         </h1>
         <p className="text-muted-foreground mt-1">
-          Review questions you saved from the Board Exam generator.
+          Review and practice all the questions you've saved from the Board Exam generator.
         </p>
       </div>
       <DynamicSavedQuestionsList filterType="board" />
