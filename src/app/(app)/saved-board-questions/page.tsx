@@ -38,7 +38,7 @@ export default function SavedBoardQuestionsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
           <FileQuestion className="w-8 h-8 mr-3 text-primary" />
-          Saved Board Questions
+          Board Saver
         </h1>
         <p className="text-muted-foreground mt-1">
           Review questions you saved from the Board Exam generator.

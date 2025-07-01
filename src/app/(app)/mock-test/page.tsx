@@ -10,7 +10,7 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, AnyQuestionType } from '@/types';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ const setupSchema = z.object({
     gradeLevel: z.enum(GRADE_LEVELS),
     subject: z.string().min(1, "Please select a subject."),
     chapters: z.string().min(1, "Please enter at least one chapter."),
-    numberOfQuestions: z.coerce.number().min(5, "Minimum 5 questions.").optional(),
+    numberOfQuestions: z.coerce.number().min(1, "Minimum 1 question.").optional(),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     isComprehensive: z.boolean().optional(),
     questionTypes: z.array(z.string()).optional(),
@@ -81,7 +81,7 @@ export default function MockTestPage() {
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { user, handleCorrectAnswer, trackStats, addWrongQuestion } = useUser();
-    const { addMultipleQuestions } = useSavedQuestions();
+    const { addQuestion, isSaved } = useSavedQuestions();
     const { toast } = useToast();
 
     const form = useForm<SetupFormValues>({
@@ -213,29 +213,41 @@ export default function MockTestPage() {
                 if (answer.isCorrect === null) return false; // Don't save subjective for correct/incorrect filters
                 return type === 'correct' ? answer.isCorrect : !answer.isCorrect;
             })
-            .map(answer => {
-                const { question } = answer;
-                return {
-                    question: question.text,
-                    answer: question.answer,
-                    options: question.options,
-                    explanation: question.explanation,
-                };
-            });
+            .map(answer => answer.question);
         
         if (questionsToSave.length === 0) {
             toast({ title: 'Nothing to Save', description: `You have no ${type} questions to save from this test.` });
             return;
         }
 
-        const context = {
-            gradeLevel: form.getValues('gradeLevel'),
-            subject: form.getValues('subject'),
-            chapter: `[Test] ${form.getValues('chapters')}`,
-            questionType: 'multiple_choice' as QuestionTypeNCERT,
-        };
+        const formValues = form.getValues();
+        let savedCount = 0;
 
-        addMultipleQuestions(questionsToSave as GeneratedQuestionAnswerPair[], context);
+        questionsToSave.forEach(q => {
+            const questionContext = {
+                gradeLevel: formValues.gradeLevel,
+                subject: formValues.subject,
+                chapter: `[Test] ${formValues.chapters}`,
+                questionType: q.type as AnyQuestionType,
+            };
+
+            if (!isSaved(q.text, questionContext)) {
+                addQuestion({
+                    text: q.text,
+                    answer: q.answer,
+                    options: q.options,
+                    explanation: q.explanation,
+                    ...questionContext
+                });
+                savedCount++;
+            }
+        });
+
+        if (savedCount > 0) {
+            toast({ title: 'Questions Saved!', description: `${savedCount} unique question(s) have been added to your saved list.` });
+        } else {
+            toast({ title: "Already Saved", description: "All selected questions were already in your saved list." });
+        }
     };
 
     const handleRecheckAnswer = async (index: number, answer: TestAnswer) => {
@@ -295,7 +307,7 @@ export default function MockTestPage() {
                     )} />
                      <div className="flex flex-col sm:flex-row gap-4">
                         <div className="space-y-2 rounded-md border p-4 flex-1"><div className="flex items-center space-x-2"><Controller name="isComprehensive" control={form.control} render={({ field }) => (<Switch id="comprehensive-mode" checked={field.value} onCheckedChange={field.onChange} />)} /><Label htmlFor="comprehensive-mode" className="text-base">Comprehensive Mode</Label></div><p className="text-xs text-muted-foreground">Generate all high-probability questions for the topic(s). (Sets question count to 25)</p></div>
-                        {!isComprehensive && (<Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (<div className="space-y-1.5 flex-1"><Label>Number of Questions</Label><Input type="number" min="5" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>)} />)}
+                        {!isComprehensive && (<Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (<div className="space-y-1.5 flex-1"><Label>Number of Questions</Label><Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>)} />)}
                     </div>
                     <div className="space-y-2">
                         <Label>Question Types (optional)</Label>
@@ -338,6 +350,8 @@ export default function MockTestPage() {
         const currentQuestion = testQuestions[currentQuestionIndex];
         const progress = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
         const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
+        const isSubjective = ['short_answer', 'long_answer', 'fill_in_the_blanks'].includes(currentQuestion.type);
+
 
         const renderQuestionText = () => {
             if (currentQuestion.type === 'assertion_reason' && currentQuestion.text.includes('\\n')) {

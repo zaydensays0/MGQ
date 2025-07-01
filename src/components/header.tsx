@@ -33,7 +33,7 @@ const allToolsLinks = [
   { href: '/rewards/spin-wheel', label: 'Spin The Wheel', icon: Ticket },
   { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/saved', label: 'Saved Questions', icon: BookOpenCheck },
-  { href: '/saved-board-questions', label: 'Saved Board Qs', icon: FileQuestion },
+  { href: '/saved-board-questions', label: 'Board Saver', icon: FileQuestion },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/notes-ai', label: 'AI Notes Generator', icon: PenSquare },
   { href: '/grammar', label: 'Grammar Helper', icon: MessageSquareQuote },
