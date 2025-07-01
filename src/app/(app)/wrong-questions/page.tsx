@@ -3,11 +3,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@/contexts/user-context';
-import type { WrongQuestion, BoardId, AnyQuestionType } from '@/types';
+import type { WrongQuestion, BoardId, AnyQuestionType, RecheckAnswerOutput, SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { RotateCcw, Check, X, ClipboardX, Trash, Award, Filter, FileQuestion, TestTube, ChevronsRight, Trophy, Building } from 'lucide-react';
+import { RotateCcw, Check, X, ClipboardX, Trash2, Award, Filter, FileQuestion, TestTube, ChevronsRight, Trophy, Building, Save, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { LoginPromptDialog } from '@/components/login-prompt-dialog';
@@ -16,17 +16,58 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { BOARDS } from '@/lib/constants';
+import { useSavedQuestions } from '@/contexts/saved-questions-context';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const WrongQuestionCard = ({ question }: { question: WrongQuestion }) => {
+const WrongQuestionCard = ({
+  question,
+  onRemove,
+  onSaveAndRemove,
+}: {
+  question: WrongQuestion;
+  onRemove: (id: string) => void;
+  onSaveAndRemove: (question: WrongQuestion) => void;
+}) => {
+  const { toast } = useToast();
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
+
+  const handleConfirmRemove = () => {
+    if (confirm("Are you sure? This will permanently delete this question from your list.")) {
+      onRemove(question.id);
+      toast({ title: 'Question Deleted' });
+    }
+  };
+  
+  const handleRecheck = async () => {
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+        const result = await recheckAnswer({
+            question: question.questionText,
+            originalAnswer: question.correctAnswer,
+            options: question.options,
+            ...question.context,
+        });
+        setRecheckResult(result);
+        toast({ title: "Recheck Complete" });
+    } catch (error) {
+        toast({ title: "Recheck Failed", variant: "destructive" });
+    } finally {
+        setIsRechecking(false);
+    }
+  };
+
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="text-base font-semibold leading-relaxed whitespace-pre-wrap">{question.questionText}</CardTitle>
         <CardDescription className="text-xs">
           Incorrectly answered {formatDistanceToNow(new Date(question.attemptedAt), { addSuffix: true })} | {question.context.subject} - {question.context.chapter}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-grow">
         <Alert variant="destructive">
           <X className="h-4 w-4" />
           <AlertTitle>Your Answer</AlertTitle>
@@ -38,12 +79,40 @@ const WrongQuestionCard = ({ question }: { question: WrongQuestion }) => {
           <AlertDescription>{question.correctAnswer}</AlertDescription>
         </Alert>
         {question.explanation && (
-            <details className="text-sm">
-                <summary className="cursor-pointer text-muted-foreground">View Explanation</summary>
-                <p className="mt-2 p-2 bg-muted/50 rounded-md">{question.explanation}</p>
-            </details>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="explanation" className="border-b-0">
+                    <AccordionTrigger className="text-sm p-0 hover:no-underline text-muted-foreground">View Explanation</AccordionTrigger>
+                    <AccordionContent className="text-sm p-2 bg-muted/50 rounded-md">
+                        {question.explanation}
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        )}
+        {recheckResult && (
+            <Alert className="mt-2" variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                <AlertDescription className="space-y-1">
+                    <p>{recheckResult.explanation}</p>
+                    {!recheckResult.isCorrect && <p><b>Corrected:</b> {recheckResult.correctAnswer}</p>}
+                </AlertDescription>
+            </Alert>
         )}
       </CardContent>
+      <CardFooter className="flex justify-between items-center bg-muted/30 p-2">
+         <Button variant="ghost" size="sm" onClick={handleRecheck} disabled={isRechecking || !!recheckResult}>
+            {isRechecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
+            Recheck
+        </Button>
+        <div className="flex items-center">
+            <Button variant="ghost" size="sm" onClick={() => onSaveAndRemove(question)}>
+                <Save className="mr-2 h-4 w-4"/> Save & Master
+            </Button>
+            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleConfirmRemove}>
+                <Trash2 className="mr-2 h-4 w-4"/> Delete
+            </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 };
@@ -138,6 +207,7 @@ const TestResultsView = ({ masteredCount, totalCount, onExit }: { masteredCount:
 
 export default function WrongQuestionsPage() {
     const { user, wrongQuestions, removeWrongQuestion, clearAllWrongQuestions, isGuest } = useUser();
+    const { addQuestion, isSaved } = useSavedQuestions();
     const [showLoginPrompt, setShowLoginPrompt] = useState(isGuest);
 
     const [boardFilter, setBoardFilter] = useState('all');
@@ -200,6 +270,25 @@ export default function WrongQuestionsPage() {
             </div>
         );
     }
+
+    const handleSaveAndRemove = (question: WrongQuestion) => {
+      const questionToSave: Omit<SavedQuestion, 'id' | 'timestamp'> = {
+        text: question.questionText,
+        answer: question.correctAnswer,
+        options: question.options,
+        explanation: question.explanation,
+        marks: question.marks,
+        ...question.context,
+      };
+
+      if (!isSaved(questionToSave.text, question.context)) {
+        addQuestion(questionToSave);
+        toast({ title: "Question Saved", description: "Moved to your main revision list." });
+      } else {
+        toast({ title: "Already Saved", description: "This question was already in your main list." });
+      }
+      removeWrongQuestion(question.id);
+    };
 
     const handleClearAll = () => {
         if (confirm("Are you sure you want to clear all questions from this list?")) {
@@ -276,7 +365,7 @@ export default function WrongQuestionsPage() {
                 </div>
                 {wrongQuestions.length > 0 && (
                      <Button onClick={handleClearAll} variant="destructive" size="sm">
-                        <Trash className="mr-2 h-4 w-4" />
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Clear All
                     </Button>
                 )}
@@ -350,7 +439,12 @@ export default function WrongQuestionsPage() {
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {filteredQuestions.map(q => (
-                        <WrongQuestionCard key={q.id} question={q} />
+                        <WrongQuestionCard 
+                            key={q.id} 
+                            question={q}
+                            onRemove={removeWrongQuestion}
+                            onSaveAndRemove={handleSaveAndRemove}
+                        />
                     ))}
                 </div>
             )}
