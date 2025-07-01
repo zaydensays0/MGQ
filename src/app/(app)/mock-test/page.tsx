@@ -10,13 +10,8 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-<<<<<<< HEAD
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, AnyQuestionType } from '@/types';
-=======
 import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, SavedQuestion } from '@/types';
->>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -210,49 +205,6 @@ export default function MockTestPage() {
         }
     };
     
-<<<<<<< HEAD
-    const handleSaveQuestions = (type: 'correct' | 'incorrect' | 'all') => {
-        const questionsToSave = userAnswers
-            .filter(answer => {
-                if (type === 'all') return true;
-                if (answer.isCorrect === null) return false; // Don't save subjective for correct/incorrect filters
-                return type === 'correct' ? answer.isCorrect : !answer.isCorrect;
-            })
-            .map(answer => answer.question);
-        
-        if (questionsToSave.length === 0) {
-            toast({ title: 'Nothing to Save', description: `You have no ${type} questions to save from this test.` });
-            return;
-        }
-
-        const formValues = form.getValues();
-        let savedCount = 0;
-
-        questionsToSave.forEach(q => {
-            const questionContext = {
-                gradeLevel: formValues.gradeLevel,
-                subject: formValues.subject,
-                chapter: `[Test] ${formValues.chapters}`,
-                questionType: q.type as AnyQuestionType,
-            };
-
-            if (!isSaved(q.text, questionContext)) {
-                addQuestion({
-                    text: q.text,
-                    answer: q.answer,
-                    options: q.options,
-                    explanation: q.explanation,
-                    ...questionContext
-                });
-                savedCount++;
-            }
-        });
-
-        if (savedCount > 0) {
-            toast({ title: 'Questions Saved!', description: `${savedCount} unique question(s) have been added to your saved list.` });
-        } else {
-            toast({ title: "Already Saved", description: "All selected questions were already in your saved list." });
-=======
     const handleSaveQuestion = (questionToSave: MockTestQuestion) => {
         const context = {
             gradeLevel: form.getValues('gradeLevel'),
@@ -272,7 +224,6 @@ export default function MockTestPage() {
             toast({ title: "Question Saved" });
         } else {
             toast({ title: "Already Saved" });
->>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
         }
     };
 
@@ -377,10 +328,6 @@ export default function MockTestPage() {
         const progress = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
         const isObjective = ['multiple_choice', 'true_false', 'assertion_reason'].includes(currentQuestion.type);
         const isSubjective = ['short_answer', 'long_answer', 'fill_in_the_blanks'].includes(currentQuestion.type);
-<<<<<<< HEAD
-
-=======
->>>>>>> f4c241b (Change the name of the section where board questions are saved to “Board)
 
         const renderQuestionText = () => {
             if (currentQuestion.type === 'assertion_reason' && currentQuestion.text.includes('\\n')) {
