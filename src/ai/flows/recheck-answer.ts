@@ -23,8 +23,8 @@ const prompt = ai.definePrompt({
   name: 'recheckAnswerPrompt',
   input: {schema: RecheckAnswerInputSchema},
   output: {schema: RecheckAnswerOutputSchema},
-  prompt: `You are an expert educator and fact-checker for NCERT syllabus, classes 9-12.
-Your task is to verify an AI-generated answer for a given question.
+  prompt: `You are an expert educator and meticulous fact-checker for the NCERT syllabus.
+Your primary goal is to ensure absolute accuracy. Cross-reference with standard textbook knowledge for the given grade level and subject.
 
 Context:
 - Grade Level: {{gradeLevel}}
@@ -50,7 +50,7 @@ For example, for the question "Which of the following is a real number?" with op
 
 1.  Set 'isCorrect' to true if the original answer is the best possible answer among the options. Otherwise, set it to false.
 2.  In 'correctAnswer', provide the definitively correct and most complete answer. If the original was the best answer, repeat it. If it was wrong or incomplete, provide the corrected, most complete answer from the options.
-3.  In 'explanation', provide a concise reason for your evaluation. If the original answer was wrong, explain the mistake and why the new answer is better. If it was correct, briefly confirm its accuracy and completeness.`,
+3.  In 'explanation', provide a concise reason for your evaluation, citing the underlying scientific principle or historical fact. If the original answer was wrong, explain the mistake and why the new answer is better. If it was correct, briefly confirm its accuracy and completeness by stating the correct principle.`,
 });
 
 const recheckAnswerFlow = ai.defineFlow(

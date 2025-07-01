@@ -170,7 +170,7 @@ export function QuestionCard({ questionText, answerText, options, explanation, q
           <div className="space-y-2 mb-3">
             {currentOptions?.map((option, index) => {
               const isSelectedOption = userSelection === option;
-              const isCorrectOption = currentAnswerText === option;
+              const isCorrectOption = currentAnswerText.trim().toLowerCase() === option.trim().toLowerCase();
               let optionStyle = "bg-muted/30 hover:bg-muted/60 dark:bg-muted/10 dark:hover:bg-muted/20";
 
               if (isAttempted) {
