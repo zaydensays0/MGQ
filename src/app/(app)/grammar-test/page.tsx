@@ -23,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SpellCheck, Loader2, Sparkles, Trophy, Save, ShieldCheck } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Switch } from '@/components/ui/switch';
 
 
 type TestState = 'setup' | 'testing' | 'results';
@@ -40,11 +41,15 @@ const questionTypes = [
     { value: 'direct_answer', label: 'Direct Answer' }
 ] as const;
 
+const difficultyLevels = [{ value: 'easy', label: 'Easy' }, { value: 'medium', label: 'Medium' }, { value: 'hard', 'label': 'Hard' }] as const;
+
 const setupSchema = z.object({
     topic: z.string().min(3, "Please enter a valid grammar topic."),
     gradeLevel: z.enum(GRADE_LEVELS),
     questionType: z.enum(['multiple_choice', 'true_false', 'direct_answer']),
     numberOfQuestions: z.coerce.number().min(3, "Minimum 3 questions."),
+    difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+    mixDifficulty: z.boolean().optional(),
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
@@ -53,56 +58,83 @@ const SetupView = ({ form, handleStartTest, isLoading }: {
     form: any;
     handleStartTest: (data: SetupFormValues) => void;
     isLoading: boolean;
-}) => (
-    <Card className="w-full max-w-xl mx-auto shadow-lg">
-        <CardHeader>
-            <CardTitle className="text-2xl font-headline flex items-center">
-                <SpellCheck className="w-6 h-6 mr-3 text-primary" />
-                Grammar Test
-            </CardTitle>
-            <CardDescription>Test your knowledge on any English grammar topic.</CardDescription>
-        </CardHeader>
-        <form onSubmit={form.handleSubmit(handleStartTest)}>
-            <CardContent className="space-y-4">
-                <Controller name="topic" control={form.control} render={({ field, fieldState }) => (
-                    <div className="space-y-1.5">
-                        <Label htmlFor="topic">Grammar Topic</Label>
-                        <Input id="topic" placeholder="e.g., Tenses, Prepositions, Active Voice" {...field} />
-                        {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
-                    </div>
-                )} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <Controller name="gradeLevel" control={form.control} render={({ field, fieldState }) => (
+}) => {
+    const mixDifficultyValue = form.watch('mixDifficulty');
+
+    return (
+        <Card className="w-full max-w-xl mx-auto shadow-lg">
+            <CardHeader>
+                <CardTitle className="text-2xl font-headline flex items-center">
+                    <SpellCheck className="w-6 h-6 mr-3 text-primary" />
+                    Grammar Test
+                </CardTitle>
+                <CardDescription>Test your knowledge on any English grammar topic.</CardDescription>
+            </CardHeader>
+            <form onSubmit={form.handleSubmit(handleStartTest)}>
+                <CardContent className="space-y-4">
+                    <Controller name="topic" control={form.control} render={({ field, fieldState }) => (
                         <div className="space-y-1.5">
-                            <Label htmlFor="gradeLevel">Class Level</Label>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger id="gradeLevel"><SelectValue placeholder="Select Class" /></SelectTrigger><SelectContent>{GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}</SelectContent></Select>
+                            <Label htmlFor="topic">Grammar Topic</Label>
+                            <Input id="topic" placeholder="e.g., Tenses, Prepositions, Active Voice" {...field} />
                             {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
                         </div>
                     )} />
-                    <Controller name="questionType" control={form.control} render={({ field, fieldState }) => (
-                         <div className="space-y-1.5">
-                            <Label htmlFor="questionType">Question Type</Label>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger id="questionType"><SelectValue placeholder="Select Type" /></SelectTrigger><SelectContent>{questionTypes.map(q => <SelectItem key={q.value} value={q.value}>{q.label}</SelectItem>)}</SelectContent></Select>
-                            {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
-                        </div>
-                    )} />
-                </div>
-                 <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
-                    <div className="space-y-1.5">
-                        <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-                        <Input id="numberOfQuestions" type="number" min="3" {...field} />
-                        {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <Controller name="gradeLevel" control={form.control} render={({ field, fieldState }) => (
+                            <div className="space-y-1.5">
+                                <Label htmlFor="gradeLevel">Class Level</Label>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger id="gradeLevel"><SelectValue placeholder="Select Class" /></SelectTrigger><SelectContent>{GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}</SelectContent></Select>
+                                {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                            </div>
+                        )} />
+                        <Controller name="questionType" control={form.control} render={({ field, fieldState }) => (
+                             <div className="space-y-1.5">
+                                <Label htmlFor="questionType">Question Type</Label>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger id="questionType"><SelectValue placeholder="Select Type" /></SelectTrigger><SelectContent>{questionTypes.map(q => <SelectItem key={q.value} value={q.value}>{q.label}</SelectItem>)}</SelectContent></Select>
+                                {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                            </div>
+                        )} />
                     </div>
-                )} />
-            </CardContent>
-            <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Test...</> : <><Sparkles className="mr-2 h-4 w-4" /> Start Test</>}
-                </Button>
-            </CardFooter>
-        </form>
-    </Card>
-);
+                     <Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="numberOfQuestions">Number of Questions</Label>
+                            <Input id="numberOfQuestions" type="number" min="3" {...field} />
+                            {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                        </div>
+                    )} />
+                     <div className="space-y-3 pt-2">
+                        <Controller name="mixDifficulty" control={form.control} render={({ field }) => (
+                            <div className="flex items-center space-x-2 rounded-md border p-3 bg-muted/50">
+                                <Switch id="mix-difficulty" checked={!!field.value} onCheckedChange={field.onChange} />
+                                <Label htmlFor="mix-difficulty" className="cursor-pointer">Mix all difficulties</Label>
+                            </div>
+                        )} />
+
+                        <Controller name="difficulty" control={form.control} render={({ field, fieldState }) => (
+                            <div className="space-y-1.5">
+                                <Label htmlFor="difficulty" className={mixDifficultyValue ? 'text-muted-foreground' : ''}>Difficulty Level</Label>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={mixDifficultyValue}>
+                                    <SelectTrigger id="difficulty">
+                                        <SelectValue placeholder="Select Difficulty" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {difficultyLevels.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                            </div>
+                        )} />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Test...</> : <><Sparkles className="mr-2 h-4 w-4" /> Start Test</>}
+                    </Button>
+                </CardFooter>
+            </form>
+        </Card>
+    )
+};
 
 const TestingView = ({
     testQuestions,
@@ -259,6 +291,8 @@ export default function GrammarTestPage() {
             topic: '',
             numberOfQuestions: 5,
             questionType: 'multiple_choice',
+            difficulty: 'medium',
+            mixDifficulty: false,
         },
     });
 
@@ -269,6 +303,8 @@ export default function GrammarTestPage() {
             gradeLevel: parseInt(data.gradeLevel, 10),
             questionType: data.questionType as GrammarQuestionType,
             numberOfQuestions: data.numberOfQuestions,
+            difficulty: data.mixDifficulty ? undefined : data.difficulty,
+            mixDifficulty: data.mixDifficulty,
         };
 
         try {
@@ -403,7 +439,13 @@ export default function GrammarTestPage() {
         setUserAnswers([]);
         setCurrentQuestionIndex(0);
         setRecheckStates({});
-        form.reset();
+        form.reset({
+            topic: '',
+            numberOfQuestions: 5,
+            questionType: 'multiple_choice',
+            difficulty: 'medium',
+            mixDifficulty: false,
+        });
     };
 
     const renderContent = () => {

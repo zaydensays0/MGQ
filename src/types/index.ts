@@ -395,6 +395,8 @@ export interface GenerateGrammarTestInput {
   gradeLevel: number;
   questionType: GrammarQuestionType;
   numberOfQuestions: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  mixDifficulty?: boolean;
 }
 export interface GrammarTestQuestion {
   text: string;
@@ -411,6 +413,8 @@ export const GenerateGrammarTestInputSchema = z.object({
   gradeLevel: z.number().describe("The class level for the test."),
   questionType: z.enum(['multiple_choice', 'true_false', 'direct_answer']).describe("The type of questions to generate."),
   numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
+  difficulty: DifficultySchema.optional().describe("The difficulty of the questions."),
+  mixDifficulty: z.boolean().optional().describe("Whether to mix questions of all difficulties."),
 });
 
 export const GrammarTestQuestionSchema = z.object({
