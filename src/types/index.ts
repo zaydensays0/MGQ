@@ -370,9 +370,6 @@ export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/
 export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/ai/flows/answer-subject-question';
 export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';
-// TODO: Find a way to export these types without circular dependencies
-// export type { GenerateFlashcardsInput, GenerateFlashcardsOutput, FlashcardSchema } from '@/ai/flows/generate-flashcards';
-// export type { GenerateGrammarTestInput, GrammarQuestionType, GrammarTestQuestion, GenerateGrammarTestOutput } from '@/ai/flows/generate-grammar-test';
 
 export interface GenerateFlashcardsInput {
   gradeLevel: GradeLevelNCERT;
@@ -392,9 +389,10 @@ export interface FlashcardSchema {
 }
 
 export type GrammarQuestionType = 'multiple_choice' | 'true_false' | 'direct_answer';
+
 export interface GenerateGrammarTestInput {
   topic: string;
-  gradeLevel: GradeLevelNCERT;
+  gradeLevel: number;
   questionType: GrammarQuestionType;
   numberOfQuestions: number;
 }
@@ -407,3 +405,21 @@ export interface GrammarTestQuestion {
 export interface GenerateGrammarTestOutput {
   questions: GrammarTestQuestion[];
 }
+
+export const GenerateGrammarTestInputSchema = z.object({
+  topic: z.string().describe("The grammar topic for the test."),
+  gradeLevel: z.number().describe("The class level for the test."),
+  questionType: z.enum(['multiple_choice', 'true_false', 'direct_answer']).describe("The type of questions to generate."),
+  numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
+});
+
+export const GrammarTestQuestionSchema = z.object({
+  text: z.string().describe("The question text."),
+  options: z.array(z.string()).optional().describe("Options for 'multiple_choice' or 'true_false' questions."),
+  answer: z.string().describe("The correct answer."),
+  explanation: z.string().describe("Explanation for the correct answer."),
+});
+
+export const GenerateGrammarTestOutputSchema = z.object({
+  questions: z.array(GrammarTestQuestionSchema).describe("An array of generated grammar test questions."),
+});

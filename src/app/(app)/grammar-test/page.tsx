@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -264,8 +265,10 @@ export default function GrammarTestPage() {
     const handleStartTest = async (data: SetupFormValues) => {
         setIsLoading(true);
         const input: GenerateGrammarTestInput = {
-            ...data,
+            topic: data.topic,
+            gradeLevel: parseInt(data.gradeLevel, 10),
             questionType: data.questionType as GrammarQuestionType,
+            numberOfQuestions: data.numberOfQuestions,
         };
 
         try {
