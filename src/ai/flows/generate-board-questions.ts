@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that generates board exam style questions.
@@ -22,6 +23,7 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateBoardQuestionOutputSchema },
   prompt: `You are an expert question paper setter for Class {{className}} of the {{boardName}} board.
 Your task is to generate high-quality exam-style questions for the subject "{{subject}}", covering the chapter(s): {{chapters}}.
+The language for all content (questions, answers, options, explanations) MUST be {{medium}}.
 
 {{#if isComprehensive}}
 This is a COMPREHENSIVE test. Generate a sufficient number of high-probability questions to thoroughly test all key aspects, definitions, and applications of the topic(s) as per the {{boardName}} blueprint.

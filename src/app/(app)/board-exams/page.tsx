@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -8,8 +9,8 @@ import { generateBoardQuestions } from '@/ai/flows/generate-board-questions';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput } from '@/types';
-import { BOARDS, SUBJECTS, BOARD_CLASSES, BOARD_QUESTION_TYPES } from '@/lib/constants';
+import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput, Language } from '@/types';
+import { BOARDS, SUBJECTS, BOARD_CLASSES, BOARD_QUESTION_TYPES, LANGUAGES } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ const setupSchema = z.object({
     questionTypes: z.array(z.string()).min(1, "Please select at least one question type."),
     numberOfQuestions: z.coerce.number().min(1, "Minimum 1 question.").optional(),
     isComprehensive: z.boolean().optional(),
+    medium: z.enum(['english', 'assamese', 'hindi']).optional(),
 }).refine(data => data.isComprehensive || (data.numberOfQuestions && data.numberOfQuestions > 0), {
     message: "Number of questions is required unless Comprehensive Mode is on.",
     path: ["numberOfQuestions"],
@@ -85,6 +87,7 @@ const GeneratedQuestionCard = ({
           chapter: context.chapters,
           questionType: question.type,
           board: context.boardId,
+          medium: context.medium,
         },
       });
     }
@@ -211,6 +214,7 @@ export default function BoardExamsPage() {
             questionTypes: [],
             isComprehensive: false,
             numberOfQuestions: 10,
+            medium: 'english',
         },
     });
     
@@ -230,6 +234,7 @@ export default function BoardExamsPage() {
                 chapters: data.chapters.split(',').map(c => c.trim()),
                 questionTypes: data.questionTypes as BoardQuestionType[],
                 numberOfQuestions: data.isComprehensive ? 20 : data.numberOfQuestions!, // AI needs a number
+                medium: data.medium,
             });
             if (result && result.questions.length > 0) {
                 setGeneratedQuestions(result.questions);
@@ -251,6 +256,7 @@ export default function BoardExamsPage() {
         chapter: lastContext!.chapters,
         questionType: q.type,
         board: lastContext!.boardId,
+        medium: lastContext!.medium,
     });
 
     const handleSaveQuestion = (q: BoardQuestion) => {
@@ -297,7 +303,7 @@ export default function BoardExamsPage() {
                 </CardHeader>
                 <form onSubmit={form.handleSubmit(handleGenerate)}>
                     <CardContent className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <Controller name="className" control={form.control} render={({ field, fieldState }) => (
                                 <div className="space-y-1.5"><Label>Class</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{BOARD_CLASSES.map(c => <SelectItem key={c} value={c}>Class {c}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
                             )} />
@@ -306,6 +312,9 @@ export default function BoardExamsPage() {
                             )} />
                             <Controller name="subject" control={form.control} render={({ field, fieldState }) => (
                                 <div className="space-y-1.5"><Label>Subject</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Subject"/></SelectTrigger><SelectContent>{SUBJECTS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
+                            )} />
+                            <Controller name="medium" control={form.control} render={({ field, fieldState }) => (
+                                <div className="space-y-1.5"><Label>Medium</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Medium" /></SelectTrigger><SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
                             )} />
                         </div>
                         <Controller name="chapters" control={form.control} render={({ field, fieldState }) => (

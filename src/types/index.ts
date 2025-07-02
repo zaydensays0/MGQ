@@ -316,6 +316,7 @@ export const GenerateBoardQuestionInputSchema = z.object({
     questionTypes: z.array(BoardQuestionTypeSchema).describe("The types of questions to generate."),
     numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
     isComprehensive: z.boolean().optional().describe("If true, generate all possible high-probability questions for the given chapters."),
+    medium: z.enum(['english', 'assamese', 'hindi']).optional().default('english').describe('The language for the questions and explanations.'),
 });
 export type GenerateBoardQuestionInput = z.infer<typeof GenerateBoardQuestionInputSchema>;
 
