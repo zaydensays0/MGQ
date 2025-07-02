@@ -14,6 +14,7 @@ import type {
   QuestionContext,
   GradeLevelNCERT,
   QuestionTypeNCERT,
+  Language,
 } from '@/types';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +63,7 @@ export default function GeneratePage() {
       subject: data.subject,
       chapter: data.chapter,
       questionType: data.questionType as QuestionTypeNCERT,
+      medium: data.medium,
     };
     setQuestionContext(context);
     
@@ -72,6 +74,7 @@ export default function GeneratePage() {
         chapter: data.chapter,
         questionType: data.questionType as QuestionTypeNCERT,
         numberOfQuestions: parseInt(data.numberOfQuestions, 10),
+        medium: data.medium,
       });
 
       if (result && result.questions.length > 0) {

@@ -12,7 +12,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { GradeLevelNCERT, QuestionTypeNCERT } from '@/types';
+import type { GradeLevelNCERT, QuestionTypeNCERT, Language } from '@/types';
 
 const RegenerateQuestionInputSchema = z.object({
   gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe('The grade level of the question.'),
@@ -30,6 +30,7 @@ const RegenerateQuestionInputSchema = z.object({
     .describe('The type of question to generate.'),
   originalQuestion: z.string().describe('The original question that needs to be regenerated.'),
   originalOptions: z.array(z.string()).optional().describe('The original options if the questionType was "multiple_choice".'),
+  medium: z.enum(['english', 'assamese', 'hindi']).optional().default('english').describe('The language for the question.'),
 });
 export type RegenerateQuestionInput = z.infer<typeof RegenerateQuestionInputSchema>;
 
@@ -51,6 +52,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert teacher specializing in creating NCERT textbook questions and answers for classes 5-12.
 
 You will generate a NEW question of type "{{{questionType}}}" and its corresponding answer for grade level "{{{gradeLevel}}}", subject "{{{subject}}}", and chapter "{{{chapter}}}".
+The language for all content (question, options, answers) MUST be {{{medium}}}.
 
 The original question was: "{{{originalQuestion}}}"
 {{#if originalOptions}}

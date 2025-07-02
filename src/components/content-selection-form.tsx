@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { GRADE_LEVELS, SUBJECTS, QUESTION_TYPES } from '@/lib/constants';
-import type { SubjectOption } from '@/types';
+import { GRADE_LEVELS, SUBJECTS, QUESTION_TYPES, LANGUAGES } from '@/lib/constants';
+import type { SubjectOption, Language } from '@/types';
 import { Sparkles, Loader2, WifiOff } from 'lucide-react';
 
 interface ContentSelectionFormProps {
@@ -30,6 +30,7 @@ export interface FormValues {
   chapter: string;
   questionType: string;
   numberOfQuestions: string;
+  medium: Language;
 }
 
 export function ContentSelectionForm({ onSubmit, isGenerating, isOnline }: ContentSelectionFormProps) {
@@ -38,11 +39,13 @@ export function ContentSelectionForm({ onSubmit, isGenerating, isOnline }: Conte
   const [chapter, setChapter] = useState<string>('');
   const [questionType, setQuestionType] = useState<string>('');
   const [numberOfQuestions, setNumberOfQuestions] = useState<string>('5');
+  const [medium, setMedium] = useState<Language>('english');
+
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!isOnline) {
-      onSubmit({ gradeLevel, subject, chapter, questionType, numberOfQuestions }); // Allow submission to trigger toast in parent
+      onSubmit({ gradeLevel, subject, chapter, questionType, numberOfQuestions, medium }); // Allow submission to trigger toast in parent
       return;
     }
     if (!gradeLevel || !subject || !chapter || !questionType || !numberOfQuestions) {
@@ -53,7 +56,7 @@ export function ContentSelectionForm({ onSubmit, isGenerating, isOnline }: Conte
       alert('Number of questions must be greater than 0.');
       return;
     }
-    onSubmit({ gradeLevel, subject, chapter, questionType, numberOfQuestions });
+    onSubmit({ gradeLevel, subject, chapter, questionType, numberOfQuestions, medium });
   };
 
   const selectedSubjectDetails = SUBJECTS.find(s => s.value === subject);
@@ -98,22 +101,38 @@ export function ContentSelectionForm({ onSubmit, isGenerating, isOnline }: Conte
         <form onSubmit={handleSubmit} className="space-y-6">
           <fieldset disabled={!isOnline}>
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="gradeLevel">Grade Level</Label>
-                <Select value={gradeLevel} onValueChange={setGradeLevel} required>
-                  <SelectTrigger id="gradeLevel" aria-label="Select Grade Level">
-                    <SelectValue placeholder="Select Grade Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADE_LEVELS.map((grade) => (
-                      <SelectItem key={grade} value={grade}>
-                        Class {grade}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gradeLevel">Grade Level</Label>
+                  <Select value={gradeLevel} onValueChange={setGradeLevel} required>
+                    <SelectTrigger id="gradeLevel" aria-label="Select Grade Level">
+                      <SelectValue placeholder="Select Grade Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GRADE_LEVELS.map((grade) => (
+                        <SelectItem key={grade} value={grade}>
+                          Class {grade}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="medium">Medium</Label>
+                  <Select value={medium} onValueChange={(value) => setMedium(value as Language)} required>
+                    <SelectTrigger id="medium" aria-label="Select Medium">
+                      <SelectValue placeholder="Select Medium" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
                 <Select value={subject} onValueChange={setSubject} required>

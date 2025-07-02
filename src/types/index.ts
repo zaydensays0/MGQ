@@ -5,6 +5,7 @@ import { z } from 'zod';
 // Base Question Types
 export type GradeLevelNCERT = '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 export type BoardClass = '9' | '10';
+export type Language = 'english' | 'assamese' | 'hindi';
 
 export type QuestionTypeNCERT =
   | 'multiple_choice'
@@ -34,6 +35,7 @@ export interface QuestionContext {
   questionType: AnyQuestionType;
   streamId?: StreamId;
   board?: BoardId;
+  medium?: Language;
 }
 
 export interface GeneratedQuestionAnswerPair {
@@ -57,6 +59,7 @@ export interface SavedQuestion {
   streamId?: StreamId;
   board?: BoardId;
   marks?: number;
+  medium?: Language;
 }
 
 // --- Generic Component & Constant Types ---
@@ -337,10 +340,11 @@ export const GenerateMockTestInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level for the test.'),
   subject: z.string().describe('The subject of the test.'),
   chapters: z.array(z.string()).describe('A list of chapters to include in the test.'),
-  numberOfQuestions: z.number().int().min(1).describe('The number of questions to generate.'),
+  numberOfQuestions: z.number().int().min(1).optional().describe('The number of questions to generate.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the test.'),
   isComprehensive: z.boolean().optional().describe('Whether the test should be comprehensive.'),
   questionTypes: z.array(z.string()).optional().describe('An optional list of specific question types to generate.'),
+  medium: z.enum(['english', 'assamese', 'hindi']).optional().describe('The language for the test.'),
 });
 export type GenerateMockTestInput = z.infer<typeof GenerateMockTestInputSchema>;
 

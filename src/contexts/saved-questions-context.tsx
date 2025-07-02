@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { SavedQuestion, QuestionContext, GeneratedQuestionAnswerPair, AnyQuestionType, BoardId } from '@/types';
@@ -64,6 +65,8 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
     if (questionData.streamId) dataToSave.streamId = questionData.streamId;
     if (questionData.board) dataToSave.board = questionData.board;
     if (questionData.marks) dataToSave.marks = questionData.marks;
+    if (questionData.medium) dataToSave.medium = questionData.medium;
+
 
     await addDoc(questionsCol, dataToSave);
   }, [user, toast]);
@@ -77,7 +80,8 @@ export const SavedQuestionsProvider: React.FC<{ children: ReactNode }> = ({ chil
         q.chapter === context.chapter &&
         q.questionType === context.questionType &&
         q.streamId === context.streamId &&
-        q.board === context.board
+        q.board === context.board &&
+        q.medium === context.medium
     );
   }, [savedQuestions]);
 

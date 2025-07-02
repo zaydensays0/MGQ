@@ -4,6 +4,7 @@
 import { QuestionCard } from './question-card';
 import type { QuestionContext, GeneratedQuestionAnswerPair } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { SaveAll } from 'lucide-react';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
@@ -44,12 +45,15 @@ export function QuestionList({ questions, questionContext, onRegenerateQuestion 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-headline font-semibold">Generated Questions ({questions.length})</h2>
-        {questions.length > 0 && (
-          <Button onClick={handleSaveAll} variant="outline">
-            <SaveAll className="mr-2 h-4 w-4" />
-            Save All Displayed
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+            {questionContext.medium && <Badge variant="secondary" className="capitalize text-sm">{questionContext.medium}</Badge>}
+            {questions.length > 0 && (
+                <Button onClick={handleSaveAll} variant="outline">
+                    <SaveAll className="mr-2 h-4 w-4" />
+                    Save All Displayed
+                </Button>
+            )}
+        </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {questions.map((qaPair, index) => (

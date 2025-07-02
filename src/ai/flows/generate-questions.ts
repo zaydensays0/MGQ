@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { QuestionTypeNCERT } from '@/types';
+import type { QuestionTypeNCERT, Language } from '@/types';
 
 const GenerateQuestionsInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level of the syllabus.'),
@@ -19,6 +19,7 @@ const GenerateQuestionsInputSchema = z.object({
   chapter: z.string().describe('The chapter of the syllabus.'),
   questionType: z.custom<QuestionTypeNCERT>().describe('The type of questions to generate (e.g., MCQ, short answer, long answer).'),
   numberOfQuestions: z.number().int().min(1).describe('The number of questions to generate.'),
+  medium: z.enum(['english', 'assamese', 'hindi']).optional().default('english').describe('The language for the questions and explanations.'),
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
@@ -45,6 +46,8 @@ const prompt = ai.definePrompt({
   prompt: `You are a helpful AI that generates high-quality questions and their corresponding answers for students based on their syllabus.
 
   Generate exactly {{numberOfQuestions}} questions of type "{{questionType}}" for grade {{gradeLevel}}, subject "{{subject}}", chapter "{{chapter}}".
+  The language for all content (questions, options, explanations) MUST be {{medium}}.
+
   For each question, provide a concise and accurate answer.
   For each question, also provide a brief but clear "explanation" for why the answer is correct.
   Ensure the questions are distinct, cover various aspects of the topic, and are not repetitive.

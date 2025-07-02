@@ -10,8 +10,8 @@ import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, SavedQuestion } from '@/types';
-import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
+import type { GradeLevelNCERT, QuestionTypeNCERT, GenerateMockTestInput, MockTestQuestion, RecheckAnswerOutput, UserStats, GeneratedQuestionAnswerPair, SavedQuestion, Language } from '@/types';
+import { GRADE_LEVELS, SUBJECTS, LANGUAGES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,6 +54,7 @@ const setupSchema = z.object({
     difficulty: z.enum(['easy', 'medium', 'hard']),
     isComprehensive: z.boolean().optional(),
     questionTypes: z.array(z.string()).optional(),
+    medium: z.enum(['english', 'assamese', 'hindi']).optional(),
 }).refine(data => data.isComprehensive || (data.numberOfQuestions && data.numberOfQuestions > 0), {
     message: "Number of questions is required unless Comprehensive Mode is on.",
     path: ["numberOfQuestions"],
@@ -91,6 +92,7 @@ export default function MockTestPage() {
             difficulty: 'medium',
             isComprehensive: false,
             questionTypes: [],
+            medium: 'english',
         },
     });
     
@@ -121,7 +123,8 @@ export default function MockTestPage() {
             gradeLevel: parseInt(data.gradeLevel, 10),
             chapters: data.chapters.split(',').map(c => c.trim()),
             numberOfQuestions: data.isComprehensive ? 25 : data.numberOfQuestions!,
-            questionTypes: data.questionTypes as QuestionTypeNCERT[] | undefined
+            questionTypes: data.questionTypes as QuestionTypeNCERT[] | undefined,
+            medium: data.medium as Language,
         };
 
         try {
@@ -211,6 +214,7 @@ export default function MockTestPage() {
             subject: form.getValues('subject'),
             chapter: `[Test] ${form.getValues('chapters')}`,
             questionType: questionToSave.type as QuestionTypeNCERT,
+            medium: form.getValues('medium') as Language
         };
 
         if (!isSaved(questionToSave.text, context)) {
@@ -279,9 +283,14 @@ export default function MockTestPage() {
                      <Controller name="chapters" control={form.control} render={({ field, fieldState }) => (
                         <div className="space-y-1.5"><Label>Chapters (comma-separated)</Label><Input placeholder="e.g., Life Processes, Control and Coordination" {...field} />{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
                     )} />
-                    <Controller name="difficulty" control={form.control} render={({ field, fieldState }) => (
-                        <div className="space-y-1.5"><Label>Difficulty</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Difficulty" /></SelectTrigger><SelectContent>{difficultyLevels.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
-                    )} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Controller name="difficulty" control={form.control} render={({ field, fieldState }) => (
+                          <div className="space-y-1.5"><Label>Difficulty</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Difficulty" /></SelectTrigger><SelectContent>{difficultyLevels.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
+                      )} />
+                      <Controller name="medium" control={form.control} render={({ field, fieldState }) => (
+                          <div className="space-y-1.5"><Label>Language</Label><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Language" /></SelectTrigger><SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent></Select>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>
+                      )} />
+                    </div>
                      <div className="flex flex-col sm:flex-row gap-4">
                         <div className="space-y-2 rounded-md border p-4 flex-1"><div className="flex items-center space-x-2"><Controller name="isComprehensive" control={form.control} render={({ field }) => (<Switch id="comprehensive-mode" checked={field.value} onCheckedChange={field.onChange} />)} /><Label htmlFor="comprehensive-mode" className="text-base">Comprehensive Mode</Label></div><p className="text-xs text-muted-foreground">Generate all high-probability questions for the topic(s). (Sets question count to 25)</p></div>
                         {!isComprehensive && (<Controller name="numberOfQuestions" control={form.control} render={({ field, fieldState }) => (<div className="space-y-1.5 flex-1"><Label>Number of Questions</Label><Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>{fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}</div>)} />)}

@@ -1,5 +1,5 @@
 
-import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId } from '@/types';
+import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId, Language } from '@/types';
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
@@ -9,6 +9,12 @@ import {
 
 export const GRADE_LEVELS: GradeLevelNCERT[] = ['5', '6', '7', '8', '9', '10', '11', '12'];
 export const BOARD_CLASSES: ('9' | '10')[] = ['9', '10'];
+
+export const LANGUAGES: { value: Language, label: string }[] = [
+  { value: 'english', label: 'English' },
+  { value: 'assamese', label: 'Assamese' },
+  { value: 'hindi', label: 'Hindi' },
+];
 
 export const BOARDS: Board[] = [
     { id: 'cbse', name: 'CBSE' },
