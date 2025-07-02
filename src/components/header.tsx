@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, GraduationCap, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -78,15 +78,10 @@ export function Header() {
         {/* LEFT SECTION */}
         <div className="flex items-center">
           <Link href="/home" className="mr-6 flex items-center space-x-2">
-            <GraduationCap className="h-7 w-7 text-primary" />
-            <div>
-              <span className="font-bold sm:inline-block text-xl font-headline">
-                MGQ
-              </span>
-              <p className="text-xs text-primary font-bold tracking-wide -mt-1">
-                MEHDI Gave Question
-              </p>
-            </div>
+            <Brain className="h-7 w-7 text-primary" />
+            <span className="font-bold sm:inline-block text-2xl font-headline">
+              MGQs
+            </span>
           </Link>
           <nav className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
             {mainFeatures.map((link) => (
@@ -147,11 +142,8 @@ export function Header() {
                  <SheetHeader className="p-4 border-b">
                   <SheetTitle asChild>
                     <Link href="/home" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                        <GraduationCap className="h-7 w-7 text-primary" />
-                        <div>
-                          <span className="font-bold text-lg font-headline text-foreground">MGQ</span>
-                          <p className="text-xs text-primary font-bold tracking-wide -mt-1">MEHDI Gave Question</p>
-                        </div>
+                        <Brain className="h-7 w-7 text-primary" />
+                        <span className="font-bold text-xl font-headline text-foreground">MGQs</span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
