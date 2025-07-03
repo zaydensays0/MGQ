@@ -9,7 +9,7 @@ import { generateBoardQuestions } from '@/ai/flows/generate-board-questions';
 import { useUser } from '@/contexts/user-context';
 import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import { useToast } from '@/hooks/use-toast';
-import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput, Language } from '@/types';
+import type { BoardId, BoardQuestion, BoardQuestionType, SavedQuestion, QuestionContext, RecheckAnswerOutput, Language, BoardClass } from '@/types';
 import { BOARDS, SUBJECTS, BOARD_CLASSES, BOARD_QUESTION_TYPES, LANGUAGES } from '@/lib/constants';
 import { recheckAnswer } from '@/ai/flows/recheck-answer';
 
@@ -298,7 +298,7 @@ export default function BoardExamsPage() {
                         Board Exam Question Generator
                     </CardTitle>
                     <CardDescription>
-                        Generate exam-style questions for Class 9 and 10 based on specific Indian educational boards.
+                        Generate exam-style questions for your specific board, class, and subject.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={form.handleSubmit(handleGenerate)}>

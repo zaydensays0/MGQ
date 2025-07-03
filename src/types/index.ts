@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Base Question Types
 export type GradeLevelNCERT = '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
-export type BoardClass = '9' | '10';
+export type BoardClass = '9' | '10' | '11' | '12';
 export type Language = 'english' | 'assamese' | 'hindi';
 
 export type QuestionTypeNCERT =
@@ -114,7 +114,7 @@ export interface SavedSubjectExpertExchange {
 }
 
 // --- Board Exam Types ---
-export type BoardId = 'cbse' | 'seba' | 'icse' | 'maharashtra' | 'tamil_nadu' | 'kerala' | 'west_bengal' | 'bihar' | 'up' | 'karnataka';
+export type BoardId = 'cbse' | 'seba' | 'icse' | 'maharashtra' | 'tamil_nadu' | 'kerala' | 'west_bengal' | 'bihar' | 'up' | 'karnataka' | 'asseb';
 
 export interface Board {
     id: BoardId;
@@ -236,6 +236,35 @@ export interface FlashcardDeck {
 
 // --- AI Flow Schemas ---
 
+// Board Exam Question Generation
+export const GenerateBoardQuestionInputSchema = z.object({
+    boardName: z.string().describe("The full name of the educational board (e.g., 'CBSE', 'ICSE')."),
+    className: z.enum(['9', '10', '11', '12']).describe("The class level, e.g., '10' or '12'."),
+    subject: z.string().describe('The subject for the questions.'),
+    chapters: z.array(z.string()).describe('The specific chapters/topics to generate questions from. Can be ["Full Syllabus"].'),
+    questionTypes: z.array(BoardQuestionTypeSchema).describe("The types of questions to generate."),
+    numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
+    isComprehensive: z.boolean().optional().describe("If true, generate all possible high-probability questions for the given chapters."),
+    medium: z.enum(['english', 'assamese', 'hindi']).optional().default('english').describe('The language for the questions and explanations.'),
+});
+export type GenerateBoardQuestionInput = z.infer<typeof GenerateBoardQuestionInputSchema>;
+
+export const BoardQuestionSchema = z.object({
+    question: z.string().describe("The full question text."),
+    answer: z.string().describe("The correct answer, which should be detailed for long-answer types."),
+    options: z.array(z.string()).optional().describe("Array of options for MCQ/Assertion-Reason type questions."),
+    type: BoardQuestionTypeSchema.describe("The type of exam question."),
+    marks: z.number().int().min(1).describe("The marks allocated for this question as per the board pattern."),
+    explanation: z.string().optional().describe("A clear explanation of the correct answer or marking scheme."),
+    isLikelyToAppear: z.boolean().describe("True if the AI predicts this is a high-probability question for the exam."),
+});
+export type BoardQuestion = z.infer<typeof BoardQuestionSchema>;
+
+export const GenerateBoardQuestionOutputSchema = z.object({
+    questions: z.array(BoardQuestionSchema).describe('An array of generated board exam style questions.'),
+});
+export type GenerateBoardQuestionOutput = z.infer<typeof GenerateBoardQuestionOutputSchema>;
+
 // Problem Solver Flow
 export const SolveProblemInputSchema = z.object({
   userQuestion: z.string().optional().describe("The user's typed question or problem, which can provide additional context to an uploaded image."),
@@ -329,35 +358,6 @@ export const TopicToQuestionsOutputSchema = z.object({
 });
 export type TopicToQuestionsOutput = z.infer<typeof TopicToQuestionsOutputSchema>;
 
-// Board Exam Question Generation
-export const GenerateBoardQuestionInputSchema = z.object({
-    boardName: z.string().describe("The full name of the educational board (e.g., 'CBSE', 'ICSE')."),
-    className: z.enum(['9', '10']).describe("The class level, 9 or 10."),
-    subject: z.string().describe('The subject for the questions.'),
-    chapters: z.array(z.string()).describe('The specific chapters/topics to generate questions from. Can be ["Full Syllabus"].'),
-    questionTypes: z.array(BoardQuestionTypeSchema).describe("The types of questions to generate."),
-    numberOfQuestions: z.number().int().min(1).describe("The number of questions to generate."),
-    isComprehensive: z.boolean().optional().describe("If true, generate all possible high-probability questions for the given chapters."),
-    medium: z.enum(['english', 'assamese', 'hindi']).optional().default('english').describe('The language for the questions and explanations.'),
-});
-export type GenerateBoardQuestionInput = z.infer<typeof GenerateBoardQuestionInputSchema>;
-
-export const BoardQuestionSchema = z.object({
-    question: z.string().describe("The full question text."),
-    answer: z.string().describe("The correct answer, which should be detailed for long-answer types."),
-    options: z.array(z.string()).optional().describe("Array of options for MCQ/Assertion-Reason type questions."),
-    type: BoardQuestionTypeSchema.describe("The type of exam question."),
-    marks: z.number().int().min(1).describe("The marks allocated for this question as per the board pattern."),
-    explanation: z.string().optional().describe("A clear explanation of the correct answer or marking scheme."),
-    isLikelyToAppear: z.boolean().describe("True if the AI predicts this is a high-probability question for the exam."),
-});
-export type BoardQuestion = z.infer<typeof BoardQuestionSchema>;
-
-export const GenerateBoardQuestionOutputSchema = z.object({
-    questions: z.array(BoardQuestionSchema).describe('An array of generated board exam style questions.'),
-});
-export type GenerateBoardQuestionOutput = z.infer<typeof GenerateBoardQuestionOutputSchema>;
-
 // Mock Test Generation
 export const GenerateMockTestInputSchema = z.object({
   gradeLevel: z.number().describe('The grade level for the test.'),
@@ -411,6 +411,7 @@ export const GenerateFlashcardsOutputSchema = z.object({
 });
 export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
 
+export type GrammarQuestionType = 'multiple_choice' | 'true_false' | 'direct_answer';
 export const GrammarTestQuestionSchema = z.object({
   text: z.string().describe("The question text."),
   options: z.array(z.string()).optional().describe("Options for 'multiple_choice' or 'true_false' questions."),

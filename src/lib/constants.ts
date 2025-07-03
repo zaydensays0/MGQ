@@ -1,5 +1,5 @@
 
-import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId, Language } from '@/types';
+import type { SubjectOption, QuestionTypeOption, GradeLevelNCERT, BadgeKey, BadgeInfo, Stream, StreamSyllabus, Board, BoardId, Language, BoardClass } from '@/types';
 import { 
     Calculator, FlaskConical, BookOpenText, Globe2, NotebookText, LucideIcon,
     Brain, Trophy, PenLine, Shield, BookMarked, Target, Puzzle, Gem, Rocket,
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export const GRADE_LEVELS: GradeLevelNCERT[] = ['5', '6', '7', '8', '9', '10', '11', '12'];
-export const BOARD_CLASSES: ('9' | '10')[] = ['9', '10'];
+export const BOARD_CLASSES: BoardClass[] = ['9', '10', '11', '12'];
 
 export const LANGUAGES: { value: Language, label: string }[] = [
   { value: 'english', label: 'English' },
@@ -20,6 +20,7 @@ export const BOARDS: Board[] = [
     { id: 'cbse', name: 'CBSE' },
     { id: 'icse', name: 'ICSE' },
     { id: 'seba', name: 'SEBA (Assam)' },
+    { id: 'asseb', name: 'ASSEB' },
     { id: 'maharashtra', name: 'Maharashtra State Board' },
     { id: 'tamil_nadu', name: 'Tamil Nadu Board' },
     { id: 'kerala', name: 'Kerala Board' },
@@ -305,7 +306,7 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
             'Advanced Auditing and Professional Ethics': ["Auditing Standards", "Audit of Different Entities", "Professional Ethics"],
             'Direct Tax Laws &amp; International Taxation': ["Advanced topics in Direct Tax", "International Taxation treaties"],
             'Indirect Tax Laws': ["Advanced topics in GST", "Customs &amp; FTP (Foreign Trade Policy)"]
-        }
+        },
     },
     'iti-polytechnic': {
         'Year 1': {
