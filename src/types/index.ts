@@ -240,8 +240,7 @@ export interface FlashcardDeck {
 export const SolveProblemInputSchema = z.object({
   userQuestion: z.string().optional().describe("The user's typed question or problem, which can provide additional context to an uploaded image."),
   imageDataUri: z.string().optional().describe("An image of the question, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  subject: z.string().describe("The academic subject of the question (e.g., Maths, Science)."),
-  gradeLevel: z.string().describe("The grade level for the context of the question."),
+  subject: z.string().optional().describe("The academic subject of the question (e.g., Maths, Science). Optional if an image is provided."),
   medium: z.enum(['english', 'assamese', 'hindi']).describe("The language for the explanation."),
   requestHint: z.boolean().optional().describe("If true, the user is requesting a hint instead of a full solution."),
 });

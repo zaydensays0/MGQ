@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, type FormEvent, useRef } from 'react';
@@ -12,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wand2, Sparkles, Loader2, Terminal, HelpCircle, CheckCircle, Bot, ImageUp, X } from 'lucide-react';
-import { GRADE_LEVELS, SUBJECTS, LANGUAGES } from '@/lib/constants';
-import type { GradeLevelNCERT, SubjectOption, Language, SolveProblemInput, SolveProblemOutput } from '@/types';
+import { SUBJECTS, LANGUAGES } from '@/lib/constants';
+import type { SubjectOption, Language, SolveProblemInput, SolveProblemOutput } from '@/types';
 import dynamic from 'next/dynamic';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
@@ -84,7 +83,6 @@ const ResultDisplay = ({ result }: { result: SolveProblemOutput }) => {
 
 export default function ProblemSolverPage() {
   const [question, setQuestion] = useState('');
-  const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
   const [subject, setSubject] = useState<string>('');
   const [medium, setMedium] = useState<Language>('english');
   const [isLoading, setIsLoading] = useState(false);
@@ -129,8 +127,9 @@ export default function ProblemSolverPage() {
         toast({ title: 'Missing Input', description: 'Please type a question or upload an image.', variant: 'destructive' });
         return;
     }
-    if (!gradeLevel || !subject) {
-      toast({ title: 'Missing Fields', description: 'Please fill out the grade, and subject.', variant: 'destructive' });
+    // If no image is uploaded, a subject is required.
+    if (!imageDataUri && !subject) {
+      toast({ title: 'Missing Context', description: 'Please select a subject when not uploading an image.', variant: 'destructive' });
       return;
     }
 
@@ -141,8 +140,7 @@ export default function ProblemSolverPage() {
     const input: SolveProblemInput = {
       userQuestion: question,
       imageDataUri,
-      gradeLevel,
-      subject,
+      subject: subject || undefined,
       medium,
       requestHint,
     };
@@ -215,15 +213,8 @@ export default function ProblemSolverPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="grade-level">Grade</Label>
-                  <Select value={gradeLevel} onValueChange={(v) => setGradeLevel(v as GradeLevelNCERT)} required>
-                    <SelectTrigger id="grade-level"><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                    <SelectContent>{GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Select value={subject} onValueChange={setSubject} required>
+                  <Label htmlFor="subject">Subject {imageDataUri ? '(Optional)' : ''}</Label>
+                  <Select value={subject} onValueChange={setSubject}>
                     <SelectTrigger id="subject">
                       <SelectValue placeholder="Select Subject">
                         {selectedSubjectDetails?.label || "Select Subject"}
@@ -234,14 +225,14 @@ export default function ProblemSolverPage() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-               <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="medium">Language</Label>
                   <Select value={medium} onValueChange={(value) => setMedium(value as Language)} required>
                     <SelectTrigger id="medium"><SelectValue placeholder="Select Language" /></SelectTrigger>
                     <SelectContent>{LANGUAGES.map(lang => <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button type="button" onClick={(e) => handleSubmit(e, true)} className="w-full" variant="outline" disabled={isLoading}>

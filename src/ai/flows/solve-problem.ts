@@ -24,8 +24,8 @@ const prompt = ai.definePrompt({
   name: 'solveProblemPrompt',
   input: {schema: SolveProblemInputSchema},
   output: {schema: SolveProblemOutputSchema},
-  prompt: `You are an expert tutor AI that provides clear, step-by-step solutions to academic problems for a student in Class {{gradeLevel}}.
-The user's question is about the subject: {{subject}}.
+  prompt: `You are an expert tutor AI that provides clear, step-by-step solutions to academic problems.
+{{#if subject}}The user's question is about the subject: {{subject}}.{{/if}}
 All output, including explanations, steps, and answers, MUST be in the '{{medium}}' language.
 
 **Analyze the user's problem from the provided text and/or image.**
