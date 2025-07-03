@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useRef } from 'react';
 import { solveProblem } from '@/ai/flows/solve-problem';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wand2, Sparkles, Loader2, Terminal, HelpCircle, CheckCircle, Bot } from 'lucide-react';
+import { Wand2, Sparkles, Loader2, Terminal, HelpCircle, CheckCircle, Bot, ImageUp, X } from 'lucide-react';
 import { GRADE_LEVELS, SUBJECTS, LANGUAGES } from '@/lib/constants';
 import type { GradeLevelNCERT, SubjectOption, Language, SolveProblemInput, SolveProblemOutput } from '@/types';
 import dynamic from 'next/dynamic';
@@ -91,12 +91,46 @@ export default function ProblemSolverPage() {
   const [result, setResult] = useState<SolveProblemOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { toast } = useToast();
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        toast({ title: 'Invalid File Type', description: 'Please upload a JPG or PNG image.', variant: 'destructive' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        setImageDataUri(dataUri);
+        setImagePreview(dataUri);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearImage = () => {
+    setImagePreview(null);
+    setImageDataUri(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
 
   const handleSubmit = async (e: FormEvent, requestHint = false) => {
     e.preventDefault();
-    if (!question.trim() || !gradeLevel || !subject) {
-      toast({ title: 'Missing Fields', description: 'Please fill out the question, grade, and subject.', variant: 'destructive' });
+    if (!question.trim() && !imageDataUri) {
+        toast({ title: 'Missing Input', description: 'Please type a question or upload an image.', variant: 'destructive' });
+        return;
+    }
+    if (!gradeLevel || !subject) {
+      toast({ title: 'Missing Fields', description: 'Please fill out the grade, and subject.', variant: 'destructive' });
       return;
     }
 
@@ -106,6 +140,7 @@ export default function ProblemSolverPage() {
 
     const input: SolveProblemInput = {
       userQuestion: question,
+      imageDataUri,
       gradeLevel,
       subject,
       medium,
@@ -148,17 +183,36 @@ export default function ProblemSolverPage() {
           <CardContent>
             <form className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="question-input">Your Question</Label>
+                <Label htmlFor="question-input">Your Question (Optional if uploading image)</Label>
                 <Textarea
                   id="question-input"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="e.g., If a train travels at 60 km/h, how long does it take to cover 150 km?"
-                  rows={6}
-                  required
+                  rows={4}
                   disabled={isLoading}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Upload Image of Question</Label>
+                {imagePreview ? (
+                  <div className="relative">
+                    <img src={imagePreview} alt="Question preview" className="rounded-md border max-h-60 w-auto object-contain" />
+                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7" onClick={handleClearImage} aria-label="Remove image">
+                        <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                    <>
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" className="hidden" />
+                        <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                          <ImageUp className="mr-2 h-4 w-4" /> Upload an Image (JPG, PNG)
+                        </Button>
+                    </>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="grade-level">Grade</Label>

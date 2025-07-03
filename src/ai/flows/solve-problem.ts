@@ -28,13 +28,23 @@ const prompt = ai.definePrompt({
 The user's question is about the subject: {{subject}}.
 All output, including explanations, steps, and answers, MUST be in the '{{medium}}' language.
 
-User's question:
+**Analyze the user's problem from the provided text and/or image.**
+If an image is provided, perform OCR to read the text and understand any diagrams. If both text and image are provided, consider the text as additional context for the image.
+
+{{#if userQuestion}}
+User's typed question (if any):
 "{{userQuestion}}"
+{{/if}}
+
+{{#if imageDataUri}}
+User's uploaded image:
+{{media url=imageDataUri}}
+{{/if}}
 
 **Your Task:**
 
 1.  **Analyze the question:**
-    - If the question is unclear, incomplete, or nonsensical, set \`isSolvable\` to \`false\` and provide a clarifying question in the \`clarificationNeeded\` field. Do not attempt to solve it.
+    - If the question is unclear, incomplete, or nonsensical (even after analyzing both text and image), set \`isSolvable\` to \`false\` and provide a clarifying question in the \`clarificationNeeded\` field. Do not attempt to solve it.
     - Otherwise, set \`isSolvable\` to \`true\`.
 
 2.  **Handle Hint Request:**

@@ -238,7 +238,8 @@ export interface FlashcardDeck {
 
 // Problem Solver Flow
 export const SolveProblemInputSchema = z.object({
-  userQuestion: z.string().describe("The user's question or problem to be solved."),
+  userQuestion: z.string().optional().describe("The user's typed question or problem, which can provide additional context to an uploaded image."),
+  imageDataUri: z.string().optional().describe("An image of the question, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   subject: z.string().describe("The academic subject of the question (e.g., Maths, Science)."),
   gradeLevel: z.string().describe("The grade level for the context of the question."),
   medium: z.enum(['english', 'assamese', 'hindi']).describe("The language for the explanation."),
@@ -411,26 +412,6 @@ export const GenerateFlashcardsOutputSchema = z.object({
 });
 export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
 
-export type GrammarQuestionType = 'multiple_choice' | 'true_false' | 'direct_answer';
-
-export interface GenerateGrammarTestInput {
-  topic: string;
-  gradeLevel: number;
-  questionType: GrammarQuestionType;
-  numberOfQuestions: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
-  mixDifficulty?: boolean;
-}
-export interface GrammarTestQuestion {
-  text: string;
-  options?: string[];
-  answer: string;
-  explanation: string;
-}
-export interface GenerateGrammarTestOutput {
-  questions: GrammarTestQuestion[];
-}
-
 export const GenerateGrammarTestInputSchema = z.object({
   topic: z.string().describe("The grammar topic for the test."),
   gradeLevel: z.number().describe("The class level for the test."),
@@ -439,6 +420,7 @@ export const GenerateGrammarTestInputSchema = z.object({
   difficulty: DifficultySchema.optional().describe("The difficulty of the questions."),
   mixDifficulty: z.boolean().optional().describe("Whether to mix questions of all difficulties."),
 });
+export type GenerateGrammarTestInput = z.infer<typeof GenerateGrammarTestInputSchema>;
 
 export const GrammarTestQuestionSchema = z.object({
   text: z.string().describe("The question text."),
@@ -446,7 +428,9 @@ export const GrammarTestQuestionSchema = z.object({
   answer: z.string().describe("The correct answer."),
   explanation: z.string().describe("Explanation for the correct answer."),
 });
+export type GrammarTestQuestion = z.infer<typeof GrammarTestQuestionSchema>;
 
 export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe("An array of generated grammar test questions."),
 });
+export type GenerateGrammarTestOutput = z.infer<typeof GenerateGrammarTestOutputSchema>;
