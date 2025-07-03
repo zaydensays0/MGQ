@@ -371,22 +371,23 @@ export type { AnswerSubjectQuestionInput, AnswerSubjectQuestionOutput } from '@/
 export type { GenerateNotesByChapterInput, GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
 export type { SummarizeTextInput, SummarizeTextOutput } from '@/ai/flows/summarize-text';
 
-export interface GenerateFlashcardsInput {
-  gradeLevel: GradeLevelNCERT;
-  subject: string;
-  chapter: string;
-  numberOfCards: number;
-}
-export interface GenerateFlashcardsOutput {
-  flashcards: {
-    front: string;
-    back: string;
-  }[];
-}
-export interface FlashcardSchema {
-    front: string;
-    back: string;
-}
+export const FlashcardSchema = z.object({
+  front: z.string().describe('The term, concept, or question for the front of the card.'),
+  back: z.string().describe('The definition or answer for the back of the card.'),
+});
+
+export const GenerateFlashcardsInputSchema = z.object({
+  gradeLevel: z.enum<GradeLevelNCERT, ['5', '6', '7', '8', '9', '10', '11', '12']>(['5', '6', '7', '8', '9', '10', '11', '12']).describe("The student's grade level."),
+  subject: z.string().describe('The subject of the chapter.'),
+  chapter: z.string().describe('The name of the chapter to generate flashcards for.'),
+  numberOfCards: z.number().int().min(1).describe('The exact number of flashcards to generate.'),
+});
+export type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
+
+export const GenerateFlashcardsOutputSchema = z.object({
+  flashcards: z.array(FlashcardSchema).describe('An array of generated flashcards.'),
+});
+export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
 
 export type GrammarQuestionType = 'multiple_choice' | 'true_false' | 'direct_answer';
 
@@ -427,3 +428,5 @@ export const GrammarTestQuestionSchema = z.object({
 export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe("An array of generated grammar test questions."),
 });
+
+    
