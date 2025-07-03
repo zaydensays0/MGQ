@@ -122,7 +122,7 @@ export interface Board {
 }
 
 // --- Study Stream Types ---
-export type StreamId = 'neet' | 'jee' | 'mbbs' | 'btech' | 'upsc' | 'ssc' | 'banking' | 'cuet' | 'clat' | 'nda' | 'ca-foundation' | 'iti-polytechnic';
+export type StreamId = 'neet' | 'jee' | 'mbbs' | 'btech' | 'upsc' | 'ssc' | 'banking' | 'cuet' | 'clat' | 'nda' | 'ca-foundation' | 'iti-polytechnic' | 'cuet-pg';
 
 export interface Stream {
   id: StreamId;
@@ -411,6 +411,14 @@ export const GenerateFlashcardsOutputSchema = z.object({
 });
 export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
 
+export const GrammarTestQuestionSchema = z.object({
+  text: z.string().describe("The question text."),
+  options: z.array(z.string()).optional().describe("Options for 'multiple_choice' or 'true_false' questions."),
+  answer: z.string().describe("The correct answer."),
+  explanation: z.string().describe("Explanation for the correct answer."),
+});
+export type GrammarTestQuestion = z.infer<typeof GrammarTestQuestionSchema>;
+
 export const GenerateGrammarTestInputSchema = z.object({
   topic: z.string().describe("The grammar topic for the test."),
   gradeLevel: z.number().describe("The class level for the test."),
@@ -420,14 +428,6 @@ export const GenerateGrammarTestInputSchema = z.object({
   mixDifficulty: z.boolean().optional().describe("Whether to mix questions of all difficulties."),
 });
 export type GenerateGrammarTestInput = z.infer<typeof GenerateGrammarTestInputSchema>;
-
-export const GrammarTestQuestionSchema = z.object({
-  text: z.string().describe("The question text."),
-  options: z.array(z.string()).optional().describe("Options for 'multiple_choice' or 'true_false' questions."),
-  answer: z.string().describe("The correct answer."),
-  explanation: z.string().describe("Explanation for the correct answer."),
-});
-export type GrammarTestQuestion = z.infer<typeof GrammarTestQuestionSchema>;
 
 export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe("An array of generated grammar test questions."),

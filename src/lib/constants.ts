@@ -110,6 +110,12 @@ export const STREAMS: Stream[] = [
         icon: GraduationCap,
     },
     {
+        id: 'cuet-pg',
+        name: 'CUET PG',
+        description: 'Postgraduate entrance test prep.',
+        icon: GraduationCap,
+    },
+    {
         id: 'clat',
         name: 'CLAT',
         description: 'Common Law Admission Test prep.',
@@ -311,6 +317,44 @@ export const STREAM_SYLLABUS: StreamSyllabus = {
         'Year 2': {
              'Trade Theory (Electrician)': ["Safety Practices", "Tools and Instruments", "Conductors and Insulators", "Ohm's Law &amp; Kirchhoff's Law", "AC &amp; DC Circuits", "Transformers", "Electrical Machines", "Wiring Systems"],
             'Trade Theory (Fitter)': ["Safety and First Aid", "Hand Tools", "Measuring Instruments", "Cutting Tools", "Drilling", "Lathe Machine", "Gauges", "Welding"]
+        }
+    },
+    'cuet-pg': {
+        'Postgraduate': {
+            'Common Test (General Paper)': [
+                "Language Comprehension",
+                "Logical Reasoning",
+                "Quantitative Aptitude",
+                "Data Interpretation",
+                "General Knowledge & Current Affairs"
+            ],
+            'Mathematics': [
+                "Algebra", "Real Analysis", "Complex Analysis", "Integral & Differential Calculus",
+                "Differential Equations", "Linear Programming", "Vector Calculus"
+            ],
+            'Physics': [
+                "Mathematical Methods", "Classical Mechanics", "Electromagnetic Theory", "Quantum Mechanics",
+                "Thermodynamics and Statistical Physics", "Electronics", "Atomic & Molecular Physics", "Nuclear and Particle Physics"
+            ],
+            'Chemistry': {
+                'Organic Chemistry': ["Stereochemistry", "Reaction Mechanisms", "Organic Synthesis", "Spectroscopy"],
+                'Inorganic Chemistry': ["Periodic Table", "Chemical Bonding", "Coordination Chemistry", "Bio-inorganic Chemistry"],
+                'Physical Chemistry': ["Quantum Chemistry", "Thermodynamics", "Chemical Kinetics", "Electrochemistry"]
+            },
+            'Botany': ["Cell Biology", "Ecology", "Reproduction", "Anatomy", "Genetics"],
+            'Zoology': ["Human Physiology", "Animal Diversity", "Ecology", "Evolution"],
+            'Life Sciences': ["Biomolecules", "Genetics", "Cell Signaling", "Development"],
+            'Biotechnology': ["Molecular Biology", "Bioprocess Engineering", "Immunology"],
+            'Microbiology': ["Virology", "Microbial Physiology", "Industrial Microbiology"],
+            'Biochemistry': ["Enzymology", "Metabolism", "Bioenergetics", "Nutrition"],
+            'English Literature': ["History of English Literature", "Indian Literature in English", "Literary Movements", "Literary Criticism & Theory", "Genres & Periods"],
+            'Geography': ["Geomorphology", "Climatology", "Oceanography", "Biogeography", "Economic Geography", "GIS & Remote Sensing"],
+            'Philosophy': ["Metaphysics", "Epistemology", "Ethics", "Logic (Symbolic & Classical)", "Social & Political Philosophy", "Indian Philosophy"],
+            'Psychology': ["History of Psychology", "Cognitive Psychology", "Personality & Intelligence", "Abnormal Psychology", "Developmental Psychology", "Research Methods & Statistics"],
+            'Sociology': ["Basic Concepts & Thinkers", "Social Structure & Change", "Research Methods", "Indian Society", "Social Issues in India"],
+            'Agricultural Sciences': ["Agronomy", "Genetics & Plant Breeding", "Soil Science", "Plant Physiology", "Plant Pathology", "Entomology", "Agricultural Economics"],
+            'MBA (Business Aptitude)': ["English/Hindi Comprehension", "Quantitative Aptitude", "Logical Reasoning", "Data Interpretation", "Business Awareness"],
+            'Law (LLB Entrance)': ["Legal Reasoning", "Constitutional Basics", "General Awareness", "Logical Aptitude", "Reading Comprehension"]
         }
     }
 };
