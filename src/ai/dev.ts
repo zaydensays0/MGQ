@@ -18,3 +18,4 @@ import '@/ai/flows/generate-stream-questions.ts';
 import '@/ai/flows/generate-board-questions.ts';
 import '@/ai/flows/generate-mock-test.ts';
 import '@/ai/flows/solve-problem.ts';
+import '@/ai/flows/generate-questions-from-image.ts';

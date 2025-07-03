@@ -386,6 +386,32 @@ export const GenerateMockTestOutputSchema = z.object({
 });
 export type GenerateMockTestOutput = z.infer<typeof GenerateMockTestOutputSchema>;
 
+// Image to Questions Flow
+export const ImageGeneratedQuestionSchema = z.object({
+  type: z.enum(['multiple_choice', 'true_false', 'assertion_reason', 'short_answer', 'long_answer', 'fill_in_the_blanks']).describe('The type of question.'),
+  question: z.string().describe("The full question text. For assertion/reason, must be formatted as 'Assertion (A): ...\\nReason (R): ...'"),
+  options: z.array(z.string()).optional().describe('An array of options for multiple_choice, true_false, or assertion_reason questions.'),
+  answer: z.string().describe('The correct answer. Must match one of the options if options are provided.'),
+  explanation: z.string().describe('A clear explanation for why the answer is correct.'),
+  language: z.string().describe('The auto-detected language of the question (e.g., "English", "Hindi").'),
+});
+export type ImageGeneratedQuestion = z.infer<typeof ImageGeneratedQuestionSchema>;
+
+
+export const GenerateQuestionsFromImageInputSchema = z.object({
+  imageDataUris: z.array(z.string().describe("A list of images of the study material, as data URIs.")),
+  questionTypes: z.array(z.string()).min(1).describe('A list of specific question types to generate.'),
+  numberOfQuestions: z.number().int().min(1).optional().describe('The number of questions to generate if not in comprehensive mode.'),
+  isComprehensive: z.boolean().optional().describe('Whether the test should be comprehensive, generating as many questions as possible.'),
+});
+export type GenerateQuestionsFromImageInput = z.infer<typeof GenerateQuestionsFromImageInputSchema>;
+
+
+export const GenerateQuestionsFromImageOutputSchema = z.object({
+  questions: z.array(ImageGeneratedQuestionSchema).describe('An array of generated questions from the image content.'),
+});
+export type GenerateQuestionsFromImageOutput = z.infer<typeof GenerateQuestionsFromImageOutputSchema>;
+
 
 // All other flow types can be inferred from their respective files.
 export type { AnswerGrammarQuestionInput, AnswerGrammarQuestionOutput } from '@/ai/flows/answer-grammar-question';

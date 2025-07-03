@@ -25,7 +25,8 @@ import {
   FileQuestion,
   Building,
   ClipboardCheck,
-  Wand2
+  Wand2,
+  ImagePlus
 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { LucideIcon } from 'lucide-react';
@@ -38,6 +39,7 @@ const features: { title: string; href: string; icon: React.ReactNode; descriptio
   { title: 'Board Exams', href: '/board-exams', icon: <Building className="w-6 h-6 text-primary" />, description: 'Practice with board-specific questions.' },
   { title: 'Mock Test', href: '/mock-test', icon: <ClipboardCheck className="w-6 h-6 text-primary" />, description: 'Take full mock tests to gauge your prep.' },
   { title: 'Problem Solver', href: '/problem-solver', icon: <Wand2 className="w-6 h-6 text-primary" />, description: 'Get step-by-step solutions for any question.' },
+  { title: 'Image to Questions', href: '/image-to-questions', icon: <ImagePlus className="w-6 h-6 text-primary" />, description: 'Generate questions from photos of your notes.' },
   { title: 'Generate Questions', href: '/generate', icon: <Sparkles className="w-6 h-6 text-primary" />, description: 'Create custom questions on any topic with AI.' },
   { title: 'Wrong Questions', href: '/wrong-questions', icon: <RotateCw className="w-6 h-6 text-primary" />, description: 'Practice the questions you got wrong.' },
   { title: 'Spin The Wheel', href: '/rewards/spin-wheel', icon: <Ticket className="w-6 h-6 text-primary" />, description: 'Spin for daily XP rewards and bonuses.' },
