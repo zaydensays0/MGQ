@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -23,6 +23,7 @@ const mainFeatures = [
   { href: '/streams', label: 'Study Streams', icon: Target },
   { href: '/board-exams', label: 'Board Exams', icon: Building },
   { href: '/mock-test', label: 'Mock Tests', icon: ClipboardCheck },
+  { href: '/problem-solver', label: 'Problem Solver', icon: Wand2 },
   { href: '/generate', label: 'Generate Questions', icon: Sparkles },
   { href: '/wrong-questions', label: 'Wrong Questions', icon: RotateCw },
   { href: '/notes', label: 'Notes', icon: FileText },

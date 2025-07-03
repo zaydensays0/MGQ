@@ -236,6 +236,28 @@ export interface FlashcardDeck {
 
 // --- AI Flow Schemas ---
 
+// Problem Solver Flow
+export const SolveProblemInputSchema = z.object({
+  userQuestion: z.string().describe("The user's question or problem to be solved."),
+  subject: z.string().describe("The academic subject of the question (e.g., Maths, Science)."),
+  gradeLevel: z.string().describe("The grade level for the context of the question."),
+  medium: z.enum(['english', 'assamese', 'hindi']).describe("The language for the explanation."),
+  requestHint: z.boolean().optional().describe("If true, the user is requesting a hint instead of a full solution."),
+});
+export type SolveProblemInput = z.infer<typeof SolveProblemInputSchema>;
+
+export const SolveProblemOutputSchema = z.object({
+  isSolvable: z.boolean().describe("Set to false if the question is ambiguous, nonsensical, or unanswerable."),
+  clarificationNeeded: z.string().optional().describe("If unsolvable, a question to ask the user for more clarity."),
+  finalAnswer: z.string().optional().describe("The direct, final answer to the problem if applicable."),
+  hint: z.string().optional().describe("A hint to guide the user if they requested one."),
+  steps: z.array(z.object({
+    stepNumber: z.number(),
+    explanation: z.string().describe("A detailed explanation for this step, in the requested medium."),
+  })).optional().describe("A step-by-step breakdown of the solution."),
+});
+export type SolveProblemOutput = z.infer<typeof SolveProblemOutputSchema>;
+
 // AI Answer Recheck Flow
 export const RecheckAnswerInputSchema = z.object({
   gradeLevel: z.string().describe('The grade level or academic level of the question.'),
@@ -428,5 +450,3 @@ export const GrammarTestQuestionSchema = z.object({
 export const GenerateGrammarTestOutputSchema = z.object({
   questions: z.array(GrammarTestQuestionSchema).describe("An array of generated grammar test questions."),
 });
-
-    

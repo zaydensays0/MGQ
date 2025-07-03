@@ -1,0 +1,72 @@
+
+'use server';
+/**
+ * @fileOverview An AI agent that solves academic problems step-by-step.
+ *
+ * - solveProblem - A function that provides a detailed solution to a user's problem.
+ * - SolveProblemInput - The input type for the solveProblem function.
+ * - SolveProblemOutput - The return type for the solveProblem function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {
+    SolveProblemInputSchema,
+    SolveProblemOutputSchema,
+    type SolveProblemInput,
+    type SolveProblemOutput,
+} from '@/types';
+
+export async function solveProblem(input: SolveProblemInput): Promise<SolveProblemOutput> {
+  return solveProblemFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'solveProblemPrompt',
+  input: {schema: SolveProblemInputSchema},
+  output: {schema: SolveProblemOutputSchema},
+  prompt: `You are an expert tutor AI that provides clear, step-by-step solutions to academic problems for a student in Class {{gradeLevel}}.
+The user's question is about the subject: {{subject}}.
+All output, including explanations, steps, and answers, MUST be in the '{{medium}}' language.
+
+User's question:
+"{{userQuestion}}"
+
+**Your Task:**
+
+1.  **Analyze the question:**
+    - If the question is unclear, incomplete, or nonsensical, set \`isSolvable\` to \`false\` and provide a clarifying question in the \`clarificationNeeded\` field. Do not attempt to solve it.
+    - Otherwise, set \`isSolvable\` to \`true\`.
+
+2.  **Handle Hint Request:**
+    - If \`requestHint\` is \`true\`, provide ONLY a helpful hint in the \`hint\` field to guide the user. Do NOT provide the final answer or steps.
+
+3.  **Provide Full Solution (if not a hint request):**
+    - **Step-by-step Explanation:** Break down the solution into logical, easy-to-follow steps. Populate the \`steps\` array. Each step's explanation must be simple and clear.
+    - **Final Answer:** Provide the concise, final answer in the \`finalAnswer\` field.
+
+**Subject-Specific Instructions:**
+-   **Mathematics:** Show all formulas used. Clearly write out each calculation step.
+-   **Science (Physics/Chemistry/Biology):** Explain the underlying principles or concepts for each step. Define any key technical terms used.
+-   **Grammar/English:** Highlight the incorrect part (if any) and explain the specific grammar rule that applies. Provide a corrected version.
+-   **History/Geography/Political Science:** Focus on key facts, dates, and concise explanations of events or concepts.
+
+Generate the response now based on these instructions.`,
+});
+
+const solveProblemFlow = ai.defineFlow(
+  {
+    name: 'solveProblemFlow',
+    inputSchema: SolveProblemInputSchema,
+    outputSchema: SolveProblemOutputSchema,
+  },
+  async (input) => {
+    const {output} = await prompt(input);
+    if (!output) {
+      return {
+        isSolvable: false,
+        clarificationNeeded: "I'm sorry, I couldn't generate a response for this question. Could you please try rephrasing it?",
+      };
+    }
+    return output;
+  }
+);
