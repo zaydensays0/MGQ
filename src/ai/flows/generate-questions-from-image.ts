@@ -30,17 +30,17 @@ const prompt = ai.definePrompt({
     {{media url=this}}
     {{/each}}
 2.  **Detect Language:** Automatically detect the primary language of the text (e.g., English, Hindi, Assamese).
-3.  **Generate Questions:** Based on the extracted content, generate questions of the following types: {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+3.  **Generate Questions:** Based on the extracted content, generate questions **ONLY** of the following types: {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
 
     {{#if isComprehensive}}
-    This is a COMPREHENSIVE request. Generate a sufficient number of questions to thoroughly test all key concepts found in the material.
+    This is a COMPREHENSIVE request. Generate a sufficient number of questions of the specified types to thoroughly test all key concepts found in the material.
     {{else}}
-    Generate exactly {{numberOfQuestions}} questions in total, distributed among the requested types.
+    Generate exactly {{numberOfQuestions}} questions in total, distributed **only** among the requested types: {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
     {{/if}}
 
 **Output Rules:**
 - ALL parts of your response (questions, options, answers, explanations, language name) MUST be in the **auto-detected language**.
-- For each question, you MUST provide: "type", "question", "answer", "explanation", and the detected "language".
+- For each question, you MUST provide: "type", "question", "answer", "explanation", and the detected "language". The "type" MUST be one of the requested types.
 - For 'multiple_choice' or 'assertion_reason' questions, you MUST provide an "options" array with 4 distinct options.
 - For 'true_false', the "options" array MUST be ["True", "False"].
 - For other types, "options" can be omitted.
