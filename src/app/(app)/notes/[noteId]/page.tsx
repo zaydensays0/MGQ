@@ -178,7 +178,7 @@ export default function ViewNotePage() {
       <Card className="shadow-xl" ref={noteContentRef}>
         <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
-            <div>
+            <div className="flex-1 mr-4">
               <CardTitle className="text-3xl font-headline flex items-center mb-1">
                 <FileText className="w-7 h-7 mr-3 text-primary flex-shrink-0" />
                 {note.title}
@@ -188,12 +188,12 @@ export default function ViewNotePage() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-                <Button onClick={handleDownloadPdf} variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                <Button onClick={handleDownloadPdf} variant="outline" size="icon" aria-label="Download PDF">
+                    <Download className="h-4 w-4" />
                 </Button>
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="icon" aria-label="Edit Note">
                   <Link href={`/notes/${note.id}/edit`}>
-                    <Edit2 className="mr-2 h-4 w-4" /> Edit Note
+                    <Edit2 className="h-4 w-4" />
                   </Link>
                 </Button>
             </div>
