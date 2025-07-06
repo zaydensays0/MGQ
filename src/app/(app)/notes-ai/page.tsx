@@ -1,24 +1,22 @@
-
 'use client';
 
-import { useState, type FormEvent, useRef, useEffect } from 'react';
+import { useState, type FormEvent, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenSquare, Sparkles, Loader2, Terminal, Save } from 'lucide-react';
+import { PenSquare, Sparkles, Loader2, Terminal, Save, Download, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
-import type { GradeLevelNCERT, SubjectOption, Note } from '@/types';
+import type { GradeLevelNCERT, Note } from '@/types';
 import { generateNotesByChapter, type GenerateNotesByChapterInput, type GenerateNotesByChapterOutput } from '@/ai/flows/generate-notes-by-chapter';
-import { summarizeText, type SummarizeTextInput, type SummarizeTextOutput } from '@/ai/flows/summarize-text';
 import { useNotes } from '@/contexts/notes-context';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <Skeleton className="h-40 w-full" />,
@@ -26,12 +24,10 @@ const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
 });
 
 export default function NotesAIPage() {
-  const [activeTab, setActiveTab] = useState('chapter');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [generatedTitle, setGeneratedTitle] = useState<string>('');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // State for Chapter Notes
   const [gradeLevel, setGradeLevel] = useState<GradeLevelNCERT | ''>('');
@@ -39,26 +35,9 @@ export default function NotesAIPage() {
   const [chapter, setChapter] = useState<string>('');
   const [noteContext, setNoteContext] = useState<Omit<GenerateNotesByChapterInput, 'chapter'> | null>(null);
 
-  // State for Summarize Text
-  const [textToSummarize, setTextToSummarize] = useState('');
-
   const { toast } = useToast();
   const { addNote } = useNotes();
-  const selectedSubjectDetails = SUBJECTS.find(s => s.value === subject);
-
-  useEffect(() => {
-    const audioElement = audioRef.current;
-    if (audioElement) {
-      if (isLoading) {
-        audioElement.play().catch(error => {
-          console.error("Audio play failed.", error);
-        });
-      } else {
-        audioElement.pause();
-        audioElement.currentTime = 0;
-      }
-    }
-  }, [isLoading]);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleGenerateByChapter = async (e: FormEvent) => {
     e.preventDefault();
@@ -89,70 +68,32 @@ export default function NotesAIPage() {
     }
   };
 
-  const handleSummarizeText = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!textToSummarize.trim()) {
-      toast({ title: 'No Text Provided', description: 'Please enter some text to summarize.', variant: 'destructive' });
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    setGeneratedContent(null);
-    
-    const input: SummarizeTextInput = { textToSummarize };
-    setNoteContext(null);
-
-    try {
-      const result = await summarizeText(input);
-      const markdownContent = formatSummaryNotes(result);
-      setGeneratedContent(markdownContent);
-      setGeneratedTitle('Summary of Your Text');
-      toast({ title: 'Summary Generated!', description: 'Your text has been summarized.' });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      setError(`Failed to summarize text. ${errorMessage}`);
-      toast({ title: 'Summarization Failed', description: errorMessage, variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const formatChapterNotes = (data: GenerateNotesByChapterOutput): string => {
-    let md = `**Summary**\n${data.summary || 'No content available.'}\n\n`;
+    let md = `## Summary\n${data.summary || 'No summary available.'}\n\n`;
     
-    md += `**Key Terms**\n`;
-    if (data.keyTerms && data.keyTerms.length > 0) {
-      md += data.keyTerms.map(kt => `- ${kt.term}: ${kt.definition}`).join('\n');
-    } else {
-      md += 'None';
-    }
-    md += '\n\n';
-
-    md += `**Important Points**\n`;
     if (data.mainPoints && data.mainPoints.length > 0) {
-        md += data.mainPoints.map(point => `• ${point}`).join('\n');
-    } else {
-        md += 'None';
+      md += `## Key Points\n`;
+      md += data.mainPoints.map(point => `* ${point}`).join('\n');
+      md += '\n\n';
     }
-    md += '\n\n';
 
-    md += `**Example Questions**\n`;
+    if (data.keyTerms && data.keyTerms.length > 0) {
+      md += `## Key Terms & Definitions\n`;
+      md += data.keyTerms.map(kt => `* **${kt.term}:** ${kt.definition}`).join('\n');
+      md += '\n\n';
+    }
+    
+    if (data.formulas && data.formulas.length > 0) {
+      md += `## Important Formulas\n`;
+      md += data.formulas.map(f => `* **${f.name}:** \`${f.formula}\``).join('\n');
+      md += '\n\n';
+    }
+
     if (data.sampleQuestions && data.sampleQuestions.length > 0) {
-        md += data.sampleQuestions.map(q => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n');
-    } else {
-        md += 'None';
+        md += `## Sample Questions\n`;
+        md += data.sampleQuestions.map(q => `**Q: ${q.question}**\n\nA: ${q.answer}`).join('\n\n');
     }
 
-    return md;
-  };
-  
-  const formatSummaryNotes = (data: SummarizeTextOutput): string => {
-    let md = `## Simplified Explanation\n${data.summary}\n\n`;
-    md += `## Key Points\n${data.bulletPoints.map(point => `- ${point}`).join('\n')}\n\n`;
-    if (data.definitions && data.definitions.length > 0) {
-      md += `## Definitions\n${data.definitions.map(def => `- **${def.term}:** ${def.definition}`).join('\n')}`;
-    }
     return md;
   };
 
@@ -177,88 +118,107 @@ export default function NotesAIPage() {
         title: 'Note Saved!',
         description: `"${generatedTitle}" has been added to My Notes.`,
       });
-      // Reset state
-      setGeneratedContent(null);
-      setGeneratedTitle('');
-      if (activeTab === 'chapter') {
-        setChapter('');
-      } else {
-        setTextToSummarize('');
-      }
+      // Do not reset content so user can still download/share
     } catch (error) {
       toast({ title: 'Error', description: 'Could not save the note.', variant: 'destructive' });
     }
   };
-  
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setGeneratedContent(null);
-    setError(null);
+
+  const handleDownloadPdf = () => {
+    if (!contentRef.current) return;
+    toast({ title: 'Preparing PDF...', description: 'This may take a moment.' });
+
+    html2canvas(contentRef.current, {
+        scale: 2, // Improve resolution
+        useCORS: true,
+        backgroundColor: window.getComputedStyle(document.body).getPropertyValue('background-color'),
+    }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const imgWidth = pdfWidth - 20; // with margin
+        const imgHeight = imgWidth / ratio;
+
+        let heightLeft = imgHeight;
+        let position = 10; // top margin
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + 10; // reset top margin
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+        
+        pdf.save(`${generatedTitle.replace(/ /g, '_')}.pdf`);
+        toast({ title: 'Download Started!', description: 'Your PDF is being downloaded.' });
+    }).catch(err => {
+        console.error("Error generating PDF", err);
+        toast({ title: 'PDF Generation Failed', description: 'Could not generate the PDF.', variant: 'destructive' });
+    });
   }
 
+  const handleShare = async () => {
+    if (!generatedContent || !navigator.share) {
+        toast({ title: 'Share Not Available', description: 'Your browser does not support the Web Share API.', variant: 'destructive'});
+        return;
+    }
+
+    try {
+        await navigator.share({
+            title: generatedTitle,
+            text: `Check out these notes on ${chapter}:\n\n${generatedContent.substring(0, 200)}...`,
+        });
+        toast({ title: 'Shared!', description: 'Notes shared successfully.' });
+    } catch (error) {
+        console.error("Share failed", error);
+        toast({ title: 'Share Failed', description: 'Could not share the notes.', variant: 'destructive' });
+    }
+  }
+  
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <audio ref={audioRef} src="https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde419d84.mp3" loop />
       <div className="mb-8">
         <h1 className="text-3xl font-headline font-bold flex items-center">
           <PenSquare className="w-8 h-8 mr-3 text-primary" />
           AI Notes Generator
         </h1>
         <p className="text-muted-foreground mt-1">
-          Struggling with a topic? Let AI break it down or create full revision notes!
+          Struggling with a topic? Let AI create full revision notes for any chapter!
         </p>
       </div>
 
-      <Tabs defaultValue="chapter" className="w-full max-w-2xl mx-auto" onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="chapter">Generate by Chapter</TabsTrigger>
-          <TabsTrigger value="summarize">Summarize My Text</TabsTrigger>
-        </TabsList>
-        <TabsContent value="chapter">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Generate Notes from Syllabus</CardTitle>
-              <CardDescription>Select a class, subject, and chapter to get detailed study notes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleGenerateByChapter} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="gradeLevel-ai">Grade</Label>
-                    <Select value={gradeLevel} onValueChange={(v) => setGradeLevel(v as GradeLevelNCERT)} required><SelectTrigger id="gradeLevel-ai"><SelectValue placeholder="Select Grade" /></SelectTrigger><SelectContent>{GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}</SelectContent></Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="subject-ai">Subject</Label>
-                    <Select value={subject} onValueChange={setSubject} required><SelectTrigger id="subject-ai"><SelectValue placeholder="Select Subject" /></SelectTrigger><SelectContent>{SUBJECTS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chapter-ai">Chapter</Label>
-                  <Input id="chapter-ai" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating...</> : <><Sparkles className="mr-2 h-5 w-5" /> Generate Notes</>}</Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="summarize">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Summarize Your Text</CardTitle>
-              <CardDescription>Paste any text below to get a simplified explanation and summary.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSummarizeText} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="text-to-summarize">Your Text</Label>
-                  <Textarea id="text-to-summarize" value={textToSummarize} onChange={(e) => setTextToSummarize(e.target.value)} placeholder="Paste your text here..." rows={8} required />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Summarizing...</> : <><Sparkles className="mr-2 h-5 w-5" /> Summarize Text</>}</Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card className="w-full max-w-2xl mx-auto shadow-lg">
+        <CardHeader>
+          <CardTitle>Generate Notes from Syllabus</CardTitle>
+          <CardDescription>Select a class, subject, and chapter to get detailed study notes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleGenerateByChapter} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gradeLevel-ai">Grade</Label>
+                <Select value={gradeLevel} onValueChange={(v) => setGradeLevel(v as GradeLevelNCERT)} required><SelectTrigger id="gradeLevel-ai"><SelectValue placeholder="Select Grade" /></SelectTrigger><SelectContent>{GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>Class {g}</SelectItem>)}</SelectContent></Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="subject-ai">Subject</Label>
+                <Select value={subject} onValueChange={setSubject} required><SelectTrigger id="subject-ai"><SelectValue placeholder="Select Subject" /></SelectTrigger><SelectContent>{SUBJECTS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="chapter-ai">Chapter</Label>
+              <Input id="chapter-ai" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />} {isLoading ? 'Generating...' : 'Generate Notes'}</Button>
+          </form>
+        </CardContent>
+      </Card>
       
       {error && (
         <Alert variant="destructive" className="mt-6 max-w-2xl mx-auto"><Terminal className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
@@ -271,19 +231,20 @@ export default function NotesAIPage() {
       {generatedContent && !isLoading && (
         <Card className="mt-6 max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="flex items-center"><Sparkles className="w-5 h-5 mr-2 text-primary" />AI Generated Content</CardTitle>
+            <CardTitle className="flex items-center"><Sparkles className="w-5 h-5 mr-2 text-primary" />{generatedTitle}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent ref={contentRef}>
             <div className="prose prose-sm sm:prose lg:prose-lg max-w-none dark:prose-invert">
               <DynamicReactMarkdown>{generatedContent}</DynamicReactMarkdown>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleSaveNote}><Save className="mr-2 h-4 w-4" /> Save to My Notes</Button>
+          <CardFooter className="flex-wrap gap-2 justify-end">
+            <Button onClick={handleSaveNote} variant="outline"><Save className="mr-2 h-4 w-4" /> Save</Button>
+            <Button onClick={handleDownloadPdf} variant="outline"><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
+            {navigator.share && <Button onClick={handleShare} variant="outline"><Share2 className="mr-2 h-4 w-4" /> Share</Button>}
           </CardFooter>
         </Card>
       )}
-
     </div>
   );
 }
