@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent, useRef } from 'react';
@@ -215,7 +216,10 @@ export default function NotesAIPage() {
               <Label htmlFor="chapter-ai">Chapter</Label>
               <Input id="chapter-ai" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />} {isLoading ? 'Generating...' : 'Generate Notes'}</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+              {isLoading ? 'Generating...' : 'Generate Notes'}
+            </Button>
           </form>
         </CardContent>
       </Card>
