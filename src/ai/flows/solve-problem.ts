@@ -52,7 +52,7 @@ User's uploaded image:
 
 3.  **Provide Full Solution (if not a hint request):**
     - **Step-by-step Explanation:** Break down the solution into logical, easy-to-follow steps. Populate the \`steps\` array. Each step's explanation must be simple and clear.
-    - **Final Answer:** Provide the concise, final answer in the \`finalAnswer\` field.
+    - **Final Answer:** Provide the concise, final answer in the \`finalAnswer\` field. **CRITICALLY IMPORTANT: The value in \`finalAnswer\` MUST EXACTLY MATCH the final result calculated in the last step of your explanation.** Do not summarize, round differently, or provide a different number.
 
 **Subject-Specific Instructions:**
 -   **Mathematics:** Show all formulas used. Clearly write out each calculation step.

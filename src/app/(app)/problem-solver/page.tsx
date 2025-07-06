@@ -1,18 +1,20 @@
+
 'use client';
 
 import { useState, type FormEvent, useRef } from 'react';
 import { solveProblem } from '@/ai/flows/solve-problem';
+import { recheckAnswer } from '@/ai/flows/recheck-answer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wand2, Sparkles, Loader2, Terminal, HelpCircle, CheckCircle, Bot, ImageUp, X } from 'lucide-react';
+import { Wand2, Sparkles, Loader2, Terminal, HelpCircle, CheckCircle, Bot, ImageUp, X, ShieldCheck } from 'lucide-react';
 import { SUBJECTS, LANGUAGES } from '@/lib/constants';
-import type { SubjectOption, Language, SolveProblemInput, SolveProblemOutput } from '@/types';
+import type { SubjectOption, Language, SolveProblemInput, SolveProblemOutput, RecheckAnswerOutput } from '@/types';
 import dynamic from 'next/dynamic';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
@@ -20,7 +22,36 @@ const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   ssr: false
 });
 
-const ResultDisplay = ({ result }: { result: SolveProblemOutput }) => {
+const ResultDisplay = ({ result, contextForRecheck }: { result: SolveProblemOutput, contextForRecheck: { question: string, subject: string, medium: Language } }) => {
+  const { toast } = useToast();
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<RecheckAnswerOutput | null>(null);
+
+  const handleRecheck = async () => {
+    if (!result.finalAnswer) {
+      toast({ title: 'Cannot Recheck', description: 'There is no final answer to recheck.', variant: 'destructive' });
+      return;
+    }
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+        const res = await recheckAnswer({
+            question: contextForRecheck.question,
+            originalAnswer: result.finalAnswer,
+            gradeLevel: '10', // Default grade for context
+            subject: contextForRecheck.subject || 'General',
+            chapter: contextForRecheck.question.substring(0, 50) + '...', // Use question as chapter context
+        });
+        setRecheckResult(res);
+        toast({ title: 'Recheck Complete!' });
+    } catch (err) {
+        toast({ title: 'Recheck Failed', description: 'An error occurred while verifying the answer.', variant: 'destructive' });
+    } finally {
+        setIsRechecking(false);
+    }
+  };
+
+
   if (!result.isSolvable) {
     return (
       <Alert variant="destructive">
@@ -42,42 +73,65 @@ const ResultDisplay = ({ result }: { result: SolveProblemOutput }) => {
   }
 
   return (
-    <div className="space-y-6">
-      {result.finalAnswer && (
-        <Card className="bg-green-50 dark:bg-green-900/30 border-green-500/50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-green-700 dark:text-green-300">
-              <CheckCircle className="mr-2 h-5 w-5" />
-              Final Answer
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-bold">{result.finalAnswer}</p>
-          </CardContent>
-        </Card>
-      )}
+    <Card className="shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+            <Bot className="mr-2 h-6 w-6 text-primary" />
+            AI Solution
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {result.finalAnswer && (
+          <Card className="bg-green-50 dark:bg-green-900/30 border-green-500/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-green-700 dark:text-green-300 text-lg">
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Final Answer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-bold">{result.finalAnswer}</p>
+            </CardContent>
+          </Card>
+        )}
 
-      {result.steps && result.steps.length > 0 && (
-        <div>
-          <h3 className="text-xl font-semibold mb-3 flex items-center">
-            <Bot className="mr-2 h-5 w-5 text-primary" />
-            Step-by-Step Solution
-          </h3>
-          <div className="space-y-4">
-            {result.steps.map((step) => (
-              <div key={step.stepNumber} className="flex items-start gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
-                  {step.stepNumber}
+        {result.steps && result.steps.length > 0 && (
+          <div>
+            <h3 className="text-xl font-semibold mb-3">
+              Step-by-Step Solution
+            </h3>
+            <div className="space-y-4">
+              {result.steps.map((step) => (
+                <div key={step.stepNumber} className="flex items-start gap-4">
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    {step.stepNumber}
+                  </div>
+                  <div className="flex-grow pt-1 prose prose-sm max-w-none dark:prose-invert">
+                      <DynamicReactMarkdown>{step.explanation}</DynamicReactMarkdown>
+                  </div>
                 </div>
-                <div className="flex-grow pt-1 prose prose-sm max-w-none dark:prose-invert">
-                    <DynamicReactMarkdown>{step.explanation}</DynamicReactMarkdown>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+      <CardFooter className="flex-col items-stretch gap-2 border-t pt-4">
+          <Button onClick={handleRecheck} variant="outline" disabled={isRechecking || !!recheckResult}>
+            {isRechecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            {isRechecking ? 'Verifying...' : 'Recheck AI Answer'}
+          </Button>
+          {recheckResult && (
+             <Alert variant={recheckResult.isCorrect ? 'default' : 'destructive'}>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>{recheckResult.isCorrect ? "Verification: Correct" : "Verification: Needs Correction"}</AlertTitle>
+                <AlertDescription className="space-y-1">
+                    <p>{recheckResult.explanation}</p>
+                    {!recheckResult.isCorrect && <p className="font-semibold mt-2">Corrected Answer: {recheckResult.correctAnswer}</p>}
+                </AlertDescription>
+            </Alert>
+          )}
+      </CardFooter>
+    </Card>
   );
 };
 
@@ -236,11 +290,11 @@ export default function ProblemSolverPage() {
 
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button type="button" onClick={(e) => handleSubmit(e, true)} className="w-full" variant="outline" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : <HelpCircle />}
+                  {isLoading ? <Loader2 className="animate-spin mr-2" /> : <HelpCircle className="mr-2" />}
                   Get a Hint
                 </Button>
                 <Button type="submit" onClick={(e) => handleSubmit(e, false)} className="w-full" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                  {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                   Solve
                 </Button>
               </div>
@@ -268,7 +322,7 @@ export default function ProblemSolverPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          {result && <ResultDisplay result={result} />}
+          {result && <ResultDisplay result={result} contextForRecheck={{ question, subject, medium }} />}
         </div>
       </div>
     </div>
