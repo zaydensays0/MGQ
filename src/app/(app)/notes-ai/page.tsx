@@ -177,9 +177,20 @@ export default function NotesAIPage() {
             text: `Check out these notes on ${chapter}:\n\n${generatedContent.substring(0, 200)}...`,
         });
         toast({ title: 'Shared!', description: 'Notes shared successfully.' });
-    } catch (error) {
+    } catch (error: any) {
+        // The most common reason for failure is the user cancelling the share dialog.
+        // In that case, we don't want to show an error toast.
+        if (error.name === 'AbortError') {
+            console.log('Share was cancelled by the user.');
+            return;
+        }
+
         console.error("Share failed", error);
-        toast({ title: 'Share Failed', description: 'Could not share the notes.', variant: 'destructive' });
+        toast({ 
+            title: 'Share Failed', 
+            description: 'Could not share the notes. This can happen due to browser permissions or if not on a secure (HTTPS) connection.',
+            variant: 'destructive' 
+        });
     }
   }
   
@@ -217,7 +228,11 @@ export default function NotesAIPage() {
               <Input id="chapter-ai" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+              {isLoading ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-5 w-5" />
+              )}
               {isLoading ? 'Generating...' : 'Generate Notes'}
             </Button>
           </form>
