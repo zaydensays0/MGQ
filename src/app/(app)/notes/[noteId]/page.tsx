@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -10,13 +10,15 @@ import { useSavedQuestions } from '@/contexts/saved-questions-context';
 import type { Note, SavedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Edit2, AlertTriangle, FileText, HelpCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Edit2, AlertTriangle, FileText, HelpCircle, Eye, EyeOff, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-// import ReactMarkdown from 'react-markdown'; // Removed direct import
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const DynamicReactMarkdown = dynamic(() => import('react-markdown'), {
   loading: () => <p>Loading content...</p>,
@@ -68,6 +70,8 @@ export default function ViewNotePage() {
 
   const { getNoteById } = useNotes();
   const { savedQuestions } = useSavedQuestions();
+  const { toast } = useToast();
+  const noteContentRef = useRef<HTMLDivElement>(null);
 
   const [note, setNote] = useState<Note | undefined>(undefined);
   const [linkedQuestions, setLinkedQuestions] = useState<SavedQuestion[]>([]);
@@ -84,6 +88,46 @@ export default function ViewNotePage() {
       setIsLoading(false);
     }
   }, [noteId, getNoteById, savedQuestions]);
+
+  const handleDownloadPdf = () => {
+    if (!noteContentRef.current || !note) return;
+    toast({ title: 'Preparing PDF...', description: 'This may take a moment.' });
+
+    html2canvas(noteContentRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: window.getComputedStyle(document.body).getPropertyValue('background-color'),
+    }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const imgWidth = pdfWidth - 20;
+        const imgHeight = imgWidth / ratio;
+
+        let heightLeft = imgHeight;
+        let position = 10;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + 10;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+        
+        pdf.save(`${note.title.replace(/ /g, '_')}.pdf`);
+        toast({ title: 'Download Started!', description: 'Your PDF is being downloaded.' });
+    }).catch(err => {
+        console.error("Error generating PDF", err);
+        toast({ title: 'PDF Generation Failed', description: 'Could not generate the PDF.', variant: 'destructive' });
+    });
+  }
 
   if (isLoading) {
     return (
@@ -131,7 +175,7 @@ export default function ViewNotePage() {
         </Link>
       </Button>
 
-      <Card className="shadow-xl">
+      <Card className="shadow-xl" ref={noteContentRef}>
         <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
             <div>
@@ -143,11 +187,16 @@ export default function ViewNotePage() {
                 Created: {format(new Date(note.createdAt), 'PPpp')} | Last Updated: {format(new Date(note.updatedAt), 'PPpp')}
               </CardDescription>
             </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/notes/${note.id}/edit`}>
-                <Edit2 className="mr-2 h-4 w-4" /> Edit Note
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+                <Button onClick={handleDownloadPdf} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/notes/${note.id}/edit`}>
+                    <Edit2 className="mr-2 h-4 w-4" /> Edit Note
+                  </Link>
+                </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

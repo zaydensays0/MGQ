@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PenSquare, Sparkles, Loader2, Terminal, Save, Download, Share2 } from 'lucide-react';
+import { PenSquare, Sparkles, Loader2, Terminal, Save, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_LEVELS, SUBJECTS } from '@/lib/constants';
 import type { GradeLevelNCERT, Note } from '@/types';
@@ -165,35 +165,6 @@ export default function NotesAIPage() {
     });
   }
 
-  const handleShare = async () => {
-    if (!generatedContent || !navigator.share) {
-        toast({ title: 'Share Not Available', description: 'Your browser does not support the Web Share API.', variant: 'destructive'});
-        return;
-    }
-
-    try {
-        await navigator.share({
-            title: generatedTitle,
-            text: `Check out these notes on ${chapter}:\n\n${generatedContent.substring(0, 200)}...`,
-        });
-        toast({ title: 'Shared!', description: 'Notes shared successfully.' });
-    } catch (error: any) {
-        // The most common reason for failure is the user cancelling the share dialog.
-        // In that case, we don't want to show an error toast.
-        if (error.name === 'AbortError') {
-            console.log('Share was cancelled by the user.');
-            return;
-        }
-
-        console.error("Share failed", error);
-        toast({ 
-            title: 'Share Failed', 
-            description: 'Could not share the notes. This can happen due to browser permissions or if not on a secure (HTTPS) connection.',
-            variant: 'destructive' 
-        });
-    }
-  }
-  
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="mb-8">
@@ -228,11 +199,7 @@ export default function NotesAIPage() {
               <Input id="chapter-ai" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., The French Revolution" required />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-5 w-5" />
-              )}
+              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
               {isLoading ? 'Generating...' : 'Generate Notes'}
             </Button>
           </form>
@@ -260,7 +227,6 @@ export default function NotesAIPage() {
           <CardFooter className="flex-wrap gap-2 justify-end">
             <Button onClick={handleSaveNote} variant="outline"><Save className="mr-2 h-4 w-4" /> Save</Button>
             <Button onClick={handleDownloadPdf} variant="outline"><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-            {navigator.share && <Button onClick={handleShare} variant="outline"><Share2 className="mr-2 h-4 w-4" /> Share</Button>}
           </CardFooter>
         </Card>
       )}
