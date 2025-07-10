@@ -231,7 +231,8 @@ export default function MockTestPage() {
         }
     };
 
-    const handleRecheckAnswer = async (index: number, answer: TestAnswer) => {
+    const handleRecheckAnswer = async (e: React.MouseEvent<HTMLButtonElement>, index: number, answer: TestAnswer) => {
+        e.preventDefault();
         setRecheckStates(prev => ({...prev, [index]: {loading: true, result: null}}));
         const testContext = form.getValues();
         try {
@@ -456,7 +457,7 @@ export default function MockTestPage() {
                                         )}
                                     </CardContent>
                                     <CardFooter className="p-2 bg-muted/50 justify-between items-center">
-                                        <Button type="button" size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
+                                        <Button type="button" size="sm" variant="ghost" onClick={(e) => handleRecheckAnswer(e, index, answer)} disabled={recheckState.loading || !!recheckState.result}>
                                             {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
                                             {recheckState.loading ? 'Verifying...' : 'Recheck Answer'}
                                         </Button>
