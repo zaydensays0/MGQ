@@ -456,7 +456,7 @@ export default function MockTestPage() {
                                         )}
                                     </CardContent>
                                     <CardFooter className="p-2 bg-muted/50 justify-between items-center">
-                                        <Button size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
+                                        <Button type="button" size="sm" variant="ghost" onClick={() => handleRecheckAnswer(index, answer)} disabled={recheckState.loading || !!recheckState.result}>
                                             {recheckState.loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ShieldCheck className="mr-2 h-4 w-4"/>}
                                             {recheckState.loading ? 'Verifying...' : 'Recheck Answer'}
                                         </Button>
