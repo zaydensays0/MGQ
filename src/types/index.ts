@@ -236,6 +236,21 @@ export interface FlashcardDeck {
 
 // --- AI Flow Schemas ---
 
+// Find Exam Papers Flow
+export const FindExamPapersInputSchema = z.object({
+  board: z.string().describe("The educational board, e.g., 'CBSE'."),
+  className: z.string().describe("The class, e.g., '10'."),
+  subject: z.string().describe("The subject, e.g., 'Mathematics'."),
+  year: z.number().describe("The year of the exam paper."),
+});
+export type FindExamPapersInput = z.infer<typeof FindExamPapersInputSchema>;
+
+export const FindExamPapersOutputSchema = z.object({
+  markdownResponse: z.string().describe("A comprehensive, single markdown response containing an introduction, reliable source links, search guidance, and any other helpful information for the user to find their exam paper."),
+});
+export type FindExamPapersOutput = z.infer<typeof FindExamPapersOutputSchema>;
+
+
 // Board Exam Question Generation
 export const GenerateBoardQuestionInputSchema = z.object({
     boardName: z.string().describe("The full name of the educational board (e.g., 'CBSE', 'ICSE')."),

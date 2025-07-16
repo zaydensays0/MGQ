@@ -20,4 +20,6 @@ import '@/ai/flows/generate-mock-test.ts';
 import '@/ai/flows/solve-problem.ts';
 import '@/ai/flows/generate-questions-from-image.ts';
 import '@/ai/flows/recheck-answer.ts';
+import '@/ai/flows/find-exam-papers.ts';
+import '@/ai/flows/voice-chat.ts';
 

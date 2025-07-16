@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import {
-  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion, Wand2, ImagePlus
+  Sparkles, Menu, Bot, BookOpenCheck, FileText, MessageSquareQuote, Archive, Brain, History, User, PenSquare, ClipboardCheck, Heart, LogOut, Layers, SpellCheck, LogIn, Trophy, LayoutGrid, Award, Lightbulb, Target, RotateCw, Ticket, Building, FileQuestion, Wand2, ImagePlus, Mic
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -31,6 +31,7 @@ const mainFeatures = [
 ];
 
 const allToolsLinks = [
+  { href: '/voice-chat', label: 'Voice Assistant', icon: Mic },
   { href: '/image-to-questions', label: 'Image to Questions', icon: ImagePlus },
   { href: '/rewards/spin-wheel', label: 'Spin The Wheel', icon: Ticket },
   { href: '/achievements', label: 'Achievements', icon: Award },
@@ -46,6 +47,7 @@ const allToolsLinks = [
   { href: '/jarvis', label: 'Jarvis', icon: Bot },
   { href: '/jarvis-saved', label: 'Jarvis Archive', icon: Archive },
   { href: '/donation', label: 'Donate', icon: Heart },
+  { href: '/past-papers', label: 'Past Papers', icon: FileQuestion },
 ];
 
 const UserProgress = ({ user }: { user: NonNullable<ReturnType<typeof useUser>['user']> }) => {
